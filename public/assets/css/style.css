@@ -1,22 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
+/* ===================================
+    Variables
+====================================== */
+
+:root {
+  --color-primary: #30254f;
+  --color-secondary: #b08eff;
+  --color-background: #fff;
+}
+
+/* ===================================
+    Root
+====================================== */
+
 ::-webkit-scrollbar {
   width: 18px;
 }
 
 ::-webkit-scrollbar-track {
   width: 5px;
-  background: #30254f;
-  border-left: 9px solid #30254f;
-  border-right: 9px solid #30254f;
+  background: var(--color-primary);
+  border-left: 9px solid var(--color-primary);
+  border-right: 9px solid var(--color-primary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d4b610;
+  background: var(--color-secondary);
   width: 0;
-  border-left: 7px solid #30254f;
-  border-right: 6px solid #30254f;
+  border-left: 7px solid var(--color-primary);
+  border-right: 6px solid var(--color-primary);
 }
 
 /* ===================================
@@ -75,7 +89,7 @@ border: 1px solid transparent;
 text-align: center;
 }
 /*Social icons background hover*/
-.icon-hover:hover {color: #30254f; transition: all 0.5s ease; background-color: #fff;}
+.icon-hover:hover {color: var(--color-primary); transition: all 0.5s ease; background-color: #fff;}
 
 .facebook-hover:hover {color: #fff !important; transition: all 0.5s ease; background-color: #4267B2;}
 .twitter-hover:hover {color: #fff !important; transition: all 0.5s ease; background-color: #1DA1F2;}
@@ -128,17 +142,17 @@ color: #fff;
 }
 .btn.trans-btn-2 {
   background: transparent;
-  border-color: #30254f;
-  color: #30254f;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 .btn.yellow-btn {
-  background:  #d4b610;
-  border-color:  #d4b610;
+  background:  var(--color-secondary);
+  border-color:  var(--color-secondary);
   color: #fff;
 }
 .btn.blue-btn {
-  background:  #30254f;
-  border-color:  #30254f;
+  background:  var(--color-primary);
+  border-color:  var(--color-primary);
   color: #fff;
 }
 /*Button hover*/
@@ -146,16 +160,16 @@ color: #fff;
 .btn.btn-hvr-white:hover {
   background-color: #fff; 
   border-color: #fff;
-  color: #30254f;
+  color: var(--color-primary);
 }
 .btn.btn-hvr-blue:hover {
-  background-color: #30254f; 
-  border-color: #30254f;
+  background-color: var(--color-primary); 
+  border-color: var(--color-primary);
   color: #fff;
 }
 .btn.btn-hvr-yellow:hover {
-  background-color: #d4b610; 
-  border-color: #d4b610;
+  background-color: var(--color-secondary); 
+  border-color: var(--color-secondary);
   color: #fff;
 }
 
@@ -263,19 +277,19 @@ color: #fff;
 }
 
 .loader div:nth-child(1) {
-  background: #30254f;
+  background: var(--color-primary);
   animation: ldio-8v0e2g029us 1.4492753623188404s linear infinite;
   animation-delay: -0.7246376811594202s;
 }
 
 .loader div:nth-child(2) {
-  background: #d4b610;
+  background: var(--color-secondary);
   animation: ldio-8v0e2g029us 1.4492753623188404s linear infinite;
   animation-delay: 0s;
 }
 
 .loader div:nth-child(3) {
-  background: #30254f;
+  background: var(--color-primary);
   animation: ldio-8v0e2g029us-o 1.4492753623188404s linear infinite;
   animation-delay: -0.7246376811594202s;
 }
@@ -297,7 +311,7 @@ color: #fff;
 }
 
 .navbar-brand {
-  background-color: #d4b610;
+  background-color: var(--color-secondary);
   padding: 20px 13px 20px 13px;
 }
 
@@ -322,7 +336,7 @@ height: 84px;
 }
 
 .navbar-fixed-top.scrolled .navbar-logo{
-  background-color: #30254f !important;
+  background-color: var(--color-primary) !important;
   transition: .2s linear;
   box-shadow: 0 10px 10px -10px rgba(0, 0, 0, 0.35);
 }
@@ -436,7 +450,7 @@ height: 84px;
 ====================================== */
 
 .banner .text-section{
-  background-color: #30254f;
+  background-color: var(--color-primary);
   height: 100vh;
   position: relative;
 }
@@ -458,7 +472,7 @@ height: 84px;
   text-transform: uppercase;
 }
 .banner .text-section span{
-  color: #d4b610;
+  color: var(--color-secondary);
 }
 
 .banner .text-section .text{
@@ -479,7 +493,7 @@ height: 84px;
 .banner .icons {
   display: flex;
   justify-content: center;
-  background-color: #d4b610;
+  background-color: var(--color-secondary);
   position: absolute;
   right: 0;
   bottom: 0;
@@ -498,12 +512,12 @@ height: 84px;
   padding: 25px 20px 25px 10px;
 }
 .banner  .icons .left-customPrevBtn:hover{
-   background-color: #30254f;
+   background-color: var(--color-primary);
    transition: all .5s ease;
    cursor: pointer;
 }
 .banner  .icons .right-customNextBtn:hover{
-  background-color: #30254f;
+  background-color: var(--color-primary);
   cursor: pointer;
   transition: all .5s ease;
 }
@@ -548,7 +562,7 @@ height: 84px;
 .about-us .text-section .text-column:hover .subheading{
 transform: translateY(-10px);
 transition: all .5s ease;
-color: #d4b610;
+color: var(--color-secondary);
 }
 
 .about-us .text-section .heading{
@@ -573,7 +587,7 @@ color: #d4b610;
   background-color: #f2f2f2;
 }
 .about-us .row-4 .heading{
-  color: #30254f;
+  color: var(--color-primary);
   margin-bottom: 25px;
 }
 .about-us .row-4 .img img{
@@ -632,7 +646,7 @@ color: #d4b610;
 }
 
 .reviews-section .carousel-section {
-  background-color: #d4b610;
+  background-color: var(--color-secondary);
   padding-top: 120px;
   padding-bottom: 120px;
   padding-right: 100px;
@@ -671,7 +685,7 @@ color: #d4b610;
 }
 
 .reviews-section .counter-section {
-  background-color: #30254f;
+  background-color: var(--color-primary);
   padding-top: 170px;
   padding-bottom: 120px;
   padding-left: 200px;
@@ -816,7 +830,7 @@ footer .text {
 ====================================== */
 
 .productdetail-banner .text-section{
-  background-color: #30254f;
+  background-color: var(--color-primary);
   height: 76vh;
   position: relative;
 }
@@ -838,7 +852,7 @@ footer .text {
   text-transform: uppercase;
 }
 .productdetail-banner .text-section span{
-  color: #d4b610;
+  color: var(--color-secondary);
 }
 .productdetail-banner  .text-section .text{
   color:#fff;
@@ -856,7 +870,7 @@ footer .text {
 .productdetail-banner  .icons {
   display: flex;
   justify-content: center;
-  background-color: #d4b610;
+  background-color: var(--color-secondary);
   padding: 25px 25px; 
   position: absolute;
   right: 0;
@@ -916,7 +930,7 @@ footer .text {
 }
 
 .product-body .product-detail .product-checklist ul li i{
-    color:  #d4b610;
+    color:  var(--color-secondary);
 }
 .product-body .product-list .product-detail .product-single-price{
     margin-top: 20px;
@@ -1065,7 +1079,7 @@ footer .text {
   transition: all .5s ease;
 }
 .products-section .card:hover .card-title {
-  color: #d4b610;
+  color: var(--color-secondary);
   transition: all .5s ease;
 }
 
@@ -1074,7 +1088,7 @@ footer .text {
 ====================================== */
 
 .standalone-banner .text-section{
-  background-color: #30254f;
+  background-color: var(--color-primary);
   height: 76vh;
   position: relative;
 }
@@ -1096,7 +1110,7 @@ footer .text {
   text-transform: uppercase;
 }
 .standalone-banner .text-section span{
-  color: #d4b610;
+  color: var(--color-secondary);
 }
 .standalone-banner  .text-section .text{
   color:#fff;
@@ -1118,7 +1132,7 @@ footer .text {
 }
 
 .page-breadcrumb li i {
-  color:#d4b610;
+  color:var(--color-secondary);
 }
 .standalone-banner .social-icons{
  position: absolute;
@@ -1130,7 +1144,7 @@ footer .text {
 .standalone-banner .icons {
   display: flex;
   justify-content: center;
-  background-color: #d4b610;
+  background-color: var(--color-secondary);
   padding: 25px 25px; 
   position: absolute;
   right: 0;
@@ -1190,7 +1204,7 @@ footer .text {
 position: absolute;
 transition: all 0.3s ease;
 opacity: 0;
-background-color:  #d4b610;
+background-color:  var(--color-secondary);
 }
 .hover-effect:hover .standaloneoverlay {
 opacity: .4;
@@ -1200,7 +1214,7 @@ width: 100%;
 height: 0;
 bottom: 0;
 right: 0;
-background-color: #d4b610;
+background-color: var(--color-secondary);
 cursor: pointer;
 }
 .hover-effect:hover .overlayBottom {
@@ -1558,7 +1572,7 @@ height: 100%;
   width: 50%;
   height: 100%;
   z-index: 9999;
-  background: #30254f;
+  background: var(--color-primary);
   transform: translate3d(100%, 0, 0);
   transition: transform .5s ease;
   position: fixed;
