@@ -1,35 +1,5 @@
-/* ===================================
-    Table of Content
-====================================== */
-
-/*- Fonts
-  - Scrollbar
-  - General   
-  - Loader
-  - Navbar
-  - Banner
-  - About-us
-  - Products-Section
-  - Reviews-Section
-  - Contact-Section
-  - Footer
-  - Products Detail Page
-  - StandAlone
-  - Products Page
-  - Media-Queries
-
-*/
-
-/* ===================================
-Fonts
-====================================== */
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-
-/* ===================================
-    Scrollbar
-====================================== */
 
 ::-webkit-scrollbar {
   width: 18px;
