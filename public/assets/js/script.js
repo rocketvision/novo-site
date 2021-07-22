@@ -154,7 +154,7 @@ $('.review-carousel').owlCarousel({
 $('.banner-carousel').owlCarousel({
     loop: true,
     margin: 0,
-    autoplay: false,
+    autoplay: true,
     nav: false,
     dots: false,
     mouseDrag: true,
