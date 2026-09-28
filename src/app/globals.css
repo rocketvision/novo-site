@@ -48,6 +48,14 @@
   font-weight: 600;
 }
 
+/* Título do Hero: limitado também pela altura, para caber na primeira dobra. */
+@utility text-hero {
+  font-size: clamp(2.5rem, min(9.4vw, 12.5svh), 7.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+  font-weight: 600;
+}
+
 @utility text-headline {
   font-size: clamp(2.125rem, 1.1rem + 4vw, 4.5rem);
   line-height: 1.02;
@@ -159,6 +167,20 @@
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@utility animate-fade-in {
+  animation: fade-in 1.2s var(--ease-out) both;
+  animation-delay: var(--delay, 500ms);
+}
+
 @utility animate-rise {
   animation: rise 1.1s var(--ease-out) both;
   animation-delay: var(--delay, 0ms);
@@ -167,6 +189,122 @@
 @utility animate-fade-up {
   animation: fade-up 0.9s var(--ease-out) both;
   animation-delay: var(--delay, 0ms);
+}
+
+/* --------------------------------------------------------------------------
+   Preloader
+   0.0s  anel se desenha
+   0.7s  foguete vibra (ignição)
+   1.05s decola deixando o rastro
+   1.55s a cortina sobe e revela a página
+   -------------------------------------------------------------------------- */
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--color-ink);
+  clip-path: inset(0 0 0 0);
+  animation: preloader-out 0.75s var(--ease-in-out) 1.55s forwards;
+}
+
+.preloader-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: preloader-mark-out 0.5s var(--ease-in-out) 1.4s forwards;
+}
+
+.preloader-ring {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: preloader-draw 0.8s var(--ease-out) 0.1s forwards;
+}
+
+.preloader-rocket {
+  animation:
+    preloader-shake 0.08s linear 0.7s 4 alternate,
+    preloader-launch 0.6s cubic-bezier(0.55, 0, 0.9, 0.4) 1.05s forwards;
+}
+
+.preloader-trail {
+  transform-origin: 16px 21.2px;
+  transform: scaleY(0);
+  animation: preloader-trail 0.6s var(--ease-out) 0.95s forwards;
+}
+
+.preloader-word {
+  opacity: 0;
+  animation: preloader-word 0.6s var(--ease-out) 0.35s forwards;
+}
+
+@keyframes preloader-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes preloader-shake {
+  from {
+    transform: translate(-0.25px, 0.25px);
+  }
+  to {
+    transform: translate(0.25px, -0.25px);
+  }
+}
+
+@keyframes preloader-launch {
+  from {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate(46px, -46px);
+    opacity: 0;
+  }
+}
+
+@keyframes preloader-trail {
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes preloader-word {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes preloader-mark-out {
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes preloader-out {
+  to {
+    clip-path: inset(0 0 100% 0);
+    visibility: hidden;
+  }
+}
+
+/* Já visto nesta sessão: sem abertura. */
+.intro-seen .preloader {
+  display: none;
+}
+
+/* Na primeira visita, a entrada do Hero espera a cortina subir. */
+html:not(.intro-seen) .animate-rise,
+html:not(.intro-seen) .animate-fade-up {
+  animation-delay: calc(var(--delay, 0ms) + 1650ms);
+}
+
+html:not(.intro-seen) .animate-fade-in {
+  animation-delay: calc(var(--delay, 500ms) + 1650ms);
 }
 
 /* Link com sublinhado que cresce da esquerda para a direita. */

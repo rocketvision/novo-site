@@ -33,9 +33,10 @@ export const site = {
 } as const;
 
 export const nav = [
-  { label: "Serviços", href: "#servicos" },
-  { label: "Como trabalhamos", href: "#processo" },
-  { label: "Por que a Rocket", href: "#diferenciais" },
+  { label: "Serviços", href: "/#servicos" },
+  { label: "Projetos", href: "/projetos" },
+  { label: "Como trabalhamos", href: "/#processo" },
+  { label: "Por que a Rocket", href: "/#diferenciais" },
 ] as const;
 
-export const primaryCta = { label: "Solicitar orçamento", href: "#contato" } as const;
+export const primaryCta = { label: "Solicitar orçamento", href: "/#contato" } as const;

@@ -19,6 +19,14 @@ export const problem = {
   eyebrow: "Parece familiar?",
   manifesto:
     "Planilhas que só uma pessoa entende. Pedidos anotados no WhatsApp. Um site que ninguém encontra. Uma ideia boa parada há meses. Sua empresa cresceu. As ferramentas dela, não.",
+  /** Cada improviso vira um objeto reconhecível que cai sobre a cena. */
+  symptoms: [
+    { kind: "file", text: "Planilhas que só uma pessoa entende.", artifact: "controle_FINAL_v7 (2).xlsx", meta: "Última edição: 23:48" },
+    { kind: "chat", text: "Pedidos anotados no WhatsApp.", artifact: "Oi! Vocês anotaram meu pedido de ontem?", meta: "+38 mensagens não lidas" },
+    { kind: "search", text: "Um site que ninguém encontra.", artifact: "sua empresa", meta: "Página 6 dos resultados" },
+    { kind: "note", text: "Uma ideia boa parada há meses.", artifact: "App de agendamento. Ver depois!!", meta: "" },
+  ] as const,
+  conclusion: ["Sua empresa cresceu.", "As ferramentas dela, não."],
 };
 
 export const shift = {
@@ -59,6 +67,12 @@ export const statement = {
   body: "Unimos estratégia, design e desenvolvimento em um só time. Você explica o problema com as suas palavras. Nós cuidamos de transformar isso em algo claro, bonito e que funciona no dia a dia.",
 };
 
+/** Momento tipográfico: uma frase se desmonta e dá lugar à outra conforme o scroll. */
+export const turn = {
+  from: "Tecnologia não deveria complicar a sua empresa.",
+  to: "Deveria fazer ela avançar.",
+};
+
 export type ServiceVisual = "site" | "store" | "system" | "app" | "brand";
 
 export type Service = {
@@ -69,6 +83,8 @@ export type Service = {
   what: string;
   outcomes: string[];
   visual: ServiceVisual;
+  /** Sinal de resultado exibido sobre a fotografia do serviço. */
+  signal: string;
 };
 
 /**
@@ -93,6 +109,7 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Contatos chegam direto para o seu time",
       ],
       visual: "site",
+      signal: "Novo contato pelo site",
     },
     {
       id: "lojas",
@@ -107,6 +124,7 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Catálogo sempre atualizado para enviar aos clientes",
       ],
       visual: "store",
+      signal: "Pedido confirmado",
     },
     {
       id: "sistemas",
@@ -121,6 +139,7 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Uma operação que cresce sem virar caos",
       ],
       visual: "system",
+      signal: "Relatório gerado automaticamente",
     },
     {
       id: "aplicativos",
@@ -135,6 +154,7 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Uma base pronta para evoluir com o uso real",
       ],
       visual: "app",
+      signal: "Agendamento confirmado no app",
     },
     {
       id: "identidade",
@@ -149,6 +169,7 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Materiais que seguem um padrão profissional",
       ],
       visual: "brand",
+      signal: "Marca aplicada em todos os materiais",
     },
   ],
 };

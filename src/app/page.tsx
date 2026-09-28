@@ -1,19 +1,20 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { Hero } from "@/components/sections/hero";
-import { Problem } from "@/components/sections/problem";
-import { Shift } from "@/components/sections/shift";
+import { HeroScene } from "@/components/sections/hero-scene";
+import { ShiftScene } from "@/components/sections/shift-scene";
 import { Statement } from "@/components/sections/statement";
 import { Services } from "@/components/sections/services";
 import { Differentials } from "@/components/sections/differentials";
 import { Proof } from "@/components/sections/proof";
 import { Process } from "@/components/sections/process";
+import { Turn } from "@/components/sections/turn";
 import { FinalCta } from "@/components/sections/final-cta";
 import { site } from "@/lib/site";
 
 /**
- * Narrativa: problema, possibilidade, o que a Rocket faz, serviços,
- * diferenciais, provas, processo e conversa.
+ * Narrativa: promessa que se abre em fotografia, problema, o que muda,
+ * virada para a solução, serviços, diferenciais, provas, processo,
+ * momento tipográfico e conversa.
  */
 export default function Home() {
   const jsonLd = {
@@ -48,14 +49,14 @@ export default function Home() {
       />
       <Header />
       <main id="conteudo">
-        <Hero />
-        <Problem />
-        <Shift />
+        <HeroScene />
+        <ShiftScene />
         <Statement />
         <Services />
         <Differentials />
         <Proof />
         <Process />
+        <Turn />
         <FinalCta />
       </main>
       <Footer />

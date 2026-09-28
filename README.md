@@ -35,3 +35,4 @@ npm run build && npm start
 - Dados da empresa (domínio, contato, redes, CNPJ): `src/lib/site.ts`
 - Itens marcados com `CONFIRMAR` dependem de informação real da Rocket Vision.
 - Formulário de contato: defina `CONTACT_WEBHOOK_URL` (veja `.env.example`).
+- Fotografias e licenças: `src/assets/images/CREDITS.md`

@@ -83,7 +83,7 @@ export function Header() {
       />
       <div className="container-page relative flex h-(--header-height) items-center justify-between">
         <Link
-          href="#inicio"
+          href="/"
           aria-label="Rocket Vision, voltar ao início"
           className={cn("transition-colors duration-500", dark ? "text-white" : "text-ink")}
           onClick={() => setOpen(false)}
@@ -161,7 +161,7 @@ export function Header() {
           >
             <nav aria-label="Menu" className="container-page flex h-full flex-col pt-8 pb-10">
               <ul className="flex flex-col">
-                {[...nav, { label: "Contato", href: "#contato" }].map((item, i) => (
+                {[...nav, { label: "Contato", href: "/#contato" }].map((item, i) => (
                   <m.li
                     key={item.href}
                     className="border-b border-line"

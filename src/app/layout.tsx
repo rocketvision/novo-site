@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { MotionProvider } from "@/components/animations/motion-provider";
+import { Preloader } from "@/components/layout/preloader";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -39,8 +40,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <head>
+        {/* A abertura aparece só na primeira visita da sessão. Roda antes da pintura para não piscar. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var k='rv-intro';if(sessionStorage.getItem(k)){document.documentElement.classList.add('intro-seen')}else{sessionStorage.setItem(k,'1')}}catch(e){}",
+          }}
+        />
         {/* Sem JavaScript, os elementos com reveal ficam visíveis desde o início. */}
         <noscript>
           <style>{`[style*="opacity:0"]{opacity:1!important;transform:none!important}`}</style>
@@ -53,6 +61,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         >
           Pular para o conteúdo
         </a>
+        <Preloader />
         <MotionProvider>{children}</MotionProvider>
       </body>
     </html>

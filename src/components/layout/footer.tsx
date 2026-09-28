@@ -17,7 +17,7 @@ export function Footer() {
       <div className="container-page border-t border-white/10 py-14 md:py-16">
         <div className="flex flex-col gap-12 md:flex-row md:items-start md:justify-between">
           <div className="max-w-xs space-y-4">
-            <Link href="#inicio" className="text-white" aria-label="Rocket Vision, voltar ao início">
+            <Link href="/" className="text-white" aria-label="Rocket Vision, voltar ao início">
               <Logo />
             </Link>
             <p className="text-sm leading-relaxed">
@@ -43,7 +43,7 @@ export function Footer() {
               <p className="text-eyebrow mb-4 text-white/50">Contato</p>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#contato" className="link-underline transition-colors hover:text-white">
+                  <Link href="/#contato" className="link-underline transition-colors hover:text-white">
                     Fale sobre seu projeto
                   </Link>
                 </li>
