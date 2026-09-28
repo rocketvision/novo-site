@@ -69,17 +69,25 @@ function parse<K extends SectionKey>(key: K, value: unknown): SectionContent<K> 
 
 const DEFAULTS_RESOLVED = <K extends SectionKey>(key: K) => resolveImages(DEFAULT_CONTENT[key], new Map()) as Resolved<K>;
 
+/**
+ * O cache guarda só dados do banco (conteúdo publicado e as mídias que ele usa), nunca as fotos
+ * embutidas já resolvidas: o caminho delas muda a cada build, e um cache que sobrevive ao deploy
+ * apontaria para arquivos que não existem mais.
+ */
+type CachedSection<K extends SectionKey> = { content: SectionContent<K> | null; media: [string, MediaInfo][] };
+
 function publishedLoader<K extends SectionKey>(key: K) {
   return unstable_cache(
-    async (): Promise<Resolved<K>> => {
+    async (): Promise<CachedSection<K>> => {
       const [row] = await getDb()
         .select({ published: schema.contentSections.published })
         .from(schema.contentSections)
         .where(eq(schema.contentSections.key, key));
       const content = row?.published ? parse(key, row.published) : null;
-      return content ? resolve(content) : DEFAULTS_RESOLVED(key);
+      const media = content ? await loadMedia(collectImageRefs(content).map((r) => r.mediaId)) : new Map<string, MediaInfo>();
+      return { content, media: [...media] };
     },
-    ["published-section", key],
+    ["published-section-data", key],
     { tags: [sectionTag(key), CACHE_TAGS.media] },
   );
 }
@@ -94,7 +102,8 @@ async function getPublished<K extends SectionKey>(key: K): Promise<Resolved<K>> 
     loaders.set(key, loader);
   }
   try {
-    return (await loader()) as Resolved<K>;
+    const { content, media } = (await loader()) as CachedSection<K>;
+    return content ? (resolveImages(content, new Map(media)) as Resolved<K>) : DEFAULTS_RESOLVED(key);
   } catch (error) {
     // Erro não entra no cache: a próxima requisição tenta de novo.
     log.error("content.load_failed", { key, error });

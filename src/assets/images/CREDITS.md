@@ -1,25 +1,30 @@
 # Créditos das imagens
 
-Todas as fotografias vêm do Unsplash e são usadas sob a Licença Unsplash (https://unsplash.com/license): uso comercial e não comercial gratuito, sem necessidade de atribuição. Nenhuma imagem é do Unsplash+.
+Fotografias da landing page, escolhidas por seção. Fontes e licenças:
 
-| Arquivo | Página original |
-|---|---|
-| `late-office.jpg` | https://unsplash.com/photos/man-working-late-at-a-dimly-lit-office-desk-l12wb6pAzuQ |
-| `spreadsheet-desk.jpg` | https://unsplash.com/photos/hand-operating-laptop-displaying-data-spreadsheet-on-a-desk-qLf_ML_Rfq8 |
-| `shop-counter.jpg` | https://unsplash.com/photos/woman-in-white-shirt-standing-beside-brown-wooden-table-7k6lKGhQXcQ |
-| `phone-hands-dark.jpg` | https://unsplash.com/photos/person-using-smartphone-BjhUu6BpUZA |
-| `laptop-light.jpg` | https://unsplash.com/photos/macbook-pro-showing-programming-language-xrVDYZRGdw4 |
-| `service-site.jpg` | https://unsplash.com/photos/macbook-pro-on-table-beside-white-imac-and-magic-mouse-hGV2TfOh0ns |
-| `service-store.jpg` | https://unsplash.com/photos/a-woman-standing-next-to-a-cardboard-box-on-top-of-a-table-V5XaBkW6PO8 |
-| `service-system.jpg` | https://unsplash.com/photos/man-in-vest-using-tablet-in-a-warehouse-4kjtbC-wMHs |
-| `service-app.jpg` | https://unsplash.com/photos/person-hand-holding-iphone-x-L5DxWLmywmM |
-| `service-brand.jpg` | https://unsplash.com/photos/orange-card-with-one-logo-surrounded-by-other-cards-OEIix2awZr4 |
-| `team-wall.jpg` | https://unsplash.com/photos/people-collaborating-on-project-plan-v89zhr0iBFY |
-| `step-talk.jpg` | https://unsplash.com/photos/two-people-holding-gray-mugs-at-table-K8XYGbw4Ahg |
-| `step-plan.jpg` | https://unsplash.com/photos/person-holding-pen-near-paper-sv8oOQaUb-o |
-| `step-build.jpg` | https://unsplash.com/photos/turned-on-macbook-pro-wit-programming-codes-display-f77Bh3inUpE |
-| `step-evolve.jpg` | https://unsplash.com/photos/person-holding-black-android-smartphone-wK-elt11pF0 |
-| `night-desk.jpg` | https://unsplash.com/photos/lit-desk-lamp-on-top-of-desk-EH9f0TI5wco |
+- Unsplash, sob a Licença Unsplash (https://unsplash.com/license): uso comercial e não comercial gratuito, sem necessidade de atribuição. Nenhuma imagem é do Unsplash+.
+- Pexels, sob a Licença Pexels (https://www.pexels.com/license/): uso comercial e não comercial gratuito, sem necessidade de atribuição.
+
+Algumas fotos foram recortadas para funcionar no enquadramento da seção (indicado na coluna "Ajuste").
+
+| Arquivo | Seção | Página original | Licença | Ajuste |
+|---|---|---|---|---|
+| `cafe-counter-night.jpg` | Hero | https://unsplash.com/photos/7dYSpTrDxhc | Unsplash | Recorte 16:10 que coloca a pessoa na janela inicial da foto |
+| `order-tickets-rail.jpg` | O que muda (1) | https://unsplash.com/photos/s26Waan4roY | Unsplash | |
+| `shop-window-night.jpg` | O que muda (2) | https://unsplash.com/photos/DUJI6z38oxY | Unsplash | |
+| `customer-phone-night.jpg` | O que muda (3) | https://unsplash.com/photos/RIjkQQYi8bo | Unsplash | Recorte do topo para remover a marca de uma loja |
+| `sketch-to-app.jpg` | Manifesto | https://unsplash.com/photos/TDfvoPFVYaE | Unsplash | |
+| `cafe-laptop-window.jpg` | Serviços: sites | https://unsplash.com/photos/E5llEM1xtWA | Unsplash | |
+| `packing-order.jpg` | Serviços: lojas virtuais | https://www.pexels.com/photo/7857523/ | Pexels | |
+| `warehouse-terminal.jpg` | Serviços: sistemas | https://unsplash.com/photos/Ggjba7uZC-I | Unsplash | |
+| `salon-phone.jpg` | Serviços: aplicativos | https://unsplash.com/photos/X9Of2xiMtgE | Unsplash | Recorte 4:3 com a pessoa, o celular e o reflexo |
+| `logo-sketches.jpg` | Serviços: identidade visual | https://unsplash.com/photos/eVpZxkNY3bw | Unsplash | |
+| `sketching-together.jpg` | Por que a Rocket | https://www.pexels.com/photo/3471423/ | Pexels | |
+| `first-conversation.jpg` | Como trabalhamos: entendemos | https://unsplash.com/photos/GB4ScXwxNGI | Unsplash | |
+| `product-brief.jpg` | Como trabalhamos: planejamos | https://unsplash.com/photos/wdnpaTNwOEQ | Unsplash | |
+| `building-together.jpg` | Como trabalhamos: construímos | https://unsplash.com/photos/NZGj8HmE6v0 | Unsplash | |
+| `cafe-phone-payment.jpg` | Como trabalhamos: evoluímos | https://www.pexels.com/photo/6612717/ | Pexels | |
+| `two-chairs-window.jpg` | Próximo passo | https://unsplash.com/photos/al-o2zPeVNk | Unsplash | |
 
 ## Projetos de exemplo (rota /projetos)
 

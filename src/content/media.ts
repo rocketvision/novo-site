@@ -6,50 +6,50 @@
  * Origem e licença de cada foto: src/assets/images/CREDITS.md
  */
 
-import lateOffice from "@/assets/images/late-office.jpg";
-import spreadsheetDesk from "@/assets/images/spreadsheet-desk.jpg";
-import shopCounter from "@/assets/images/shop-counter.jpg";
-import phoneHandsDark from "@/assets/images/phone-hands-dark.jpg";
-import laptopLight from "@/assets/images/laptop-light.jpg";
-import serviceSite from "@/assets/images/service-site.jpg";
-import serviceStore from "@/assets/images/service-store.jpg";
-import serviceSystem from "@/assets/images/service-system.jpg";
-import serviceApp from "@/assets/images/service-app.jpg";
-import serviceBrand from "@/assets/images/service-brand.jpg";
-import teamWall from "@/assets/images/team-wall.jpg";
-import stepTalk from "@/assets/images/step-talk.jpg";
-import stepPlan from "@/assets/images/step-plan.jpg";
-import stepBuild from "@/assets/images/step-build.jpg";
-import stepEvolve from "@/assets/images/step-evolve.jpg";
-import nightDesk from "@/assets/images/night-desk.jpg";
+import cafeCounterNight from "@/assets/images/cafe-counter-night.jpg";
+import orderTicketsRail from "@/assets/images/order-tickets-rail.jpg";
+import shopWindowNight from "@/assets/images/shop-window-night.jpg";
+import customerPhoneNight from "@/assets/images/customer-phone-night.jpg";
+import sketchToApp from "@/assets/images/sketch-to-app.jpg";
+import cafeLaptopWindow from "@/assets/images/cafe-laptop-window.jpg";
+import packingOrder from "@/assets/images/packing-order.jpg";
+import warehouseTerminal from "@/assets/images/warehouse-terminal.jpg";
+import salonPhone from "@/assets/images/salon-phone.jpg";
+import logoSketches from "@/assets/images/logo-sketches.jpg";
+import sketchingTogether from "@/assets/images/sketching-together.jpg";
+import firstConversation from "@/assets/images/first-conversation.jpg";
+import productBrief from "@/assets/images/product-brief.jpg";
+import buildingTogether from "@/assets/images/building-together.jpg";
+import cafePhonePayment from "@/assets/images/cafe-phone-payment.jpg";
+import twoChairsWindow from "@/assets/images/two-chairs-window.jpg";
 import type { StaticImageData } from "next/image";
 import type { FallbackKey } from "@/lib/content/schemas";
 
 export type Photo = { src: StaticImageData; alt: string };
 
 export const media = {
-  hero: { src: lateOffice, alt: "Pessoa trabalhando sozinha até tarde em um escritório escuro" },
+  hero: { src: cafeCounterNight, alt: "Mulher sozinha atrás do balcão de um pequeno café, à noite" },
   shift: [
-    { src: spreadsheetDesk, alt: "Mão no notebook com uma planilha aberta sobre a mesa" },
-    { src: shopCounter, alt: "Lojista atendendo no balcão de uma loja pequena" },
-    { src: phoneHandsDark, alt: "Mãos segurando um celular em um ambiente escuro" },
+    { src: orderTicketsRail, alt: "Comandas de pedidos presas em fila no trilho de uma cozinha" },
+    { src: shopWindowNight, alt: "Vitrine de uma loja iluminada à noite, com a porta aberta e os produtos expostos" },
+    { src: customerPhoneNight, alt: "Homem consultando o celular na calçada, em frente a uma loja, à noite" },
   ],
-  statement: { src: laptopLight, alt: "Notebook com código na tela, iluminado pela luz da tarde" },
+  statement: { src: sketchToApp, alt: "Mão usando um aplicativo no celular sobre folhas com os rascunhos das telas" },
   services: {
-    site: { src: serviceSite, alt: "Mesa de trabalho com computador e notebook exibindo um site" },
-    store: { src: serviceStore, alt: "Empreendedora montando caixas de envio em um ateliê iluminado" },
-    system: { src: serviceSystem, alt: "Gestor usando um tablet dentro de um centro de distribuição" },
-    app: { src: serviceApp, alt: "Mãos usando um aplicativo no celular" },
-    brand: { src: serviceBrand, alt: "Papelaria de identidade visual organizada sobre a mesa" },
+    site: { src: cafeLaptopWindow, alt: "Homem usando o notebook na mesa de um café, junto a uma janela grande" },
+    store: { src: packingOrder, alt: "Mãos acomodando um produto embrulhado em papel de seda dentro de uma caixa de envio" },
+    system: { src: warehouseTerminal, alt: "Funcionária usando o sistema no computador dentro de um depósito" },
+    app: { src: salonPhone, alt: "Mulher consultando o celular na cadeira de um salão de beleza, refletida no espelho" },
+    brand: { src: logoSketches, alt: "Folhas com esboços de logotipo desenhados a lápis" },
   },
-  differentials: { src: teamWall, alt: "Duas pessoas organizando um plano com notas adesivas em uma parede de vidro" },
+  differentials: { src: sketchingTogether, alt: "Duas pessoas à mesa, uma delas desenhando no papel as telas de um aplicativo" },
   workflow: [
-    { src: stepTalk, alt: "Duas pessoas conversando à mesa com xícaras de café" },
-    { src: stepPlan, alt: "Mão desenhando wireframes de telas no papel" },
-    { src: stepBuild, alt: "Notebook com código de um projeto aberto" },
-    { src: stepEvolve, alt: "Pessoa usando um aplicativo no celular" },
+    { src: firstConversation, alt: "Duas pessoas conversando à mesa, uma explicando e a outra tomando notas" },
+    { src: productBrief, alt: "Folhas com o briefing do produto, os objetivos dos usuários e o fluxo das telas" },
+    { src: buildingTogether, alt: "Duas pessoas concentradas nas telas do computador, trabalhando lado a lado" },
+    { src: cafePhonePayment, alt: "Cliente pagando pelo celular no balcão de um café" },
   ],
-  cta: { src: nightDesk, alt: "Mesa com luminária acesa diante da cidade à noite" },
+  cta: { src: twoChairsWindow, alt: "Duas cadeiras e uma mesa pequena junto a uma janela iluminada pelo sol" },
 } satisfies Record<string, Photo | Photo[] | Record<string, Photo>>;
 
 /**
