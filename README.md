@@ -18,3 +18,20 @@ Olá Seja Bem-Vindo ao repositório do site da Rocket Vision esse repositório a
 # Equipe de Desenvolvimento
 - [Guilherme Ramos](https://github.com/guiramosrocket)
 - [Lord](https://github.com/lewdum)
+
+# Landing page (Next.js)
+
+A nova landing page fica em `src/` e roda com Next.js. O site estático anterior continua intacto em `public/`.
+
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm run lint
+npm run typecheck
+npm run build && npm start
+```
+
+- Copy da página: `src/content/landing.ts`
+- Dados da empresa (domínio, contato, redes, CNPJ): `src/lib/site.ts`
+- Itens marcados com `CONFIRMAR` dependem de informação real da Rocket Vision.
+- Formulário de contato: defina `CONTACT_WEBHOOK_URL` (veja `.env.example`).
