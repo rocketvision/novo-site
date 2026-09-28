@@ -75,26 +75,30 @@ export function ProjectIndex({ projects }: { projects: Project[] }) {
                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
                 exit={{ opacity: 0, scale: 0.85 }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                className="relative -mt-40 ml-8 h-64 w-52 overflow-hidden rounded-2xl shadow-[0_40px_80px_-30px_rgb(0_0_0/0.8)] xl:h-72 xl:w-60"
+                className="relative -mt-[7.5rem] ml-10 h-[15rem] w-[22rem] overflow-hidden rounded-2xl shadow-[0_40px_80px_-30px_rgb(0_0_0/0.8)] ring-1 ring-white/10"
               >
-                {projects.map((project, i) => (
-                  <m.div
-                    key={project.slug}
-                    initial={false}
-                    animate={{ opacity: hovered === i ? 1 : 0, scale: hovered === i ? 1 : 1.12 }}
-                    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute inset-0"
-                  >
-                    <Image
-                      src={project.image.src}
-                      alt=""
-                      fill
-                      sizes="240px"
-                      className="object-cover"
-                      style={{ objectPosition: project.image.position }}
-                    />
-                  </m.div>
-                ))}
+                {projects.map((project, i) => {
+                  const screen = project.screens.desktop ?? project.screens.phones?.[0];
+                  if (!screen) return null;
+                  return (
+                    <m.div
+                      key={project.slug}
+                      initial={false}
+                      animate={{ opacity: hovered === i ? 1 : 0, scale: hovered === i ? 1 : 1.08 }}
+                      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ backgroundColor: project.theme.bg }}
+                    >
+                      {project.screens.desktop ? (
+                        <Image src={screen.src} alt="" fill sizes="352px" className="object-cover object-top" />
+                      ) : (
+                        <div className="relative h-[88%] aspect-[390/844] overflow-hidden rounded-xl">
+                          <Image src={screen.src} alt="" fill sizes="120px" className="object-cover" />
+                        </div>
+                      )}
+                    </m.div>
+                  );
+                })}
               </m.div>
             )}
           </AnimatePresence>

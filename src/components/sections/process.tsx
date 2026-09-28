@@ -7,7 +7,7 @@ import { Photo } from "@/components/ui/photo";
 import { Reveal } from "@/components/animations/reveal";
 import { workflow } from "@/content/landing";
 import { media } from "@/content/media";
-import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { cn } from "@/lib/utils";
 
@@ -21,23 +21,34 @@ const total = workflow.steps.length;
  * Mobile e reduced motion: linha do tempo vertical com as mesmas fotos.
  */
 export function Process() {
-  const isDesktop = useMediaQuery("(min-width: 1024px)", false);
   const reduceMotion = usePrefersReducedMotion();
 
   return (
     <section id="processo" aria-labelledby="processo-titulo" className="bg-mist">
-      {isDesktop && !reduceMotion ? <HorizontalProcess /> : <VerticalProcess />}
+      {reduceMotion ? (
+        <VerticalProcess />
+      ) : (
+        // As duas composições saem do servidor; o CSS escolhe pelo breakpoint, sem salto após carregar.
+        <>
+          <div className="hidden lg:block">
+            <HorizontalProcess />
+          </div>
+          <div className="lg:hidden">
+            <VerticalProcess idSuffix="-m" />
+          </div>
+        </>
+      )}
     </section>
   );
 }
 
-function Heading({ compact = false }: { compact?: boolean }) {
+function Heading({ compact = false, idSuffix = "" }: { compact?: boolean; idSuffix?: string }) {
   return (
     <div className={cn(compact ? "grid items-end gap-6 lg:grid-cols-12 lg:gap-12" : "max-w-3xl")}>
       <div className={cn(compact && "lg:col-span-7")}>
         <Eyebrow>{workflow.eyebrow}</Eyebrow>
         <h2
-          id="processo-titulo"
+          id={`processo-titulo${idSuffix}`}
           className={cn(
             "mt-6 text-ink",
             compact ? "text-[clamp(2rem,0.8rem+2.6vw,3.75rem)] leading-[1.04] font-semibold tracking-[-0.04em]" : "text-headline",
@@ -128,13 +139,13 @@ function StepFrame({ step, index, progress }: { step: Step; index: number; progr
   );
 }
 
-function VerticalProcess() {
+function VerticalProcess({ idSuffix = "" }: { idSuffix?: string }) {
   const listRef = useRef<HTMLOListElement>(null);
   const scrollYProgress = useScrollProgress(listRef, ["start center", "end center"]);
 
   return (
     <div className="container-page py-24 md:py-32">
-      <Heading />
+      <Heading idSuffix={idSuffix} />
       <ol ref={listRef} className="relative mt-14 space-y-16 pl-10 md:pl-14">
         <span aria-hidden="true" className="absolute top-2 bottom-2 left-[0.3125rem] w-px bg-black/10">
           <m.span style={{ scaleY: scrollYProgress }} className="absolute inset-0 origin-top bg-ink" />

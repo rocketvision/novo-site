@@ -292,18 +292,13 @@
   }
 }
 
-/* Já visto nesta sessão: sem abertura. */
-.intro-seen .preloader {
-  display: none;
-}
-
-/* Na primeira visita, a entrada do Hero espera a cortina subir. */
-html:not(.intro-seen) .animate-rise,
-html:not(.intro-seen) .animate-fade-up {
+/* No carregamento da página, a entrada dos títulos espera a cortina da abertura subir. */
+html:not(.intro-done) .animate-rise,
+html:not(.intro-done) .animate-fade-up {
   animation-delay: calc(var(--delay, 0ms) + 1650ms);
 }
 
-html:not(.intro-seen) .animate-fade-in {
+html:not(.intro-done) .animate-fade-in {
   animation-delay: calc(var(--delay, 500ms) + 1650ms);
 }
 

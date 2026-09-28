@@ -9,7 +9,7 @@ import { Photo } from "@/components/ui/photo";
 import { Reveal } from "@/components/animations/reveal";
 import { services, type Service } from "@/content/landing";
 import { media } from "@/content/media";
-import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { insetClip, segment } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,6 @@ const total = items.length;
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function Services() {
-  const isDesktop = useMediaQuery("(min-width: 1024px)", false);
   const reduceMotion = usePrefersReducedMotion();
 
   return (
@@ -39,7 +38,19 @@ export function Services() {
           </Link>
         </Reveal>
       </div>
-      {isDesktop && !reduceMotion ? <ServicesStage /> : <ServicesStack />}
+      {reduceMotion ? (
+        <ServicesStack />
+      ) : (
+        // As duas composições saem do servidor; o CSS escolhe pelo breakpoint, sem salto após carregar.
+        <>
+          <div className="hidden lg:block">
+            <ServicesStage />
+          </div>
+          <div className="lg:hidden">
+            <ServicesStack idSuffix="-m" />
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -187,11 +198,11 @@ function Signal({ text }: { text: string }) {
 }
 
 /** Mobile e reduced motion: cada serviço com a própria fotografia, em sequência. */
-function ServicesStack() {
+function ServicesStack({ idSuffix = "" }: { idSuffix?: string }) {
   return (
     <div className="pb-24">
       {items.map((service, i) => (
-        <article key={service.id} aria-labelledby={`servico-${service.id}-titulo`} className="mt-14 first:mt-4 md:mt-24">
+        <article key={service.id} aria-labelledby={`servico-${service.id}-titulo${idSuffix}`} className="mt-14 first:mt-4 md:mt-24">
           <Reveal className="relative mx-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] sm:mx-8 sm:aspect-[16/10]">
             <Photo photo={media.services[service.visual]} sizes="100vw" />
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
@@ -205,7 +216,7 @@ function ServicesStack() {
               <span className="mx-2 text-black/20">/</span>
               {service.name}
             </p>
-            <h3 id={`servico-${service.id}-titulo`} className="text-title mt-4 text-ink">
+            <h3 id={`servico-${service.id}-titulo${idSuffix}`} className="text-title mt-4 text-ink">
               {service.title}
             </h3>
             <p className="text-body mt-4 text-muted">{service.problem}</p>

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRef } from "react";
 import { m, useTransform, type MotionValue } from "motion/react";
 import { Check } from "lucide-react";
@@ -9,17 +8,20 @@ import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { lerp, segment } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
+import { BrowserFrame, PhoneFrame } from "./devices";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 /** Quanto do trecho de cada projeto ele fica parado antes do próximo começar a subir. */
 const HOLD = 0.3;
 /** Altura de scroll dedicada a cada projeto, em svh. */
 const SLOT = 110;
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
 /**
  * Pilha de projetos em tela cheia.
- * Cada projeto sobe por cima do anterior como um cartão; o de baixo recua,
- * escurece e ganha cantos, criando profundidade. A foto se aproxima enquanto entra.
+ * Cada projeto sobe por cima do anterior como um cartão; o de baixo recua e escurece.
+ * Dentro do cartão, as telas chegam em camadas (o celular mais rápido que o navegador),
+ * como numa foto de produto que ganha profundidade.
  */
 export function ProjectStack({ projects }: { projects: Project[] }) {
   const reduceMotion = usePrefersReducedMotion();
@@ -75,25 +77,17 @@ function StackCard({
   total: number;
   progress: MotionValue<number>;
 }) {
-  const slots = total - 1;
-  // Posição contínua na pilha: 0 = primeiro projeto inteiro, 1 = segundo, e assim por diante.
-  const at = (v: number) => v * slots;
-
-  const y = useTransform(progress, (v) => {
-    if (index === 0) return "0%";
-    const t = segment(at(v), index - 1 + HOLD, index);
-    return `${(1 - easeOut(t)) * 100}%`;
-  });
-  // Quando o próximo sobe, este recua e escurece.
+  const at = (v: number) => v * (total - 1);
+  const entering = useTransform(progress, (v) => (index === 0 ? 1 : easeOut(segment(at(v), index - 1 + HOLD, index))));
   const covered = useTransform(progress, (v) => segment(at(v), index + HOLD, index + 1));
+
+  const y = useTransform(entering, (t) => `${(1 - t) * 100}%`);
   const scale = useTransform(covered, (t) => lerp(1, 0.9, t));
   const shade = useTransform(covered, (t) => t * 0.7);
-  const radius = useTransform(progress, (v) => {
-    const entering = index === 0 ? 1 : segment(at(v), index - 1 + HOLD, index);
-    const c = segment(at(v), index + HOLD, index + 1);
-    return `${lerp(28, 16, entering) + c * 12}px`;
-  });
-  const photoScale = useTransform(progress, (v) => lerp(1.25, 1, segment(at(v), index - 1 + HOLD, index + 0.6)));
+  const radius = useTransform([entering, covered], ([e, c]: number[]) => `${lerp(28, 16, e) + c * 12}px`);
+  // Profundidade: o navegador chega de um pouco mais baixo, o celular de mais longe ainda.
+  const stageY = useTransform(entering, (t) => `${(1 - t) * 18}%`);
+  const frontY = useTransform(entering, (t) => `${(1 - t) * 45}%`);
   const contentOpacity = useTransform(progress, (v) => (index === 0 ? 1 : segment(at(v), index - 0.25, index)));
   const contentY = useTransform(contentOpacity, (t) => (1 - t) * 40);
 
@@ -101,15 +95,20 @@ function StackCard({
     <m.article
       aria-labelledby={`projeto-${project.slug}-titulo`}
       style={{ y, scale, borderRadius: radius, zIndex: index }}
-      className="absolute inset-2 origin-top overflow-hidden bg-ink will-change-transform md:inset-3"
+      className="absolute inset-2 origin-top overflow-hidden will-change-transform md:inset-3"
     >
-      <ProjectCard project={project} index={index} total={total} photoScale={photoScale} contentStyle={{ opacity: contentOpacity, y: contentY }} />
+      <ProjectCard
+        project={project}
+        index={index}
+        total={total}
+        stageY={stageY}
+        frontY={frontY}
+        contentStyle={{ opacity: contentOpacity, y: contentY }}
+      />
       <m.div style={{ opacity: shade }} className="pointer-events-none absolute inset-0 bg-black" />
     </m.article>
   );
 }
-
-const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
 type MotionStyle = React.ComponentProps<typeof m.div>["style"];
 
@@ -117,80 +116,127 @@ function ProjectCard({
   project,
   index,
   total,
-  photoScale,
+  stageY,
+  frontY,
   contentStyle,
 }: {
   project: Project;
   index: number;
   total: number;
-  photoScale?: MotionValue<number>;
+  stageY?: MotionValue<string>;
+  frontY?: MotionValue<string>;
   contentStyle?: MotionStyle;
 }) {
-  return (
-    <>
-      <m.div style={photoScale ? { scale: photoScale } : undefined} className="absolute inset-0">
-        <Image
-          src={project.image.src}
-          alt={project.image.alt}
-          fill
-          sizes="100vw"
-          placeholder="blur"
-          quality={80}
-          className="object-cover"
-          style={{ objectPosition: project.image.position }}
-        />
-      </m.div>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30" />
+  const light = project.theme.tone === "light";
 
+  return (
+    <div
+      className={cn("absolute inset-0", light ? "text-white" : "text-ink")}
+      style={{
+        backgroundColor: project.theme.bg,
+        backgroundImage: `radial-gradient(ellipse 70% 60% at 70% 45%, ${light ? "rgb(255 255 255 / 0.07)" : "rgb(255 255 255 / 0.55)"}, transparent 70%)`,
+      }}
+    >
+      {/* Palco das telas */}
+      <m.div
+        style={stageY ? { y: stageY } : undefined}
+        className="absolute inset-x-0 top-[calc(var(--header-height)+2.5rem)] h-[44%] lg:top-0 lg:bottom-0 lg:left-[36%] lg:h-auto"
+      >
+        <DeviceStage project={project} frontY={frontY} />
+      </m.div>
+
+      {/* Topo: selo e contador */}
       <div className="absolute inset-x-0 top-0 flex items-start justify-between p-5 pt-[calc(var(--header-height)+0.5rem)] md:p-10 md:pt-[calc(var(--header-height)+1rem)]">
         {project.sample ? (
-          <span className="rounded-full bg-white/15 px-3 py-1.5 font-mono text-[0.6875rem] tracking-wide text-white/85 backdrop-blur-md">
+          <span
+            className={cn(
+              "rounded-full px-3 py-1.5 font-mono text-[0.6875rem] tracking-wide",
+              light ? "bg-white/10 text-white/80" : "bg-black/[0.06] text-black/60",
+            )}
+          >
             Projeto de exemplo
           </span>
         ) : (
           <span />
         )}
-        <span className="font-mono text-xs text-white/70 tabular-nums">
+        <span className={cn("font-mono text-xs tabular-nums", light ? "text-white/60" : "text-black/50")}>
           {pad(index + 1)} / {pad(total)}
         </span>
       </div>
 
+      {/* Texto */}
       <m.div
         style={contentStyle}
-        className="absolute inset-x-0 bottom-0 grid gap-6 p-5 pb-8 text-white md:p-10 md:pb-12 lg:grid-cols-12 lg:items-end lg:gap-10"
+        className="absolute inset-x-0 bottom-0 p-5 pb-8 md:p-10 md:pb-12 lg:top-0 lg:right-auto lg:flex lg:w-[36%] lg:flex-col lg:justify-end lg:pr-4"
       >
-        <div className="lg:col-span-7">
-          <p className="text-eyebrow text-white/65">
-            {project.category} <span className="mx-1.5 text-white/30">/</span> {project.year}
-          </p>
-          <h2
-            id={`projeto-${project.slug}-titulo`}
-            className="mt-4 text-[clamp(2.5rem,1rem+5.6vw,6.5rem)] leading-[0.95] font-semibold tracking-[-0.05em]"
-          >
-            {project.name}
-          </h2>
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-white/75 md:text-lg">{project.summary}</p>
-        </div>
-
-        <div className="hidden sm:block lg:col-span-4 lg:col-start-9">
-          <p className="text-sm text-white/55">{project.client}</p>
-          <ul className="mt-4 space-y-2.5 border-t border-white/15 pt-4">
-            {project.highlights.map((item) => (
-              <li key={item} className="flex gap-3 text-[0.9375rem] text-white/90">
-                <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={2.25} />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <ul className="mt-5 flex flex-wrap gap-2">
-            {project.services.map((service) => (
-              <li key={service} className={cn("rounded-full border border-white/20 px-3 py-1 text-xs text-white/75")}>
-                {service}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <p className={cn("text-eyebrow", light ? "text-white/60" : "text-black/55")}>
+          <span style={{ color: project.theme.accent }}>{project.category}</span>
+          <span className="mx-1.5 opacity-40">/</span>
+          {project.year}
+        </p>
+        <h2
+          id={`projeto-${project.slug}-titulo`}
+          className="mt-4 text-[clamp(2.25rem,1rem+3.6vw,4.75rem)] leading-[0.98] font-semibold tracking-[-0.045em]"
+        >
+          {project.name}
+        </h2>
+        <p className={cn("mt-4 max-w-md text-base leading-relaxed md:text-lg", light ? "text-white/70" : "text-black/65")}>
+          {project.summary}
+        </p>
+        <ul className={cn("mt-6 hidden space-y-2 border-t pt-5 sm:block", light ? "border-white/15" : "border-black/10")}>
+          {project.highlights.map((item) => (
+            <li key={item} className={cn("flex gap-3 text-[0.9375rem]", light ? "text-white/85" : "text-black/75")}>
+              <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" style={{ color: project.theme.accent }} strokeWidth={2.25} />
+              {item}
+            </li>
+          ))}
+        </ul>
+        <ul className="mt-5 hidden flex-wrap gap-2 sm:flex">
+          {project.services.map((service) => (
+            <li
+              key={service}
+              className={cn("rounded-full border px-3 py-1 text-xs", light ? "border-white/20 text-white/70" : "border-black/15 text-black/60")}
+            >
+              {service}
+            </li>
+          ))}
+        </ul>
       </m.div>
-    </>
+    </div>
+  );
+}
+
+/** Composição das telas conforme o que o projeto tem: navegador, celulares ou ambos. */
+function DeviceStage({ project, frontY }: { project: Project; frontY?: MotionValue<string> }) {
+  const { desktop, phones = [] } = project.screens;
+  const front = frontY ? { y: frontY } : undefined;
+
+  if (desktop) {
+    return (
+      <div className="relative flex h-full items-center">
+        <BrowserFrame
+          screen={desktop}
+          sizes="(min-width: 1024px) 64vw, 94vw"
+          className="absolute left-1/2 w-[min(94%,calc(40svh*1.5))] -translate-x-1/2 lg:left-[4%] lg:w-[108%] lg:translate-x-0"
+        />
+        {phones[0] && (
+          <m.div style={front} className="absolute bottom-[2%] left-[6%] w-[24%] lg:bottom-[12%] lg:left-[1%] lg:w-[17%]">
+            <PhoneFrame screen={phones[0]} sizes="(min-width: 1024px) 14vw, 26vw" />
+          </m.div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex h-full items-center justify-center gap-[5%]">
+      {phones.map((screen, i) => (
+        <m.div key={i} style={i === 1 ? front : undefined} className="aspect-[400/866] h-[94%] lg:h-[76%]">
+          <div className={cn("h-full", i === 1 && "translate-y-[8%]")}>
+            <PhoneFrame screen={screen} sizes="(min-width: 1024px) 20vw, 40vw" />
+          </div>
+        </m.div>
+      ))}
+    </div>
   );
 }

@@ -7,7 +7,7 @@ import { Photo } from "@/components/ui/photo";
 import { Reveal } from "@/components/animations/reveal";
 import { shift } from "@/content/landing";
 import { media } from "@/content/media";
-import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { insetClip, segment } from "@/lib/scroll";
 
@@ -24,9 +24,20 @@ const total = shift.items.length;
  * Mobile e reduced motion: lista editorial com as fotos intercaladas.
  */
 export function ShiftScene() {
-  const isDesktop = useMediaQuery("(min-width: 1024px)", false);
   const reduceMotion = usePrefersReducedMotion();
-  return isDesktop && !reduceMotion ? <StageShift /> : <StackedShift />;
+  if (reduceMotion) return <StackedShift />;
+  // As duas composições saem prontas do servidor e o CSS escolhe pelo breakpoint:
+  // a página nasce com a altura certa e o F5 volta exatamente para o mesmo ponto.
+  return (
+    <>
+      <div className="hidden lg:block">
+        <StageShift />
+      </div>
+      <div className="lg:hidden">
+        <StackedShift idSuffix="-m" />
+      </div>
+    </>
+  );
 }
 
 function StageShift() {
@@ -141,12 +152,12 @@ function ShiftPhoto({ index, progress, photo }: { index: number; progress: Motio
   );
 }
 
-function StackedShift() {
+function StackedShift({ idSuffix = "" }: { idSuffix?: string }) {
   return (
-    <section aria-labelledby="shift-titulo" className="bg-ink pt-24 pb-24 text-white md:pt-32" data-header="dark">
+    <section aria-labelledby={`shift-titulo${idSuffix}`} className="bg-ink pt-24 pb-24 text-white md:pt-32" data-header="dark">
       <div className="container-page">
         <Eyebrow className="text-white/55">{shift.eyebrow}</Eyebrow>
-        <h2 id="shift-titulo" className="text-title mt-6 max-w-2xl">
+        <h2 id={`shift-titulo${idSuffix}`} className="text-title mt-6 max-w-2xl">
           {shift.title}
         </h2>
       </div>

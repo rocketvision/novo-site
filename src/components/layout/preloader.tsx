@@ -3,8 +3,9 @@
  * deixando o rastro e a cortina sobe revelando a página.
  *
  * Animação 100% CSS (globals.css, seção "Preloader"): funciona sem JavaScript,
- * não atrasa a hidratação e se desliga sozinha. Aparece só na primeira visita
- * da sessão (script inline no layout) e é pulada com prefers-reduced-motion.
+ * não atrasa a hidratação e se desliga sozinha. Aparece a cada carregamento completo
+ * da página (F5 ou primeira visita), mas não na navegação interna entre rotas,
+ * porque o layout permanece montado. É pulada com prefers-reduced-motion.
  */
 export function Preloader() {
   return (
