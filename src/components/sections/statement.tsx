@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { m, useTransform } from "motion/react";
 import type { Resolved } from "@/lib/content/resolved";
 import { LogoMark } from "@/components/ui/logo";
-import { Photo } from "@/components/ui/photo";
+import { OrderedStack } from "@/components/visuals/ordered-stack";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { useHeaderTheme } from "@/hooks/use-header-theme";
@@ -12,16 +12,18 @@ import { insetClip, segment } from "@/lib/scroll";
 
 /**
  * Virada da narrativa: o escuro do problema dá lugar à luz da solução.
- * O fundo clareia, a proposta ganha foco e a fotografia sobe por trás do texto.
+ * O fundo clareia, a proposta ganha foco e sobe por trás do texto o visual da ordem:
+ * os improvisos do hero, agora alinhados e ligados à Rocket.
  */
 type Content = Resolved<"statement">;
+type Problem = Resolved<"problem">;
 
-export function Statement({ statement }: { statement: Content }) {
+export function Statement({ statement, problem }: { statement: Content; problem: Problem }) {
   const reduceMotion = usePrefersReducedMotion();
-  return reduceMotion ? <StaticStatement statement={statement} /> : <AnimatedStatement statement={statement} />;
+  return reduceMotion ? <StaticStatement statement={statement} problem={problem} /> : <AnimatedStatement statement={statement} problem={problem} />;
 }
 
-function AnimatedStatement({ statement }: { statement: Content }) {
+function AnimatedStatement({ statement, problem }: { statement: Content; problem: Problem }) {
   const ref = useRef<HTMLElement>(null);
   const progress = useScrollProgress(ref, ["start start", "end end"]);
   useHeaderTheme(ref, progress, (v) => v < 0.18);
@@ -68,7 +70,7 @@ function AnimatedStatement({ statement }: { statement: Content }) {
           <div className="relative min-h-0 lg:col-span-5 lg:h-[72svh]">
             <m.div style={{ y: photoY, clipPath: photoClip }} className="absolute inset-0 overflow-hidden rounded-[1.75rem]">
               <m.div style={{ scale: photoScale }} className="absolute inset-0">
-                <Photo photo={statement.image} sizes="(min-width: 1024px) 40vw, 100vw" />
+                <OrderedStack problem={problem} />
               </m.div>
             </m.div>
           </div>
@@ -78,7 +80,7 @@ function AnimatedStatement({ statement }: { statement: Content }) {
   );
 }
 
-function StaticStatement({ statement }: { statement: Content }) {
+function StaticStatement({ statement, problem }: { statement: Content; problem: Problem }) {
   return (
     <section aria-labelledby="statement-titulo" className="bg-paper py-28">
       <div className="container-page grid gap-12 lg:grid-cols-12 lg:items-center">
@@ -90,7 +92,7 @@ function StaticStatement({ statement }: { statement: Content }) {
           <p className="text-lead mt-8 max-w-xl text-muted">{statement.body}</p>
         </div>
         <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] lg:col-span-5">
-          <Photo photo={statement.image} sizes="(min-width: 1024px) 40vw, 100vw" />
+          <OrderedStack problem={problem} />
         </div>
       </div>
     </section>

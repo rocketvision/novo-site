@@ -73,8 +73,6 @@ export const turn = {
   to: "Deveria fazer ela avançar.",
 };
 
-export type ServiceVisual = "site" | "store" | "system" | "app" | "brand";
-
 export type Service = {
   id: string;
   name: string;
@@ -82,8 +80,7 @@ export type Service = {
   problem: string;
   what: string;
   outcomes: string[];
-  visual: ServiceVisual;
-  /** Sinal de resultado exibido sobre a fotografia do serviço. */
+  /** Sinal de resultado exibido sobre o visual do serviço. */
   signal: string;
 };
 
@@ -108,7 +105,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Visitantes entendem o que você oferece em segundos",
         "Contatos chegam direto para o seu time",
       ],
-      visual: "site",
       signal: "Novo contato pelo site",
     },
     {
@@ -123,7 +119,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Pagamento, estoque e pedidos no mesmo lugar",
         "Catálogo sempre atualizado para enviar aos clientes",
       ],
-      visual: "store",
       signal: "Pedido confirmado",
     },
     {
@@ -138,7 +133,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Dados confiáveis para decidir com segurança",
         "Uma operação que cresce sem virar caos",
       ],
-      visual: "system",
       signal: "Relatório gerado automaticamente",
     },
     {
@@ -153,7 +147,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Uma experiência que seus clientes entendem sem manual",
         "Uma base pronta para evoluir com o uso real",
       ],
-      visual: "app",
       signal: "Agendamento confirmado no app",
     },
     {
@@ -168,7 +161,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
         "Mais confiança na primeira impressão",
         "Materiais que seguem um padrão profissional",
       ],
-      visual: "brand",
       signal: "Marca aplicada em todos os materiais",
     },
   ],

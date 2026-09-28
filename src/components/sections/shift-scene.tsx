@@ -3,43 +3,47 @@
 import { useRef } from "react";
 import { m, useTransform, type MotionValue } from "motion/react";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Photo } from "@/components/ui/photo";
 import { Reveal } from "@/components/animations/reveal";
+import { Stage } from "@/components/visuals/primitives";
+import { TransformationFor } from "@/components/visuals/transformations";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
+import { useRevealProgress } from "@/hooks/use-reveal-progress";
 import { insetClip, segment } from "@/lib/scroll";
 
 type Shift = Resolved<"shift">;
+type Problem = Resolved<"problem">;
 type Item = Shift["groups"][number]["pairs"][number];
 
-/** Cada foto acompanha duas transformações (operação, vendas, produto). O CMS garante dois pares por grupo. */
+/** Cada painel acompanha duas transformações (operação, vendas, produto). O CMS garante dois pares por grupo. */
 const pairsOf = (shift: Shift) => shift.groups.flatMap((g) => g.pairs);
 
 /**
  * O que muda.
  * Desktop: palco fixo. Cada improviso é riscado pelo scroll e dá lugar à versão resolvida,
- * enquanto a fotografia à direita troca por cortina a cada dois temas.
- * Mobile e reduced motion: lista editorial com as fotos intercaladas.
+ * enquanto, no painel à direita, o mesmo objeto do improviso que caiu no hero se reorganiza
+ * no estado resolvido. O painel troca por cortina a cada dois temas.
+ * Mobile e reduced motion: lista editorial com os painéis intercalados.
  */
-export function ShiftScene({ shift }: { shift: Shift }) {
+export function ShiftScene({ shift, problem }: { shift: Shift; problem: Problem }) {
   const reduceMotion = usePrefersReducedMotion();
-  if (reduceMotion) return <StackedShift shift={shift} />;
+  if (reduceMotion) return <StackedShift shift={shift} problem={problem} />;
   // As duas composições saem prontas do servidor e o CSS escolhe pelo breakpoint:
   // a página nasce com a altura certa e o F5 volta exatamente para o mesmo ponto.
   return (
     <>
       <div className="hidden lg:block">
-        <StageShift shift={shift} />
+        <StageShift shift={shift} problem={problem} />
       </div>
       <div className="lg:hidden">
-        <StackedShift shift={shift} idSuffix="-m" />
+        <StackedShift shift={shift} problem={problem} idSuffix="-m" />
       </div>
     </>
   );
 }
 
-function StageShift({ shift }: { shift: Shift }) {
+function StageShift({ shift, problem }: { shift: Shift; problem: Problem }) {
   const ref = useRef<HTMLElement>(null);
   const items = pairsOf(shift);
   const total = items.length;
@@ -77,9 +81,17 @@ function StageShift({ shift }: { shift: Shift }) {
 
         <div className="relative my-[calc(var(--header-height)+1rem)] flex-1 overflow-hidden rounded-l-[2rem]">
           {shift.groups.map((group, i) => (
-            <ShiftPhoto key={i} index={i} groups={groups} progress={progress} photo={group.image} />
+            <ShiftPanel
+              key={i}
+              index={i}
+              groups={groups}
+              progress={progress}
+              first={firstPairOf(shift, i)}
+              total={total}
+              pairs={group.pairs}
+              problem={problem}
+            />
           ))}
-          <div className="absolute inset-0 bg-gradient-to-r from-ink/40 via-transparent to-transparent" />
         </div>
       </div>
     </section>
@@ -134,20 +146,32 @@ function Pair({ item, index, total, progress }: { item: Item; index: number; tot
   );
 }
 
-function ShiftPhoto({
+const firstPairOf = (shift: Shift, group: number) => shift.groups.slice(0, group).reduce((n, g) => n + g.pairs.length, 0);
+
+/** Fundo dos painéis: o escuro da seção com um brilho discreto da cor de destaque. */
+const panelClass =
+  "absolute inset-0 bg-ink-soft bg-[radial-gradient(90%_70%_at_75%_15%,rgb(255_91_31/0.16),transparent_65%)]";
+
+function ShiftPanel({
   index,
   groups,
   progress,
-  photo,
+  first,
+  total,
+  pairs,
+  problem,
 }: {
   index: number;
   groups: number;
   progress: MotionValue<number>;
-  photo: Shift["groups"][number]["image"];
+  first: number;
+  total: number;
+  pairs: Item[];
+  problem: Problem;
 }) {
   const start = index / groups;
   const end = (index + 1) / groups;
-  // A próxima foto sobe por cima da anterior como uma cortina.
+  // O próximo painel sobe por cima do anterior como uma cortina.
   const clipPath = useTransform(progress, (v) => {
     if (index === 0) return insetClip(0, 0, 0, 0);
     const t = segment(v, start - 0.05, start + 0.03);
@@ -156,15 +180,64 @@ function ShiftPhoto({
   const scale = useTransform(progress, [start - 0.05, end], [1.16, 1]);
 
   return (
-    <m.div style={{ clipPath }} className="absolute inset-0">
+    <m.div style={{ clipPath }} className={panelClass}>
       <m.div style={{ scale }} className="absolute inset-0">
-        <Photo photo={photo} sizes="55vw" decorative />
+        {pairs.map((pair, j) => (
+          <PairVisual key={j} index={first + j} total={total} leads={j === 0} progress={progress} pair={pair} problem={problem} />
+        ))}
       </m.div>
     </m.div>
   );
 }
 
-function StackedShift({ shift, idSuffix = "" }: { shift: Shift; idSuffix?: string }) {
+/** A transformação acompanha o risco do texto: começa quando o improviso é riscado e assenta com o "depois". */
+function PairVisual({
+  index,
+  total,
+  leads,
+  progress,
+  pair,
+  problem,
+}: {
+  index: number;
+  total: number;
+  /** Primeiro par do painel: entra junto com a cortina, sem fade. */
+  leads: boolean;
+  progress: MotionValue<number>;
+  pair: Item;
+  problem: Problem;
+}) {
+  const start = index / total;
+  const end = (index + 1) / total;
+  const w = end - start;
+  const t = useTransform(progress, (v) => segment(v, start + w * 0.14, start + w * 0.62));
+  // Sai e entra no mesmo ritmo do texto ao lado, com uma troca curta na fronteira.
+  const opacity = useTransform(progress, [start, start + w * 0.06, end - w * 0.06, end], [leads ? 1 : 0, 1, 1, index === total - 1 ? 1 : 0]);
+  const y = useTransform(progress, [start, start + w * 0.1], [leads ? "0em" : "1.5em", "0em"]);
+
+  return (
+    <m.div style={{ opacity, y }} className="absolute inset-0">
+      <Stage size={[2.7, 3.1]}>
+        <TransformationFor index={index} t={t} before={pair.before} after={pair.after} problem={problem} />
+      </Stage>
+    </m.div>
+  );
+}
+
+/** Mobile e reduced motion: a transformação acontece quando o painel entra na tela. */
+function RevealedPair({ index, pair, problem }: { index: number; pair: Item; problem: Problem }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const t = useRevealProgress(ref);
+  return (
+    <div ref={ref} className="relative h-full">
+      <Stage size={[3.3, 4.6]}>
+        <TransformationFor index={index} t={t} before={pair.before} after={pair.after} problem={problem} />
+      </Stage>
+    </div>
+  );
+}
+
+function StackedShift({ shift, problem, idSuffix = "" }: { shift: Shift; problem: Problem; idSuffix?: string }) {
   return (
     <section aria-labelledby={`shift-titulo${idSuffix}`} className="bg-ink pt-24 pb-24 text-white md:pt-32" data-header="dark">
       <div className="container-page">
@@ -177,7 +250,12 @@ function StackedShift({ shift, idSuffix = "" }: { shift: Shift; idSuffix?: strin
       {shift.groups.map((group, g) => (
         <div key={g} className="mt-16 md:mt-24">
           <Reveal className="relative mx-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] sm:mx-8 sm:aspect-[16/10]">
-            <Photo photo={group.image} sizes="100vw" decorative />
+            <div className={panelClass} />
+            <div className="absolute inset-0 grid grid-rows-2 sm:grid-cols-2 sm:grid-rows-1">
+              {group.pairs.map((pair, j) => (
+                <RevealedPair key={j} index={firstPairOf(shift, g) + j} pair={pair} problem={problem} />
+              ))}
+            </div>
           </Reveal>
           <ol className="container-page mt-4">
             {group.pairs.map((item, i) => (

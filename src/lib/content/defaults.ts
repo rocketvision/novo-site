@@ -6,6 +6,7 @@
  * 2. Como rede de segurança: se o banco estiver indisponível, a landing continua exibindo este conteúdo.
  *
  * As imagens apontam para as fotos originais pela chave `fallback` (ver FALLBACK_IMAGES em src/content/media.ts).
+ * O texto alternativo fica vazio: assim vale o da própria foto original, que muda junto com ela.
  */
 
 import {
@@ -23,36 +24,7 @@ import {
 import { site } from "@/lib/site";
 import type { FallbackKey, SectionContent, SectionKey } from "./schemas";
 
-const img = (fallback: FallbackKey, alt: string) => ({ mediaId: null, alt, fallback });
-
-const serviceFallback: Record<string, FallbackKey> = {
-  site: "service-site",
-  store: "service-store",
-  system: "service-system",
-  app: "service-app",
-  brand: "service-brand",
-};
-
-const serviceAlt: Record<string, string> = {
-  site: "Homem usando o notebook na mesa de um café, junto a uma janela grande",
-  store: "Mãos acomodando um produto embrulhado em papel de seda dentro de uma caixa de envio",
-  system: "Funcionária usando o sistema no computador dentro de um depósito",
-  app: "Mulher consultando o celular na cadeira de um salão de beleza, refletida no espelho",
-  brand: "Folhas com esboços de logotipo desenhados a lápis",
-};
-
-const shiftAlts = [
-  "Comandas de pedidos presas em fila no trilho de uma cozinha",
-  "Vitrine de uma loja iluminada à noite, com a porta aberta e os produtos expostos",
-  "Homem consultando o celular na calçada, em frente a uma loja, à noite",
-];
-
-const workflowAlts = [
-  "Duas pessoas conversando à mesa, uma explicando e a outra tomando notas",
-  "Folhas com o briefing do produto, os objetivos dos usuários e o fluxo das telas",
-  "Duas pessoas concentradas nas telas do computador, trabalhando lado a lado",
-  "Cliente pagando pelo celular no balcão de um café",
-];
+const img = (fallback: FallbackKey) => ({ mediaId: null, alt: "", fallback });
 
 export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
   hero: {
@@ -61,7 +33,7 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     lead: hero.lead,
     primaryCta: { label: hero.primaryCta, href: "#contato" },
     secondaryCta: { label: hero.secondaryCta, href: "#servicos" },
-    image: img("hero", "Mulher sozinha atrás do balcão de um pequeno café, à noite"),
+    image: img("hero"),
   },
   problem: {
     eyebrow: problem.eyebrow,
@@ -72,14 +44,12 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     eyebrow: shift.eyebrow,
     title: shift.title,
     groups: [0, 1, 2].map((g) => ({
-      image: img(`shift-${g}` as FallbackKey, shiftAlts[g]),
       pairs: shift.items.slice(g * 2, g * 2 + 2).map((p) => ({ before: p.before, after: p.after })),
     })),
   },
   statement: {
     title: statement.title,
     body: statement.body,
-    image: img("statement", "Mão usando um aplicativo no celular sobre folhas com os rascunhos das telas"),
   },
   services: {
     eyebrow: services.eyebrow,
@@ -93,25 +63,18 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
       what: s.what,
       outcomes: [...s.outcomes],
       signal: s.signal,
-      image: img(serviceFallback[s.visual], serviceAlt[s.visual]),
     })),
   },
   differentials: {
     eyebrow: differentials.eyebrow,
     title: differentials.title,
     items: differentials.items.map((i) => ({ title: i.title, body: i.body })),
-    image: img("differentials", "Duas pessoas à mesa, uma delas desenhando no papel as telas de um aplicativo"),
   },
   workflow: {
     eyebrow: workflow.eyebrow,
     title: workflow.title,
     lead: workflow.lead,
-    steps: workflow.steps.map((s, i) => ({
-      name: s.name,
-      title: s.title,
-      body: s.body,
-      image: img(`workflow-${i}` as FallbackKey, workflowAlts[i]),
-    })),
+    steps: workflow.steps.map((s) => ({ name: s.name, title: s.title, body: s.body })),
   },
   turn: { from: turn.from, strike: "complicar", to: turn.to },
   cta: {
@@ -121,7 +84,7 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     submit: cta.submit,
     interests: [...cta.interests],
     reassurance: cta.reassurance,
-    image: img("cta", "Duas cadeiras e uma mesa pequena junto a uma janela iluminada pelo sol"),
+    image: img("cta"),
   },
   projectsPage: {
     eyebrow: projectsPage.eyebrow,
