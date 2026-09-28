@@ -21,7 +21,7 @@ Olá Seja Bem-Vindo ao repositório do site da Rocket Vision esse repositório a
 
 # Landing page (Next.js)
 
-A nova landing page fica em `src/` e roda com Next.js. O site estático anterior continua intacto em `public/`.
+A landing page fica em `src/` e roda com Next.js.
 
 ```bash
 npm install

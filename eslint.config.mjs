@@ -12,8 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Site estático legado (HTML/jQuery), fora do escopo da landing em Next.js.
-    "public/**",
+    // Scripts utilitários em Python.
     "scripts/**",
   ]),
 ]);

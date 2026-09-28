@@ -7,7 +7,7 @@ type LogoProps = {
 };
 
 /**
- * Símbolo vetorial redesenhado a partir do logo original (public/assets/img/logo.png):
+ * Símbolo vetorial redesenhado a partir do logo original em PNG do site anterior:
  * foguete em diagonal dentro de um anel aberto. Usa currentColor para se adaptar ao fundo.
  */
 export function LogoMark({ className }: { className?: string }) {
