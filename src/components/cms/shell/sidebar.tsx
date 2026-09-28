@@ -18,7 +18,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { LogoMark } from "@/components/ui/logo";
+import { StudioLogo } from "@/components/cms/brand";
 import { api } from "@/lib/cms/api";
 import { cn } from "@/lib/utils";
 
@@ -66,11 +66,8 @@ export function Sidebar({ allowed, user }: { allowed: NavKey[]; user: { name: st
 
   const nav = (
     <nav aria-label="Principal" className="flex h-full flex-col">
-      <div className="flex h-14 items-center gap-2.5 px-4">
-        <LogoMark className="size-6 text-zinc-900" />
-        <span className="text-[15px] font-semibold tracking-tight">
-          Rocket <span className="font-normal text-zinc-500">CMS</span>
-        </span>
+      <div className="flex h-14 items-center px-4">
+        <StudioLogo compact />
       </div>
 
       <ul className="flex-1 space-y-0.5 px-2 py-2">
@@ -154,10 +151,7 @@ export function Sidebar({ allowed, user }: { allowed: NavKey[]; user: { name: st
         >
           <Menu className="size-5" />
         </button>
-        <span className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
-          <LogoMark className="size-5" />
-          Rocket <span className="font-normal text-zinc-500">CMS</span>
-        </span>
+        <StudioLogo compact />
         <span className="size-9" />
       </div>
       {open && (

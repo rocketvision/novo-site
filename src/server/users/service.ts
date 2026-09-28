@@ -7,6 +7,7 @@ import type { SessionUser } from "@/server/auth/session";
 import { isPermission, OWNER_ROLE_KEY, type Permission } from "@/server/authz/permissions";
 import { conflict, forbidden, HttpError, notFound } from "@/server/http/errors";
 import { isMailConfigured, sendMail } from "@/server/mail";
+import { adminResetMail, inviteMail } from "@/server/mail-templates";
 import { isUuid } from "@/server/media/service";
 
 type Ctx = { ip: string | null; userAgent: string | null };
@@ -121,18 +122,7 @@ async function otherActiveOwners(tx: Tx, exceptUserId: string) {
 type InviteResult = { userId: string; link: string | null; emailed: boolean };
 
 async function deliverInvite(user: { email: string; name: string }, link: string, invitedBy: string) {
-  const { delivered } = await sendMail({
-    to: user.email,
-    subject: "Convite para o CMS da Rocket Vision",
-    text: [
-      `Olá, ${user.name}.`,
-      "",
-      `${invitedBy} convidou você para o CMS da Rocket Vision.`,
-      `Para criar a sua senha e entrar, acesse: ${link}`,
-      "",
-      "O link vale por 7 dias e só pode ser usado uma vez.",
-    ].join("\n"),
-  });
+  const { delivered } = await sendMail(inviteMail(user, link, invitedBy));
   return delivered;
 }
 
@@ -193,11 +183,7 @@ export async function createResetLink(actor: SessionUser, userId: string, ctx: C
     return { user: row.user, token: t };
   });
   const link = tokenUrl("password_reset", token);
-  const { delivered } = await sendMail({
-    to: user.email,
-    subject: "Redefinição de senha do CMS Rocket Vision",
-    text: [`Olá, ${user.name}.`, "", `${actor.name} gerou um link para você criar uma senha nova no CMS da Rocket Vision.`, `Acesse: ${link}`, "", "O link vale por 1 hora e só pode ser usado uma vez."].join("\n"),
-  });
+  const { delivered } = await sendMail(adminResetMail(user, link, actor.name));
   return { link: delivered ? null : link, emailed: delivered };
 }
 

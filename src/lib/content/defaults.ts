@@ -34,24 +34,24 @@ const serviceFallback: Record<string, FallbackKey> = {
 };
 
 const serviceAlt: Record<string, string> = {
-  site: "Mesa de trabalho com computador e notebook exibindo um site",
-  store: "Empreendedora montando caixas de envio em um ateliê iluminado",
-  system: "Gestor usando um tablet dentro de um centro de distribuição",
-  app: "Mãos usando um aplicativo no celular",
-  brand: "Papelaria de identidade visual organizada sobre a mesa",
+  site: "Homem usando o notebook na mesa de um café, junto a uma janela grande",
+  store: "Mãos acomodando um produto embrulhado em papel de seda dentro de uma caixa de envio",
+  system: "Funcionária usando o sistema no computador dentro de um depósito",
+  app: "Mulher consultando o celular na cadeira de um salão de beleza, refletida no espelho",
+  brand: "Folhas com esboços de logotipo desenhados a lápis",
 };
 
 const shiftAlts = [
-  "Mão no notebook com uma planilha aberta sobre a mesa",
-  "Lojista atendendo no balcão de uma loja pequena",
-  "Mãos segurando um celular em um ambiente escuro",
+  "Comandas de pedidos presas em fila no trilho de uma cozinha",
+  "Vitrine de uma loja iluminada à noite, com a porta aberta e os produtos expostos",
+  "Homem consultando o celular na calçada, em frente a uma loja, à noite",
 ];
 
 const workflowAlts = [
-  "Duas pessoas conversando à mesa com xícaras de café",
-  "Mão desenhando wireframes de telas no papel",
-  "Notebook com código de um projeto aberto",
-  "Pessoa usando um aplicativo no celular",
+  "Duas pessoas conversando à mesa, uma explicando e a outra tomando notas",
+  "Folhas com o briefing do produto, os objetivos dos usuários e o fluxo das telas",
+  "Duas pessoas concentradas nas telas do computador, trabalhando lado a lado",
+  "Cliente pagando pelo celular no balcão de um café",
 ];
 
 export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
@@ -61,7 +61,7 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     lead: hero.lead,
     primaryCta: { label: hero.primaryCta, href: "#contato" },
     secondaryCta: { label: hero.secondaryCta, href: "#servicos" },
-    image: img("hero", "Pessoa trabalhando sozinha até tarde em um escritório escuro"),
+    image: img("hero", "Mulher sozinha atrás do balcão de um pequeno café, à noite"),
   },
   problem: {
     eyebrow: problem.eyebrow,
@@ -79,7 +79,7 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
   statement: {
     title: statement.title,
     body: statement.body,
-    image: img("statement", "Notebook com código na tela, iluminado pela luz da tarde"),
+    image: img("statement", "Mão usando um aplicativo no celular sobre folhas com os rascunhos das telas"),
   },
   services: {
     eyebrow: services.eyebrow,
@@ -100,7 +100,7 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     eyebrow: differentials.eyebrow,
     title: differentials.title,
     items: differentials.items.map((i) => ({ title: i.title, body: i.body })),
-    image: img("differentials", "Duas pessoas organizando um plano com notas adesivas em uma parede de vidro"),
+    image: img("differentials", "Duas pessoas à mesa, uma delas desenhando no papel as telas de um aplicativo"),
   },
   workflow: {
     eyebrow: workflow.eyebrow,
@@ -121,7 +121,7 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     submit: cta.submit,
     interests: [...cta.interests],
     reassurance: cta.reassurance,
-    image: img("cta", "Mesa com luminária acesa diante da cidade à noite"),
+    image: img("cta", "Duas cadeiras e uma mesa pequena junto a uma janela iluminada pelo sol"),
   },
   projectsPage: {
     eyebrow: projectsPage.eyebrow,
