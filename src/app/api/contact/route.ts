@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { normalizeContact, validateContact } from "@/lib/contact";
+import { clientIpFrom } from "@/server/auth/session";
+import { consume, POLICIES } from "@/server/security/rate-limit";
 
 /**
  * Recebe o formulário de contato e encaminha para CONTACT_WEBHOOK_URL
@@ -9,6 +11,12 @@ import { normalizeContact, validateContact } from "@/lib/contact";
  * e o formulário orienta o visitante a usar os canais diretos. Nenhum lead é descartado em silêncio.
  */
 export async function POST(request: Request) {
+  // Limite por IP contra spam (compartilhado entre instâncias, no Postgres). Sem banco, o limite fica aberto.
+  const limit = await consume(POLICIES.contactByIp, clientIpFrom(request.headers) ?? "unknown");
+  if (!limit.allowed) {
+    return NextResponse.json({ error: "too_many_requests" }, { status: 429, headers: { "Retry-After": String(limit.retryAfter) } });
+  }
+
   let body: unknown;
   try {
     body = await request.json();

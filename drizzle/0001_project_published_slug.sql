@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "projects_published_slug_unique" ON "projects" USING btree (("published_snapshot" ->> 'slug')) WHERE "projects"."status" = 'published';

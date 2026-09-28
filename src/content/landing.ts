@@ -297,3 +297,15 @@ export const cta = {
   // CONFIRMAR: se houver um prazo real de resposta, ele converte melhor aqui.
   reassurance: "Conversa sem compromisso.",
 };
+
+/** Abertura e convite final da página /projetos. */
+export const projectsPage = {
+  eyebrow: "Projetos",
+  title: "Trabalho que fala por si.",
+  lead: "Sistemas, aplicativos, lojas e sites que desenhamos e construímos. Cada um começou com uma conversa sobre um problema real.",
+  cta: {
+    title: "Seu projeto pode ser o próximo.",
+    body: "Conte o que sua empresa precisa. A gente mostra o caminho mais claro para tirar a ideia do papel.",
+    label: "Quero falar sobre meu projeto",
+  },
+};

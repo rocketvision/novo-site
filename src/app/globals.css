@@ -124,6 +124,19 @@
     font-feature-settings: "ss01", "cv11";
   }
 
+  /*
+   * Telas grandes (ex.: 4K com 150% de escala no Windows = 2560 px de largura).
+   * A composição foi desenhada para cerca de 1440 px. Acima disso, a unidade base (rem) cresce junto
+   * com a tela, e tipografia, contêiner e espaçamentos acompanham na mesma proporção, sem colunas
+   * estreitas perdidas no meio de fotos em tela cheia.
+   * - A largura considerada é limitada pela altura (proporção 16:10), para as cenas fixas caberem na tela.
+   * - Cresce 75% do proporcional e para em 26 px: o zoom do navegador continua tendo efeito.
+   * - Só vale no site público (o marcador fica no layout do site); o CMS mantém a escala normal.
+   */
+  :root:has([data-site-scale]) {
+    font-size: clamp(16px, calc(16px + (min(100vw, 160vh) - 1440px) / 120), 26px);
+  }
+
   ::selection {
     background: var(--color-accent);
     color: white;

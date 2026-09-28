@@ -3,7 +3,7 @@
 import { m, type Variants } from "motion/react";
 import { revealDistance, stagger as staggerToken, transition } from "@/lib/motion";
 
-type Tag = "div" | "li" | "ul" | "ol" | "p" | "span" | "h2" | "h3" | "article";
+type Tag = "div" | "li" | "ul" | "ol" | "p" | "span" | "h2" | "h3" | "article" | "figure";
 
 type RevealProps = {
   children: React.ReactNode;

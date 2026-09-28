@@ -7,18 +7,19 @@ import { ArrowUpRight, Check } from "lucide-react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Photo } from "@/components/ui/photo";
 import { Reveal } from "@/components/animations/reveal";
-import { services, type Service } from "@/content/landing";
-import { media } from "@/content/media";
+import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { insetClip, segment } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
 
-const items = services.items;
-const total = items.length;
+type Content = Resolved<"services">;
+type Service = Content["items"][number];
+
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export function Services() {
+export function Services({ services }: { services: Content }) {
+  const items = services.items;
   const reduceMotion = usePrefersReducedMotion();
 
   return (
@@ -39,15 +40,15 @@ export function Services() {
         </Reveal>
       </div>
       {reduceMotion ? (
-        <ServicesStack />
+        <ServicesStack items={items} />
       ) : (
         // As duas composições saem do servidor; o CSS escolhe pelo breakpoint, sem salto após carregar.
         <>
           <div className="hidden lg:block">
-            <ServicesStage />
+            <ServicesStage items={items} />
           </div>
           <div className="lg:hidden">
-            <ServicesStack idSuffix="-m" />
+            <ServicesStack items={items} idSuffix="-m" />
           </div>
         </>
       )}
@@ -56,8 +57,9 @@ export function Services() {
 }
 
 /** Palco fixo: a fotografia troca por cortina e o texto acompanha, serviço a serviço. */
-function ServicesStage() {
+function ServicesStage({ items }: { items: Service[] }) {
   const ref = useRef<HTMLDivElement>(null);
+  const total = items.length;
   const progress = useScrollProgress(ref, ["start start", "end end"]);
   const [active, setActive] = useState(0);
   useMotionValueEvent(progress, "change", (v) => setActive(Math.min(total - 1, Math.floor(v * total))));
@@ -71,7 +73,8 @@ function ServicesStage() {
   };
 
   return (
-    <div ref={ref} className="relative h-[520vh]">
+    // Altura proporcional ao número de serviços: com os 5 originais, 520vh.
+    <div ref={ref} style={{ height: `${Math.round((total * 520) / 5)}vh` }} className="relative">
       <div className="sticky top-0 flex h-svh overflow-hidden">
         <div className="flex w-[40%] flex-col py-[calc(var(--header-height)+2rem)] pr-12 pl-[max(3rem,calc((100vw-80rem)/2+3rem))]">
           <nav aria-label="Serviços">
@@ -102,14 +105,14 @@ function ServicesStage() {
 
           <div className="relative mt-8 flex-1">
             {items.map((service, i) => (
-              <ServiceCopy key={service.id} service={service} index={i} progress={progress} />
+              <ServiceCopy key={service.id} service={service} index={i} total={total} progress={progress} />
             ))}
           </div>
         </div>
 
         <div className="relative my-[calc(var(--header-height)+0.75rem)] flex-1 overflow-hidden rounded-l-[2rem] bg-mist">
           {items.map((service, i) => (
-            <ServicePhoto key={service.id} service={service} index={i} progress={progress} />
+            <ServicePhoto key={service.id} service={service} index={i} total={total} progress={progress} />
           ))}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/35 to-transparent" />
           <p className="absolute top-8 right-10 font-mono text-xs text-white/85 tabular-nums mix-blend-difference" aria-hidden="true">
@@ -121,14 +124,16 @@ function ServicesStage() {
   );
 }
 
-function segmentOf(index: number) {
+function segmentOf(index: number, total: number) {
   const start = index / total;
   const end = (index + 1) / total;
   return { start, end, w: end - start, first: index === 0, last: index === total - 1 };
 }
 
-function ServiceCopy({ service, index, progress }: { service: Service; index: number; progress: MotionValue<number> }) {
-  const { start, end, w, first, last } = segmentOf(index);
+type SlideProps = { service: Service; index: number; total: number; progress: MotionValue<number> };
+
+function ServiceCopy({ service, index, total, progress }: SlideProps) {
+  const { start, end, w, first, last } = segmentOf(index, total);
   const opacity = useTransform(progress, [start, start + w * 0.16, end - w * 0.16, end], [first ? 1 : 0, 1, 1, last ? 1 : 0]);
   const y = useTransform(progress, [start, start + w * 0.2, end - w * 0.2, end], [first ? 0 : 48, 0, 0, last ? 0 : -48]);
   const outcomesOpacity = useTransform(progress, [start + w * 0.12, start + w * 0.3], [first ? 1 : 0, 1]);
@@ -150,8 +155,8 @@ function ServiceCopy({ service, index, progress }: { service: Service; index: nu
       <p className="text-body mt-5 text-muted">{service.problem}</p>
       <p className="text-body mt-3 text-graphite">{service.what}</p>
       <m.ul style={{ opacity: outcomesOpacity }} className="mt-7 space-y-2.5 border-t border-line pt-6">
-        {service.outcomes.map((outcome) => (
-          <li key={outcome} className="flex gap-3 text-[0.9375rem] text-graphite">
+        {service.outcomes.map((outcome, i) => (
+          <li key={i} className="flex gap-3 text-[0.9375rem] text-graphite">
             <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={2.25} />
             {outcome}
           </li>
@@ -161,8 +166,8 @@ function ServiceCopy({ service, index, progress }: { service: Service; index: nu
   );
 }
 
-function ServicePhoto({ service, index, progress }: { service: Service; index: number; progress: MotionValue<number> }) {
-  const { start, end, w } = segmentOf(index);
+function ServicePhoto({ service, index, total, progress }: SlideProps) {
+  const { start, end, w } = segmentOf(index, total);
   // A foto seguinte entra da direita como uma cortina, com a câmera ainda se aproximando.
   const clipPath = useTransform(progress, (v) => {
     if (index === 0) return insetClip(0, 0, 0, 0);
@@ -176,7 +181,7 @@ function ServicePhoto({ service, index, progress }: { service: Service; index: n
   return (
     <m.div style={{ clipPath }} className="absolute inset-0">
       <m.div style={{ scale }} className="absolute inset-0">
-        <Photo photo={media.services[service.visual]} sizes="60vw" />
+        <Photo photo={service.image} sizes="60vw" />
       </m.div>
       <m.div style={{ opacity: signalOpacity, y: signalY }} className="absolute bottom-10 left-10 z-10">
         <Signal text={service.signal} />
@@ -198,13 +203,13 @@ function Signal({ text }: { text: string }) {
 }
 
 /** Mobile e reduced motion: cada serviço com a própria fotografia, em sequência. */
-function ServicesStack({ idSuffix = "" }: { idSuffix?: string }) {
+function ServicesStack({ items, idSuffix = "" }: { items: Service[]; idSuffix?: string }) {
   return (
     <div className="pb-24">
       {items.map((service, i) => (
         <article key={service.id} aria-labelledby={`servico-${service.id}-titulo${idSuffix}`} className="mt-14 first:mt-4 md:mt-24">
           <Reveal className="relative mx-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] sm:mx-8 sm:aspect-[16/10]">
-            <Photo photo={media.services[service.visual]} sizes="100vw" />
+            <Photo photo={service.image} sizes="100vw" />
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
             <div className="absolute bottom-5 left-5">
               <Signal text={service.signal} />
@@ -222,8 +227,8 @@ function ServicesStack({ idSuffix = "" }: { idSuffix?: string }) {
             <p className="text-body mt-4 text-muted">{service.problem}</p>
             <p className="text-body mt-3 text-graphite">{service.what}</p>
             <ul className="mt-6 space-y-2.5 border-t border-line pt-5">
-              {service.outcomes.map((outcome) => (
-                <li key={outcome} className="flex gap-3 text-[0.9375rem] text-graphite">
+              {service.outcomes.map((outcome, j) => (
+                <li key={j} className="flex gap-3 text-[0.9375rem] text-graphite">
                   <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={2.25} />
                   {outcome}
                 </li>

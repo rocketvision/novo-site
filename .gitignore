@@ -19,3 +19,11 @@ npm-debug.log*
 
 # vercel
 .vercel
+
+# uploads locais do CMS em desenvolvimento
+/public/uploads/
+
+# estado gerado pelos testes e2e (senhas aleatórias, imagens de teste, relatórios)
+/tests/e2e/.state/
+/playwright-report/
+/test-results/

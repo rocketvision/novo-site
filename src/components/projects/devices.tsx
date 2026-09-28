@@ -1,6 +1,12 @@
 import Image from "next/image";
-import type { Screen } from "@/content/projects";
+import type { ProjectImage as Screen } from "@/lib/projects/types";
 import { cn } from "@/lib/utils";
+
+/** Blur enquanto carrega: imports estáticos trazem o próprio; imagens do CMS trazem o gerado no upload. */
+export function blur(screen: Screen) {
+  if (typeof screen.src !== "string") return { placeholder: "blur" as const };
+  return screen.blurDataURL ? { placeholder: "blur" as const, blurDataURL: screen.blurDataURL } : {};
+}
 
 /** Janela de navegador para prints de desktop (proporção 16:10). */
 export function BrowserFrame({ screen, sizes, className }: { screen: Screen; sizes: string; className?: string }) {
@@ -17,7 +23,7 @@ export function BrowserFrame({ screen, sizes, className }: { screen: Screen; siz
         <span className="size-[0.85em] rounded-full bg-[#28c840]" />
       </div>
       <div className="relative aspect-[16/10]">
-        <Image src={screen.src} alt={screen.alt} fill sizes={sizes} quality={85} placeholder="blur" className="object-cover object-top" />
+        <Image src={screen.src} alt={screen.alt} fill sizes={sizes} quality={85} {...blur(screen)} className="object-cover object-top" />
       </div>
     </div>
   );
@@ -33,7 +39,7 @@ export function PhoneFrame({ screen, sizes, className }: { screen: Screen; sizes
       )}
     >
       <div className="relative aspect-[390/844] overflow-hidden rounded-[11.5%/5.3%]">
-        <Image src={screen.src} alt={screen.alt} fill sizes={sizes} quality={85} placeholder="blur" className="object-cover" />
+        <Image src={screen.src} alt={screen.alt} fill sizes={sizes} quality={85} {...blur(screen)} className="object-cover" />
         <span className="absolute top-[1.6%] left-1/2 h-[3.6%] w-[31%] -translate-x-1/2 rounded-full bg-black" />
       </div>
     </div>

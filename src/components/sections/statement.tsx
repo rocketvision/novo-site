@@ -2,8 +2,7 @@
 
 import { useRef } from "react";
 import { m, useTransform } from "motion/react";
-import { statement } from "@/content/landing";
-import { media } from "@/content/media";
+import type { Resolved } from "@/lib/content/resolved";
 import { LogoMark } from "@/components/ui/logo";
 import { Photo } from "@/components/ui/photo";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
@@ -15,12 +14,14 @@ import { insetClip, segment } from "@/lib/scroll";
  * Virada da narrativa: o escuro do problema dá lugar à luz da solução.
  * O fundo clareia, a proposta ganha foco e a fotografia sobe por trás do texto.
  */
-export function Statement() {
+type Content = Resolved<"statement">;
+
+export function Statement({ statement }: { statement: Content }) {
   const reduceMotion = usePrefersReducedMotion();
-  return reduceMotion ? <StaticStatement /> : <AnimatedStatement />;
+  return reduceMotion ? <StaticStatement statement={statement} /> : <AnimatedStatement statement={statement} />;
 }
 
-function AnimatedStatement() {
+function AnimatedStatement({ statement }: { statement: Content }) {
   const ref = useRef<HTMLElement>(null);
   const progress = useScrollProgress(ref, ["start start", "end end"]);
   useHeaderTheme(ref, progress, (v) => v < 0.18);
@@ -57,7 +58,7 @@ function AnimatedStatement() {
               style={{ opacity: titleOpacity, y: titleY }}
               className="mt-6 text-[clamp(2.125rem,1rem+3vw,4.25rem)] leading-[1.04] font-semibold tracking-[-0.04em] lg:mt-8"
             >
-              <StatementTitle />
+              <StatementTitle title={statement.title} />
             </m.h2>
             <m.p style={{ opacity: bodyOpacity, y: bodyY, color: bodyColor }} className="text-lead mt-6 max-w-xl lg:mt-8">
               {statement.body}
@@ -67,7 +68,7 @@ function AnimatedStatement() {
           <div className="relative min-h-0 lg:col-span-5 lg:h-[72svh]">
             <m.div style={{ y: photoY, clipPath: photoClip }} className="absolute inset-0 overflow-hidden rounded-[1.75rem]">
               <m.div style={{ scale: photoScale }} className="absolute inset-0">
-                <Photo photo={media.statement} sizes="(min-width: 1024px) 40vw, 100vw" />
+                <Photo photo={statement.image} sizes="(min-width: 1024px) 40vw, 100vw" />
               </m.div>
             </m.div>
           </div>
@@ -77,19 +78,19 @@ function AnimatedStatement() {
   );
 }
 
-function StaticStatement() {
+function StaticStatement({ statement }: { statement: Content }) {
   return (
     <section aria-labelledby="statement-titulo" className="bg-paper py-28">
       <div className="container-page grid gap-12 lg:grid-cols-12 lg:items-center">
         <div className="lg:col-span-7">
           <LogoMark className="size-9 text-accent" />
           <h2 id="statement-titulo" className="text-headline mt-8 text-ink">
-            <StatementTitle />
+            <StatementTitle title={statement.title} />
           </h2>
           <p className="text-lead mt-8 max-w-xl text-muted">{statement.body}</p>
         </div>
         <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] lg:col-span-5">
-          <Photo photo={media.statement} sizes="(min-width: 1024px) 40vw, 100vw" />
+          <Photo photo={statement.image} sizes="(min-width: 1024px) 40vw, 100vw" />
         </div>
       </div>
     </section>
@@ -97,8 +98,9 @@ function StaticStatement() {
 }
 
 /** A promessa em destaque; o complemento em tom mais baixo, na mesma linha de leitura. */
-function StatementTitle() {
-  const [first, ...rest] = statement.title.split(". ");
+function StatementTitle({ title }: { title: string }) {
+  const [first, ...rest] = title.split(". ");
+  if (rest.length === 0) return <>{title}</>;
   return (
     <>
       {first}. <span className="opacity-40">{rest.join(". ")}</span>
