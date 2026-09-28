@@ -23,6 +23,7 @@ import stepBuild from "@/assets/images/step-build.jpg";
 import stepEvolve from "@/assets/images/step-evolve.jpg";
 import nightDesk from "@/assets/images/night-desk.jpg";
 import type { StaticImageData } from "next/image";
+import type { FallbackKey } from "@/lib/content/schemas";
 
 export type Photo = { src: StaticImageData; alt: string };
 
@@ -50,3 +51,26 @@ export const media = {
   ],
   cta: { src: nightDesk, alt: "Mesa com luminária acesa diante da cidade à noite" },
 } satisfies Record<string, Photo | Photo[] | Record<string, Photo>>;
+
+/**
+ * Fotos originais de direção de arte, usadas quando o CMS não define outra imagem.
+ * As chaves são referenciadas pelo campo `fallback` das imagens de seção.
+ */
+export const FALLBACK_IMAGES: Record<FallbackKey, Photo> = {
+  hero: media.hero,
+  "shift-0": media.shift[0],
+  "shift-1": media.shift[1],
+  "shift-2": media.shift[2],
+  statement: media.statement,
+  "service-site": media.services.site,
+  "service-store": media.services.store,
+  "service-system": media.services.system,
+  "service-app": media.services.app,
+  "service-brand": media.services.brand,
+  differentials: media.differentials,
+  "workflow-0": media.workflow[0],
+  "workflow-1": media.workflow[1],
+  "workflow-2": media.workflow[2],
+  "workflow-3": media.workflow[3],
+  cta: media.cta,
+};

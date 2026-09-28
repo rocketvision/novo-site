@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { AnimatePresence, m, useMotionValue, useSpring } from "motion/react";
 import { ArrowDownRight } from "lucide-react";
-import type { Project } from "@/content/projects";
+import type { PublicProject as Project } from "@/lib/projects/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
@@ -78,7 +78,7 @@ export function ProjectIndex({ projects }: { projects: Project[] }) {
                 className="relative -mt-[7.5rem] ml-10 h-[15rem] w-[22rem] overflow-hidden rounded-2xl shadow-[0_40px_80px_-30px_rgb(0_0_0/0.8)] ring-1 ring-white/10"
               >
                 {projects.map((project, i) => {
-                  const screen = project.screens.desktop ?? project.screens.phones?.[0];
+                  const screen = project.screens.desktop ?? project.cover ?? project.screens.phones[0];
                   if (!screen) return null;
                   return (
                     <m.div
@@ -89,7 +89,7 @@ export function ProjectIndex({ projects }: { projects: Project[] }) {
                       className="absolute inset-0 flex items-center justify-center"
                       style={{ backgroundColor: project.theme.bg }}
                     >
-                      {project.screens.desktop ? (
+                      {screen !== project.screens.phones[0] ? (
                         <Image src={screen.src} alt="" fill sizes="352px" className="object-cover object-top" />
                       ) : (
                         <div className="relative h-[88%] aspect-[390/844] overflow-hidden rounded-xl">

@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { MotionProvider } from "@/components/animations/motion-provider";
-import { Preloader } from "@/components/layout/preloader";
-import { IntroDone } from "@/components/layout/intro-done";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -48,17 +45,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <style>{`[style*="opacity:0"]{opacity:1!important;transform:none!important}`}</style>
         </noscript>
       </head>
-      <body>
-        <a
-          href="#conteudo"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-full focus:bg-ink focus:px-5 focus:py-2.5 focus:text-sm focus:text-white"
-        >
-          Pular para o conteúdo
-        </a>
-        <Preloader />
-        <IntroDone />
-        <MotionProvider>{children}</MotionProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

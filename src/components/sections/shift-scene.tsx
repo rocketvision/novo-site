@@ -5,17 +5,16 @@ import { m, useTransform, type MotionValue } from "motion/react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Photo } from "@/components/ui/photo";
 import { Reveal } from "@/components/animations/reveal";
-import { shift } from "@/content/landing";
-import { media } from "@/content/media";
+import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { insetClip, segment } from "@/lib/scroll";
 
-type Item = (typeof shift.items)[number];
+type Shift = Resolved<"shift">;
+type Item = Shift["groups"][number]["pairs"][number];
 
-/** Cada foto acompanha duas transformações: operação, vendas, produto. */
-const PAIRS_PER_PHOTO = 2;
-const total = shift.items.length;
+/** Cada foto acompanha duas transformações (operação, vendas, produto). O CMS garante dois pares por grupo. */
+const pairsOf = (shift: Shift) => shift.groups.flatMap((g) => g.pairs);
 
 /**
  * O que muda.
@@ -23,31 +22,35 @@ const total = shift.items.length;
  * enquanto a fotografia à direita troca por cortina a cada dois temas.
  * Mobile e reduced motion: lista editorial com as fotos intercaladas.
  */
-export function ShiftScene() {
+export function ShiftScene({ shift }: { shift: Shift }) {
   const reduceMotion = usePrefersReducedMotion();
-  if (reduceMotion) return <StackedShift />;
+  if (reduceMotion) return <StackedShift shift={shift} />;
   // As duas composições saem prontas do servidor e o CSS escolhe pelo breakpoint:
   // a página nasce com a altura certa e o F5 volta exatamente para o mesmo ponto.
   return (
     <>
       <div className="hidden lg:block">
-        <StageShift />
+        <StageShift shift={shift} />
       </div>
       <div className="lg:hidden">
-        <StackedShift idSuffix="-m" />
+        <StackedShift shift={shift} idSuffix="-m" />
       </div>
     </>
   );
 }
 
-function StageShift() {
+function StageShift({ shift }: { shift: Shift }) {
   const ref = useRef<HTMLElement>(null);
+  const items = pairsOf(shift);
+  const total = items.length;
+  const groups = shift.groups.length;
   const progress = useScrollProgress(ref, ["start start", "end end"]);
   const barScale = useTransform(progress, [0, 1], [0, 1]);
   const counter = useTransform(progress, (v) => String(Math.min(total, Math.floor(v * total) + 1)).padStart(2, "0"));
 
   return (
-    <section ref={ref} aria-labelledby="shift-titulo" className="relative h-[560vh] bg-ink text-white" data-header="dark">
+    // Altura proporcional ao número de pares: com os 6 originais, 560vh.
+    <section ref={ref} aria-labelledby="shift-titulo" style={{ height: `${Math.round((total * 560) / 6)}vh` }} className="relative bg-ink text-white" data-header="dark">
       <div className="sticky top-0 flex h-svh overflow-hidden">
         <div className="relative z-10 flex w-[46%] flex-col justify-between py-[calc(var(--header-height)+2.5rem)] pr-12 pl-[max(3rem,calc((100vw-80rem)/2+3rem))]">
           <div>
@@ -58,8 +61,8 @@ function StageShift() {
           </div>
 
           <ol className="relative min-h-[18rem]">
-            {shift.items.map((item, i) => (
-              <Pair key={item.before} item={item} index={i} progress={progress} />
+            {items.map((item, i) => (
+              <Pair key={i} item={item} index={i} total={total} progress={progress} />
             ))}
           </ol>
 
@@ -73,8 +76,8 @@ function StageShift() {
         </div>
 
         <div className="relative my-[calc(var(--header-height)+1rem)] flex-1 overflow-hidden rounded-l-[2rem]">
-          {media.shift.map((photo, i) => (
-            <ShiftPhoto key={i} index={i} progress={progress} photo={photo} />
+          {shift.groups.map((group, i) => (
+            <ShiftPhoto key={i} index={i} groups={groups} progress={progress} photo={group.image} />
           ))}
           <div className="absolute inset-0 bg-gradient-to-r from-ink/40 via-transparent to-transparent" />
         </div>
@@ -83,7 +86,7 @@ function StageShift() {
   );
 }
 
-function Pair({ item, index, progress }: { item: Item; index: number; progress: MotionValue<number> }) {
+function Pair({ item, index, total, progress }: { item: Item; index: number; total: number; progress: MotionValue<number> }) {
   const start = index / total;
   const end = (index + 1) / total;
   const w = end - start;
@@ -131,8 +134,17 @@ function Pair({ item, index, progress }: { item: Item; index: number; progress: 
   );
 }
 
-function ShiftPhoto({ index, progress, photo }: { index: number; progress: MotionValue<number>; photo: (typeof media.shift)[number] }) {
-  const groups = Math.ceil(total / PAIRS_PER_PHOTO);
+function ShiftPhoto({
+  index,
+  groups,
+  progress,
+  photo,
+}: {
+  index: number;
+  groups: number;
+  progress: MotionValue<number>;
+  photo: Shift["groups"][number]["image"];
+}) {
   const start = index / groups;
   const end = (index + 1) / groups;
   // A próxima foto sobe por cima da anterior como uma cortina.
@@ -152,7 +164,7 @@ function ShiftPhoto({ index, progress, photo }: { index: number; progress: Motio
   );
 }
 
-function StackedShift({ idSuffix = "" }: { idSuffix?: string }) {
+function StackedShift({ shift, idSuffix = "" }: { shift: Shift; idSuffix?: string }) {
   return (
     <section aria-labelledby={`shift-titulo${idSuffix}`} className="bg-ink pt-24 pb-24 text-white md:pt-32" data-header="dark">
       <div className="container-page">
@@ -162,14 +174,14 @@ function StackedShift({ idSuffix = "" }: { idSuffix?: string }) {
         </h2>
       </div>
 
-      {media.shift.map((photo, g) => (
+      {shift.groups.map((group, g) => (
         <div key={g} className="mt-16 md:mt-24">
           <Reveal className="relative mx-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] sm:mx-8 sm:aspect-[16/10]">
-            <Photo photo={photo} sizes="100vw" decorative />
+            <Photo photo={group.image} sizes="100vw" decorative />
           </Reveal>
           <ol className="container-page mt-4">
-            {shift.items.slice(g * PAIRS_PER_PHOTO, g * PAIRS_PER_PHOTO + PAIRS_PER_PHOTO).map((item) => (
-              <Reveal as="li" key={item.before} className="border-b border-white/10 py-8">
+            {group.pairs.map((item, i) => (
+              <Reveal as="li" key={i} className="border-b border-white/10 py-8">
                 <p className="text-body text-white/60">
                   <span className="sr-only">Antes: </span>
                   <span className="line-through decoration-accent decoration-2">{item.before}</span>

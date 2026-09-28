@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { m, useTransform, type MotionValue } from "motion/react";
 import { LogoMark } from "@/components/ui/logo";
-import { turn } from "@/content/landing";
+import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 
@@ -11,16 +11,21 @@ import { useScrollProgress } from "@/hooks/use-scroll-progress";
  * Momento tipográfico antes do convite final.
  * Uma frase é riscada, se desmonta palavra por palavra e dá lugar à outra no mesmo lugar.
  */
-export function Turn() {
+type Content = Resolved<"turn">;
+
+export function Turn({ turn }: { turn: Content }) {
   const reduceMotion = usePrefersReducedMotion();
-  return reduceMotion ? <StaticTurn /> : <AnimatedTurn />;
+  return reduceMotion ? <StaticTurn turn={turn} /> : <AnimatedTurn turn={turn} />;
 }
 
-const fromWords = turn.from.split(" ");
-const toWords = turn.to.split(" ");
-const struck = fromWords.findIndex((w) => w.startsWith("complicar"));
+/** A palavra riscada é escolhida no CMS; a pontuação colada a ela não conta na comparação. */
+const bare = (word: string) => word.replace(/[.,!?;:]+$/, "");
 
-function AnimatedTurn() {
+function AnimatedTurn({ turn }: { turn: Content }) {
+  const fromWords = turn.from.split(/\s+/);
+  const toWords = turn.to.split(/\s+/);
+  const struck = fromWords.findIndex((w) => bare(w) === turn.strike.trim());
+
   const ref = useRef<HTMLElement>(null);
   const progress = useScrollProgress(ref, ["start start", "end end"]);
   const strike = useTransform(progress, [0.1, 0.24], [0, 1]);
@@ -103,7 +108,7 @@ function InWord({
   );
 }
 
-function StaticTurn() {
+function StaticTurn({ turn }: { turn: Content }) {
   return (
     <section className="bg-paper py-32">
       <div className="container-page text-display text-ink">

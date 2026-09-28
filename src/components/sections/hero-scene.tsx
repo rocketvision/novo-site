@@ -7,8 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Photo } from "@/components/ui/photo";
 import { ProblemChaos } from "./problem-chaos";
-import { hero, problem } from "@/content/landing";
-import { media } from "@/content/media";
+import type { Resolved } from "@/lib/content/resolved";
 import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { useHeaderTheme } from "@/hooks/use-header-theme";
@@ -17,6 +16,8 @@ import { ease } from "@/lib/motion";
 
 const delay = (ms: number) => ({ "--delay": `${ms}ms` }) as React.CSSProperties;
 const easeInOut = cubicBezier(...ease.inOut);
+
+type Content = { hero: Resolved<"hero">; problem: Resolved<"problem"> };
 
 /** Janela da fotografia no início da cena, em % do palco: topo, direita, base, esquerda. */
 type Frame = [number, number, number, number];
@@ -29,16 +30,18 @@ type Frame = [number, number, number, number];
  * 3. A foto escurece e os improvisos da operação caem sobre ela, um a um.
  * 4. A imagem se apaga no preto da próxima seção.
  */
-export function HeroScene() {
+export function HeroScene(content: Content) {
   const reduceMotion = usePrefersReducedMotion();
-  return reduceMotion ? <StaticHero /> : <AnimatedHero />;
+  return reduceMotion ? <StaticHero {...content} /> : <AnimatedHero {...content} />;
 }
 
 function HeroText({
+  hero,
   headlineRef,
   columnRef,
   textRef,
 }: {
+  hero: Resolved<"hero">;
   headlineRef?: React.Ref<HTMLHeadingElement>;
   columnRef?: React.Ref<HTMLDivElement>;
   textRef?: React.Ref<HTMLDivElement>;
@@ -49,8 +52,8 @@ function HeroText({
         {hero.eyebrow}
       </p>
       <h1 ref={headlineRef} className="text-hero mt-5 text-ink lg:mt-6">
-        {hero.title.map((line, i) => (
-          <span key={line} className="block overflow-hidden pb-[0.06em]">
+        {hero.titleLines.map((line, i) => (
+          <span key={i} className="block overflow-hidden pb-[0.06em]">
             <span className="animate-rise block" style={delay(80 + i * 90)}>
               {line}
             </span>
@@ -62,11 +65,11 @@ function HeroText({
           {hero.lead}
         </p>
         <div className="animate-fade-up mt-6 flex flex-wrap items-center gap-x-5 gap-y-3" style={delay(540)}>
-          <ButtonLink href="#contato" size="lg" icon={<ArrowRight className="size-4" />}>
-            {hero.primaryCta}
+          <ButtonLink href={hero.primaryCta.href} size="lg" icon={<ArrowRight className="size-4" />}>
+            {hero.primaryCta.label}
           </ButtonLink>
-          <a href="#servicos" className="group inline-flex items-center gap-2 text-[0.9375rem] font-medium text-graphite">
-            <span className="link-underline">{hero.secondaryCta}</span>
+          <a href={hero.secondaryCta.href} className="group inline-flex items-center gap-2 text-[0.9375rem] font-medium text-graphite">
+            <span className="link-underline">{hero.secondaryCta.label}</span>
             <ArrowDown className="size-4 transition-transform duration-300 group-hover:translate-y-0.5" />
           </a>
         </div>
@@ -75,7 +78,7 @@ function HeroText({
   );
 }
 
-function AnimatedHero() {
+function AnimatedHero({ hero, problem }: Content) {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -136,31 +139,31 @@ function AnimatedHero() {
           style={{ opacity: textOpacity, y: textY }}
           className="container-page absolute inset-x-0 top-0 bottom-0 pt-[calc(var(--header-height)+1.75rem)] pb-6 lg:pt-[calc(var(--header-height)+2.5rem)] lg:pb-12"
         >
-          <HeroText textRef={textRef} headlineRef={headlineRef} columnRef={columnRef} />
+          <HeroText hero={hero} textRef={textRef} headlineRef={headlineRef} columnRef={columnRef} />
         </m.div>
 
         <m.div style={{ clipPath }} className="animate-fade-in absolute inset-0">
           <m.div style={{ scale: photoScale }} className="absolute inset-0">
-            <Photo photo={media.hero} sizes="100vw" priority />
+            <Photo photo={hero.image} sizes="100vw" priority />
           </m.div>
           <m.div style={{ opacity: shade }} className="absolute inset-0 bg-ink" />
         </m.div>
 
-        <ProblemChaos progress={progress} start={0.46} />
+        <ProblemChaos problem={problem} progress={progress} start={0.46} />
       </div>
     </section>
   );
 }
 
 /** Versão para prefers-reduced-motion: mesma narrativa, sem movimento. */
-function StaticHero() {
+function StaticHero({ hero, problem }: Content) {
   return (
     <>
       <section id="inicio" className="bg-paper pt-[calc(var(--header-height)+2rem)] pb-16">
         <div className="container-page">
-          <HeroText />
+          <HeroText hero={hero} />
           <div className="relative mt-12 aspect-[16/9] overflow-hidden rounded-3xl">
-            <Photo photo={media.hero} sizes="100vw" priority />
+            <Photo photo={hero.image} sizes="100vw" priority />
           </div>
         </div>
       </section>
@@ -168,8 +171,8 @@ function StaticHero() {
         <div className="container-page">
           <Eyebrow className="text-white/60">{problem.eyebrow}</Eyebrow>
           <ul className="mt-8 grid gap-3 text-lg text-white/75 sm:grid-cols-2">
-            {problem.symptoms.map((symptom) => (
-              <li key={symptom.kind}>{symptom.text}</li>
+            {problem.symptoms.map((symptom, i) => (
+              <li key={i}>{symptom.text}</li>
             ))}
           </ul>
           <p className="text-title mt-10">

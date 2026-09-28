@@ -1,9 +1,10 @@
 import Image from "next/image";
-import type { Photo as PhotoData } from "@/content/media";
+import type { ResolvedImage } from "@/lib/content/resolved";
 import { cn } from "@/lib/utils";
 
 type PhotoProps = {
-  photo: PhotoData;
+  /** Foto original embutida (import estático) ou imagem enviada pelo CMS (URL). */
+  photo: ResolvedImage;
   /** Largura renderizada, para o navegador baixar só o tamanho necessário. */
   sizes: string;
   className?: string;
@@ -14,6 +15,8 @@ type PhotoProps = {
 
 /** Fotografia que preenche o contêiner pai (que precisa ser relative). */
 export function Photo({ photo, sizes, className, priority, decorative }: PhotoProps) {
+  // Import estático já traz o blur; imagem do CMS traz o blur gerado no upload.
+  const hasBlur = typeof photo.src !== "string" || Boolean(photo.blurDataURL);
   return (
     <Image
       src={photo.src}
@@ -21,7 +24,8 @@ export function Photo({ photo, sizes, className, priority, decorative }: PhotoPr
       fill
       sizes={sizes}
       priority={priority}
-      placeholder="blur"
+      placeholder={hasBlur ? "blur" : "empty"}
+      blurDataURL={photo.blurDataURL}
       quality={80}
       className={cn("object-cover", className)}
     />

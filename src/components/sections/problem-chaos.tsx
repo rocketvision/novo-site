@@ -3,10 +3,11 @@
 import { m, useTransform, type MotionValue } from "motion/react";
 import { FileSpreadsheet, Search } from "lucide-react";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { problem } from "@/content/landing";
+import type { Resolved } from "@/lib/content/resolved";
 import { cn } from "@/lib/utils";
 
-type Symptom = (typeof problem.symptoms)[number];
+type Problem = Resolved<"problem">;
+type Symptom = Problem["symptoms"][number];
 
 /**
  * Posição de cada improviso na cena. Os objetos caem espalhados,
@@ -25,7 +26,7 @@ const layout = [
  * Conforme o scroll avança, os improvisos da operação caem um a um sobre a foto escura
  * e, no centro, aparece a conclusão. No fim, tudo se apaga para a próxima seção.
  */
-export function ProblemChaos({ progress, start = 0.46 }: { progress: MotionValue<number>; start?: number }) {
+export function ProblemChaos({ problem, progress, start = 0.46 }: { problem: Problem; progress: MotionValue<number>; start?: number }) {
   const eyebrowOpacity = useTransform(progress, [start, start + 0.05], [0, 1]);
   const conclusionOpacity = useTransform(progress, [start + 0.3, start + 0.38], [0, 1]);
   const conclusionY = useTransform(progress, [start + 0.3, start + 0.4], [24, 0]);
@@ -34,11 +35,11 @@ export function ProblemChaos({ progress, start = 0.46 }: { progress: MotionValue
   return (
     <m.div style={{ opacity: exit }} className="pointer-events-none absolute inset-0">
       <h2 className="sr-only">
-        {problem.eyebrow} {problem.manifesto}
+        {[problem.eyebrow, ...problem.symptoms.map((s) => s.text), ...problem.conclusion].join(" ")}
       </h2>
 
       {problem.symptoms.map((symptom, i) => (
-        <Artifact key={symptom.kind} symptom={symptom} index={i} progress={progress} start={start} />
+        <Artifact key={i} symptom={symptom} index={i} progress={progress} start={start} />
       ))}
 
       <div className="absolute inset-0 flex items-end justify-center px-6 pb-[12svh] lg:items-center lg:pb-0" aria-hidden="true">
@@ -110,7 +111,7 @@ function ArtifactBody({ symptom }: { symptom: Symptom }) {
             </span>
             <div className="min-w-0">
               <p className="truncate font-mono text-[0.6875rem] font-medium text-ink lg:text-xs">{symptom.artifact}</p>
-              <p className="mt-0.5 text-[0.625rem] text-muted lg:text-[0.6875rem]">{symptom.meta}</p>
+              {symptom.meta && <p className="mt-0.5 text-[0.625rem] text-muted lg:text-[0.6875rem]">{symptom.meta}</p>}
             </div>
           </div>
           <div className="mt-3 grid grid-cols-4 gap-px overflow-hidden rounded-md bg-black/10" aria-hidden="true">
@@ -127,10 +128,12 @@ function ArtifactBody({ symptom }: { symptom: Symptom }) {
             <p className="text-[0.8125rem] leading-snug text-white/90 lg:text-sm">{symptom.artifact}</p>
             <p className="mt-1 text-right text-[0.625rem] text-white/45">09:14</p>
           </div>
-          <p className="mt-2.5 flex items-center gap-2 text-[0.6875rem] text-emerald-300">
-            <span className="size-1.5 rounded-full bg-emerald-400" />
-            {symptom.meta}
-          </p>
+          {symptom.meta && (
+            <p className="mt-2.5 flex items-center gap-2 text-[0.6875rem] text-emerald-300">
+              <span className="size-1.5 rounded-full bg-emerald-400" />
+              {symptom.meta}
+            </p>
+          )}
         </div>
       );
     case "search":
@@ -144,7 +147,7 @@ function ArtifactBody({ symptom }: { symptom: Symptom }) {
             <span className="block h-2 w-4/5 rounded-full bg-black/[0.08]" />
             <span className="block h-2 w-3/5 rounded-full bg-black/[0.06]" />
           </div>
-          <p className="mt-3 text-[0.6875rem] text-muted">{symptom.meta}</p>
+          {symptom.meta && <p className="mt-3 text-[0.6875rem] text-muted">{symptom.meta}</p>}
         </div>
       );
     case "note":

@@ -10,25 +10,48 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx --env-file-if-exists=.env.local scripts/seed.mts",
+    "cms:bootstrap-owner": "tsx --env-file-if-exists=.env.local scripts/bootstrap-owner.mts",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:seed-samples": "tsx --tsconfig scripts/tsconfig.json --env-file-if-exists=.env.local scripts/seed-samples.mts"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.2.1",
+    "@oslojs/crypto": "^1.0.1",
+    "@oslojs/encoding": "^1.1.0",
+    "@vercel/blob": "^2.8.0",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.3",
+    "file-type": "^22.1.1",
     "lucide-react": "^1.48.0",
     "motion": "^13.4.4",
     "next": "16.3.6",
+    "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "tailwind-merge": "^3.7.0"
+    "server-only": "^0.0.1",
+    "sharp": "^0.35.5",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.4",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^18.0.4",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.2"
   }
 }

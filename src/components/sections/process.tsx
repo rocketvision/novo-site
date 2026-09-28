@@ -5,14 +5,13 @@ import { m, useSpring, useTransform, type MotionValue } from "motion/react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Photo } from "@/components/ui/photo";
 import { Reveal } from "@/components/animations/reveal";
-import { workflow } from "@/content/landing";
-import { media } from "@/content/media";
+import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { cn } from "@/lib/utils";
 
-type Step = (typeof workflow.steps)[number];
-const total = workflow.steps.length;
+type Workflow = Resolved<"workflow">;
+type Step = Workflow["steps"][number];
 
 /**
  * Como trabalhamos.
@@ -20,21 +19,21 @@ const total = workflow.steps.length;
  * com parallax dentro de cada quadro.
  * Mobile e reduced motion: linha do tempo vertical com as mesmas fotos.
  */
-export function Process() {
+export function Process({ workflow }: { workflow: Workflow }) {
   const reduceMotion = usePrefersReducedMotion();
 
   return (
     <section id="processo" aria-labelledby="processo-titulo" className="bg-mist">
       {reduceMotion ? (
-        <VerticalProcess />
+        <VerticalProcess workflow={workflow} />
       ) : (
         // As duas composições saem do servidor; o CSS escolhe pelo breakpoint, sem salto após carregar.
         <>
           <div className="hidden lg:block">
-            <HorizontalProcess />
+            <HorizontalProcess workflow={workflow} />
           </div>
           <div className="lg:hidden">
-            <VerticalProcess idSuffix="-m" />
+            <VerticalProcess workflow={workflow} idSuffix="-m" />
           </div>
         </>
       )}
@@ -42,7 +41,7 @@ export function Process() {
   );
 }
 
-function Heading({ compact = false, idSuffix = "" }: { compact?: boolean; idSuffix?: string }) {
+function Heading({ workflow, compact = false, idSuffix = "" }: { workflow: Workflow; compact?: boolean; idSuffix?: string }) {
   return (
     <div className={cn(compact ? "grid items-end gap-6 lg:grid-cols-12 lg:gap-12" : "max-w-3xl")}>
       <div className={cn(compact && "lg:col-span-7")}>
@@ -64,7 +63,8 @@ function Heading({ compact = false, idSuffix = "" }: { compact?: boolean; idSuff
   );
 }
 
-function HorizontalProcess() {
+function HorizontalProcess({ workflow }: { workflow: Workflow }) {
+  const total = workflow.steps.length;
   const sectionRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLOListElement>(null);
@@ -88,10 +88,11 @@ function HorizontalProcess() {
   const progress = useSpring(useTransform(scrollYProgress, [0.06, 0.94], [0, 1]), { stiffness: 120, damping: 30 });
 
   return (
-    <div ref={sectionRef} className="relative h-[360vh]">
+    // Altura proporcional ao número de etapas: com as 4 originais, 360vh.
+    <div ref={sectionRef} style={{ height: `${Math.round((total * 360) / 4)}vh` }} className="relative">
       <div className="sticky top-0 flex h-svh flex-col justify-center overflow-hidden pt-(--header-height)">
         <div className="container-page">
-          <Heading compact />
+          <Heading workflow={workflow} compact />
 
           <div className="relative mt-8 flex h-px items-center bg-black/10" aria-hidden="true">
             <m.div style={{ scaleX: progress }} className="absolute inset-0 origin-left bg-ink" />
@@ -101,7 +102,7 @@ function HorizontalProcess() {
         <div ref={viewportRef} className="container-page mt-7">
           <m.ol ref={trackRef} style={{ x }} className="flex w-max gap-8 will-change-transform">
             {workflow.steps.map((step, i) => (
-              <StepFrame key={step.name} step={step} index={i} progress={progress} />
+              <StepFrame key={i} step={step} index={i} total={total} progress={progress} />
             ))}
           </m.ol>
         </div>
@@ -110,7 +111,7 @@ function HorizontalProcess() {
   );
 }
 
-function StepFrame({ step, index, progress }: { step: Step; index: number; progress: MotionValue<number> }) {
+function StepFrame({ step, index, total, progress }: { step: Step; index: number; total: number; progress: MotionValue<number> }) {
   // A etapa ganha destaque quando o progresso chega à sua posição na faixa.
   const center = index / (total - 1);
   const focus = useTransform(progress, [center - 0.36, center - 0.08, center + 0.08, center + 0.36], [0, 1, 1, 0]);
@@ -126,7 +127,7 @@ function StepFrame({ step, index, progress }: { step: Step; index: number; progr
         className="relative h-[clamp(11rem,32svh,22rem)] origin-bottom-left overflow-hidden rounded-[1.5rem]"
       >
         <m.div style={{ x: photoX }} className="absolute -inset-x-[14%] inset-y-0">
-          <Photo photo={media.workflow[index]} sizes="40vw" />
+          <Photo photo={step.image} sizes="40vw" />
         </m.div>
         <span className="absolute top-5 left-6 font-mono text-xs text-white tabular-nums mix-blend-difference">
           {String(index + 1).padStart(2, "0")}
@@ -139,19 +140,19 @@ function StepFrame({ step, index, progress }: { step: Step; index: number; progr
   );
 }
 
-function VerticalProcess({ idSuffix = "" }: { idSuffix?: string }) {
+function VerticalProcess({ workflow, idSuffix = "" }: { workflow: Workflow; idSuffix?: string }) {
   const listRef = useRef<HTMLOListElement>(null);
   const scrollYProgress = useScrollProgress(listRef, ["start center", "end center"]);
 
   return (
     <div className="container-page py-24 md:py-32">
-      <Heading idSuffix={idSuffix} />
+      <Heading workflow={workflow} idSuffix={idSuffix} />
       <ol ref={listRef} className="relative mt-14 space-y-16 pl-10 md:pl-14">
         <span aria-hidden="true" className="absolute top-2 bottom-2 left-[0.3125rem] w-px bg-black/10">
           <m.span style={{ scaleY: scrollYProgress }} className="absolute inset-0 origin-top bg-ink" />
         </span>
         {workflow.steps.map((step, i) => (
-          <li key={step.name} className="relative">
+          <li key={i} className="relative">
             <span aria-hidden="true" className="absolute top-1.5 -left-10 size-2.5 rounded-full bg-accent ring-4 ring-mist md:-left-14" />
             <p className="text-eyebrow text-muted">
               <span className="text-ink tabular-nums">{String(i + 1).padStart(2, "0")}</span>
@@ -161,7 +162,7 @@ function VerticalProcess({ idSuffix = "" }: { idSuffix?: string }) {
             <h3 className="text-title mt-3 text-ink">{step.title}</h3>
             <p className="text-body mt-3 max-w-xl text-muted">{step.body}</p>
             <Reveal className="relative mt-6 aspect-[16/10] overflow-hidden rounded-[1.25rem]">
-              <Photo photo={media.workflow[i]} sizes="100vw" />
+              <Photo photo={step.image} sizes="100vw" />
             </Reveal>
           </li>
         ))}

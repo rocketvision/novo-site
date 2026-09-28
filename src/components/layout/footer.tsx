@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
-import { nav, site } from "@/lib/site";
+import type { Resolved } from "@/lib/content/resolved";
+import { nav, site as brand } from "@/lib/site";
 
-export function Footer() {
-  const { email, phone, whatsapp } = site.contact;
+/** `settings`: dados editáveis no CMS (Configurações). Campos vazios não aparecem. */
+export function Footer({ settings }: { settings: Resolved<"site"> }) {
+  const { email, phone, whatsapp } = settings.contact;
   const contactLinks = [
     email && { label: email, href: `mailto:${email}` },
     whatsapp && { label: "WhatsApp", href: `https://wa.me/${whatsapp}` },
@@ -21,7 +23,7 @@ export function Footer() {
               <Logo />
             </Link>
             <p className="text-sm leading-relaxed">
-              Sites, lojas virtuais, sistemas e aplicativos para empresas que querem crescer com organização.
+              {settings.footerTagline}
             </p>
           </div>
 
@@ -57,11 +59,11 @@ export function Footer() {
               </ul>
             </div>
 
-            {site.social.length > 0 && (
+            {settings.social.length > 0 && (
               <div>
                 <p className="text-eyebrow mb-4 text-white/50">Redes</p>
                 <ul className="space-y-3">
-                  {site.social.map((item) => (
+                  {settings.social.map((item) => (
                     <li key={item.href}>
                       <a
                         href={item.href}
@@ -81,9 +83,9 @@ export function Footer() {
 
         <div className="mt-14 flex flex-col gap-2 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row sm:justify-between">
           <p>
-            © {year} {site.legal.companyName || site.name}. Todos os direitos reservados.
+            © {year} {settings.legal.companyName || brand.name}. Todos os direitos reservados.
           </p>
-          {site.legal.cnpj && <p>CNPJ {site.legal.cnpj}</p>}
+          {settings.legal.cnpj && <p>CNPJ {settings.legal.cnpj}</p>}
         </div>
       </div>
     </footer>

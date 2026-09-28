@@ -5,8 +5,7 @@ import { m, useTransform } from "motion/react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/animations/reveal";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Photo } from "@/components/ui/photo";
-import { cta } from "@/content/landing";
-import { media } from "@/content/media";
+import type { Resolved } from "@/lib/content/resolved";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { insetClip, segment } from "@/lib/scroll";
 import { ContactForm } from "./contact-form";
@@ -15,7 +14,7 @@ import { ContactForm } from "./contact-form";
  * Convite final: a fotografia noturna se abre até as bordas da tela
  * com o título sobre ela, e o formulário surge logo abaixo, no mesmo escuro.
  */
-export function FinalCta() {
+export function FinalCta({ cta, contact }: { cta: Resolved<"cta">; contact: Resolved<"site">["contact"] }) {
   const bandRef = useRef<HTMLDivElement>(null);
   const progress = useScrollProgress(bandRef, ["start end", "end start"]);
   const clipPath = useTransform(progress, (v) => {
@@ -29,7 +28,7 @@ export function FinalCta() {
       <div ref={bandRef} className="relative h-[92svh] min-h-[34rem]">
         <m.div style={{ clipPath }} className="absolute inset-0 overflow-hidden">
           <m.div style={{ scale }} className="absolute inset-0">
-            <Photo photo={media.cta} sizes="100vw" decorative />
+            <Photo photo={cta.image} sizes="100vw" decorative />
           </m.div>
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-ink/10" />
         </m.div>
@@ -38,8 +37,8 @@ export function FinalCta() {
           <Eyebrow className="text-white/60">{cta.eyebrow}</Eyebrow>
           <h2 id="contato-titulo" className="text-display mt-6 max-w-5xl">
             <RevealGroup as="span" className="block">
-              {cta.title.map((line) => (
-                <RevealItem as="span" key={line} className="block">
+              {cta.titleLines.map((line, i) => (
+                <RevealItem as="span" key={i} className="block">
                   {line}
                 </RevealItem>
               ))}
@@ -53,7 +52,7 @@ export function FinalCta() {
           {cta.lead}
         </Reveal>
         <Reveal delay={0.1} className="lg:col-span-7 lg:col-start-6">
-          <ContactForm />
+          <ContactForm cta={cta} contact={contact} />
         </Reveal>
       </div>
     </section>

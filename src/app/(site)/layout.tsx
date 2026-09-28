@@ -1,0 +1,22 @@
+import { MotionProvider } from "@/components/animations/motion-provider";
+import { Preloader } from "@/components/layout/preloader";
+import { IntroDone } from "@/components/layout/intro-done";
+
+/** Layout do site público: abertura, animações e atalho de acessibilidade. O CMS não usa nada disso. */
+export default function SiteLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <>
+      {/* Marcador que ativa a escala para telas grandes (globals.css). */}
+      <span data-site-scale hidden />
+      <a
+        href="#conteudo"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-full focus:bg-ink focus:px-5 focus:py-2.5 focus:text-sm focus:text-white"
+      >
+        Pular para o conteúdo
+      </a>
+      <Preloader />
+      <IntroDone />
+      <MotionProvider>{children}</MotionProvider>
+    </>
+  );
+}

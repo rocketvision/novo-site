@@ -2,8 +2,9 @@
 
 import { useRef } from "react";
 import { m, useTransform, type MotionValue } from "motion/react";
-import { Check } from "lucide-react";
-import type { Project } from "@/content/projects";
+import Link from "next/link";
+import { ArrowUpRight, Check } from "lucide-react";
+import type { PublicProject as Project } from "@/lib/projects/types";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { lerp, segment } from "@/lib/scroll";
@@ -171,8 +172,12 @@ function ProjectCard({
       >
         <p className={cn("text-eyebrow", light ? "text-white/60" : "text-black/55")}>
           <span style={{ color: project.theme.accent }}>{project.category}</span>
-          <span className="mx-1.5 opacity-40">/</span>
-          {project.year}
+          {project.year && (
+            <>
+              <span className="mx-1.5 opacity-40">/</span>
+              {project.year}
+            </>
+          )}
         </p>
         <h2
           id={`projeto-${project.slug}-titulo`}
@@ -184,23 +189,34 @@ function ProjectCard({
           {project.summary}
         </p>
         <ul className={cn("mt-6 hidden space-y-2 border-t pt-5 sm:block", light ? "border-white/15" : "border-black/10")}>
-          {project.highlights.map((item) => (
-            <li key={item} className={cn("flex gap-3 text-[0.9375rem]", light ? "text-white/85" : "text-black/75")}>
+          {project.highlights.map((item, i) => (
+            <li key={i} className={cn("flex gap-3 text-[0.9375rem]", light ? "text-white/85" : "text-black/75")}>
               <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" style={{ color: project.theme.accent }} strokeWidth={2.25} />
               {item}
             </li>
           ))}
         </ul>
         <ul className="mt-5 hidden flex-wrap gap-2 sm:flex">
-          {project.services.map((service) => (
+          {project.services.map((service, i) => (
             <li
-              key={service}
+              key={i}
               className={cn("rounded-full border px-3 py-1 text-xs", light ? "border-white/20 text-white/70" : "border-black/15 text-black/60")}
             >
               {service}
             </li>
           ))}
         </ul>
+        <Link
+          href={`/projetos/${project.slug}`}
+          className={cn(
+            "group mt-7 inline-flex w-fit items-center gap-2 text-[0.9375rem] font-medium",
+            light ? "text-white" : "text-ink",
+          )}
+        >
+          <span className="link-underline">Ver projeto</span>
+          <ArrowUpRight aria-hidden="true" className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <span className="sr-only">{project.name}</span>
+        </Link>
       </m.div>
     </div>
   );
@@ -208,14 +224,16 @@ function ProjectCard({
 
 /** Composição das telas conforme o que o projeto tem: navegador, celulares ou ambos. */
 function DeviceStage({ project, frontY }: { project: Project; frontY?: MotionValue<string> }) {
-  const { desktop, phones = [] } = project.screens;
+  const { desktop, phones } = project.screens;
+  // Sem telas: a capa ocupa o palco como uma tela de computador.
+  const main = desktop ?? (phones.length === 0 ? project.cover : null);
   const front = frontY ? { y: frontY } : undefined;
 
-  if (desktop) {
+  if (main) {
     return (
       <div className="relative flex h-full items-center">
         <BrowserFrame
-          screen={desktop}
+          screen={main}
           sizes="(min-width: 1024px) 64vw, 94vw"
           className="absolute left-1/2 w-[min(94%,calc(40svh*1.5))] -translate-x-1/2 lg:left-[4%] lg:w-[108%] lg:translate-x-0"
         />

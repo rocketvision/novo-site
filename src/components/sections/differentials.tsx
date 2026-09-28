@@ -5,15 +5,14 @@ import { m, useTransform } from "motion/react";
 import { Reveal } from "@/components/animations/reveal";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Photo } from "@/components/ui/photo";
-import { differentials } from "@/content/landing";
-import { media } from "@/content/media";
+import type { Resolved } from "@/lib/content/resolved";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 
 /**
  * Diferenciais em composição editorial: a fotografia fica fixa e sangra pela
  * borda esquerda enquanto os compromissos passam ao lado dela.
  */
-export function Differentials() {
+export function Differentials({ differentials }: { differentials: Resolved<"differentials"> }) {
   const ref = useRef<HTMLElement>(null);
   const progress = useScrollProgress(ref, ["start end", "end start"]);
   const scale = useTransform(progress, [0, 1], [1.2, 1]);
@@ -30,7 +29,7 @@ export function Differentials() {
         <div className="relative mb-14 lg:mb-0">
           <div className="relative mx-4 aspect-[4/3] overflow-hidden rounded-[1.5rem] sm:mx-8 lg:sticky lg:top-0 lg:mx-0 lg:aspect-auto lg:h-svh lg:rounded-none lg:rounded-r-[2rem]">
             <m.div style={{ scale, y }} className="absolute inset-0">
-              <Photo photo={media.differentials} sizes="(min-width: 1024px) 44vw, 100vw" />
+              <Photo photo={differentials.image} sizes="(min-width: 1024px) 44vw, 100vw" />
             </m.div>
           </div>
         </div>
@@ -45,7 +44,7 @@ export function Differentials() {
 
           <ul className="mt-16 lg:mt-24">
             {differentials.items.map((item, i) => (
-              <Reveal as="li" key={item.title} className="group border-t border-line py-9 last:border-b lg:py-12">
+              <Reveal as="li" key={i} className="group border-t border-line py-9 last:border-b lg:py-12">
                 <div className="flex gap-6">
                   <span aria-hidden="true" className="text-eyebrow w-6 shrink-0 pt-2.5 text-subtle tabular-nums">
                     {String(i + 1).padStart(2, "0")}

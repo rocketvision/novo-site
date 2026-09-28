@@ -4,9 +4,8 @@ import { useId, useState } from "react";
 import { AnimatePresence, m } from "motion/react";
 import { ArrowRight, Check, LoaderCircle } from "lucide-react";
 import { buttonClasses } from "@/components/ui/button";
-import { cta } from "@/content/landing";
+import type { Resolved } from "@/lib/content/resolved";
 import { validateContact, type ContactErrors, type ContactPayload } from "@/lib/contact";
-import { site } from "@/lib/site";
 import { transition } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +13,7 @@ type Status = "idle" | "sending" | "sent" | "error";
 
 const empty: ContactPayload = { name: "", company: "", email: "", phone: "", interests: [], message: "" };
 
-export function ContactForm() {
+export function ContactForm({ cta, contact }: { cta: Resolved<"cta">; contact: Resolved<"site">["contact"] }) {
   const [data, setData] = useState<ContactPayload>(empty);
   const [errors, setErrors] = useState<ContactErrors>({});
   const [status, setStatus] = useState<Status>("idle");
@@ -58,7 +57,7 @@ export function ContactForm() {
     }
   }
 
-  const { email, whatsapp } = site.contact;
+  const { email, whatsapp } = contact;
 
   return (
     <div className="relative">
