@@ -1,30 +1,15 @@
 # Créditos das imagens
 
-Fotografias da landing page, escolhidas por seção. Fontes e licenças:
+A landing usa fotografia em apenas dois lugares: o hero e o convite final (Próximo passo).
+As demais seções (O que muda, manifesto, serviços, Por que a Rocket e Como trabalhamos) têm visuais
+desenhados em código em `src/components/visuals`, a partir da própria copy. Não dependem de nenhum arquivo de imagem.
 
-- Unsplash, sob a Licença Unsplash (https://unsplash.com/license): uso comercial e não comercial gratuito, sem necessidade de atribuição. Nenhuma imagem é do Unsplash+.
-- Pexels, sob a Licença Pexels (https://www.pexels.com/license/): uso comercial e não comercial gratuito, sem necessidade de atribuição.
+| Arquivo | Seção | Situação |
+|---|---|---|
+| `cafe-counter-night.jpg` | Hero | Provisória (Unsplash, https://unsplash.com/photos/7dYSpTrDxhc). Será substituída pela fotografia premium escolhida e licenciada. |
+| `two-chairs-window.jpg` | Próximo passo | Provisória (Unsplash, https://unsplash.com/photos/al-o2zPeVNk). Será substituída pela fotografia premium escolhida e licenciada. |
 
-Algumas fotos foram recortadas para funcionar no enquadramento da seção (indicado na coluna "Ajuste").
-
-| Arquivo | Seção | Página original | Licença | Ajuste |
-|---|---|---|---|---|
-| `cafe-counter-night.jpg` | Hero | https://unsplash.com/photos/7dYSpTrDxhc | Unsplash | Recorte 16:10 que coloca a pessoa na janela inicial da foto |
-| `order-tickets-rail.jpg` | O que muda (1) | https://unsplash.com/photos/s26Waan4roY | Unsplash | |
-| `shop-window-night.jpg` | O que muda (2) | https://unsplash.com/photos/DUJI6z38oxY | Unsplash | |
-| `customer-phone-night.jpg` | O que muda (3) | https://unsplash.com/photos/RIjkQQYi8bo | Unsplash | Recorte do topo para remover a marca de uma loja |
-| `sketch-to-app.jpg` | Manifesto | https://unsplash.com/photos/TDfvoPFVYaE | Unsplash | |
-| `cafe-laptop-window.jpg` | Serviços: sites | https://unsplash.com/photos/E5llEM1xtWA | Unsplash | |
-| `packing-order.jpg` | Serviços: lojas virtuais | https://www.pexels.com/photo/7857523/ | Pexels | |
-| `warehouse-terminal.jpg` | Serviços: sistemas | https://unsplash.com/photos/Ggjba7uZC-I | Unsplash | |
-| `salon-phone.jpg` | Serviços: aplicativos | https://unsplash.com/photos/X9Of2xiMtgE | Unsplash | Recorte 4:3 com a pessoa, o celular e o reflexo |
-| `logo-sketches.jpg` | Serviços: identidade visual | https://unsplash.com/photos/eVpZxkNY3bw | Unsplash | |
-| `sketching-together.jpg` | Por que a Rocket | https://www.pexels.com/photo/3471423/ | Pexels | |
-| `first-conversation.jpg` | Como trabalhamos: entendemos | https://unsplash.com/photos/GB4ScXwxNGI | Unsplash | |
-| `product-brief.jpg` | Como trabalhamos: planejamos | https://unsplash.com/photos/wdnpaTNwOEQ | Unsplash | |
-| `building-together.jpg` | Como trabalhamos: construímos | https://unsplash.com/photos/NZGj8HmE6v0 | Unsplash | |
-| `cafe-phone-payment.jpg` | Como trabalhamos: evoluímos | https://www.pexels.com/photo/6612717/ | Pexels | |
-| `two-chairs-window.jpg` | Próximo passo | https://unsplash.com/photos/al-o2zPeVNk | Unsplash | |
+Ao trocar, registre aqui: fonte, URL da página original, autor, coleção, tipo de licença e número da licença.
 
 ## Projetos de exemplo (rota /projetos)
 

@@ -31,8 +31,6 @@ export type FieldSpec =
       hint?: string;
     };
 
-const emptyImage = () => ({ mediaId: null, alt: "" });
-
 export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
   hero: [
     { type: "text", key: "eyebrow", label: "Rótulo", max: 80, hint: "Texto pequeno acima do título." },
@@ -112,10 +110,9 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
       },
       min: 1,
       maxItems: 4,
-      hint: "Cada grupo tem uma foto e dois pares de antes e depois. A foto troca a cada grupo.",
-      newItem: () => ({ image: emptyImage(), pairs: [{ before: "", after: "" }, { before: "", after: "" }] }),
+      hint: "Cada grupo tem dois pares de antes e depois e troca de painel por cortina. Os seis primeiros pares têm um visual próprio, na ordem: planilha, conversa, busca, balcão, ideia no papel e tarefa repetida.",
+      newItem: () => ({ pairs: [{ before: "", after: "" }, { before: "", after: "" }] }),
       fields: [
-        { type: "image", key: "image", label: "Foto do grupo", minWidth: 1400 },
         {
           type: "list",
           key: "pairs",
@@ -143,7 +140,6 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
       hint: "A primeira frase fica em destaque; o restante aparece em tom mais claro. Separe as frases com ponto.",
     },
     { type: "text", key: "body", label: "Texto", max: 320, multiline: true },
-    { type: "image", key: "image", label: "Foto", minWidth: 1000, hint: "Sobe por trás do texto. Prefira fotos verticais." },
   ],
   services: [
     { type: "text", key: "eyebrow", label: "Rótulo", max: 40 },
@@ -165,7 +161,6 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
         what: "",
         outcomes: [""],
         signal: "",
-        image: emptyImage(),
       }),
       fields: [
         { type: "text", key: "name", label: "Nome", max: 40, hint: "Aparece na navegação entre serviços." },
@@ -173,8 +168,7 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
         { type: "text", key: "problem", label: "Problema", max: 220, multiline: true },
         { type: "text", key: "what", label: "O que fazemos", max: 240, multiline: true },
         { type: "lines", key: "outcomes", label: "Resultados", itemLabel: "Resultado", max: 80, min: 1, maxItems: 4 },
-        { type: "text", key: "signal", label: "Sinal de resultado", max: 50, hint: "Notificação exibida sobre a foto." },
-        { type: "image", key: "image", label: "Foto do serviço", minWidth: 1400 },
+        { type: "text", key: "signal", label: "Sinal de resultado", max: 50, hint: "Notificação exibida sobre o visual do serviço." },
       ],
     },
   ],
@@ -195,7 +189,6 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
         { type: "text", key: "body", label: "Texto", max: 220, multiline: true },
       ],
     },
-    { type: "image", key: "image", label: "Foto", minWidth: 1200, hint: "Fica fixa na lateral enquanto os diferenciais passam." },
   ],
   workflow: [
     { type: "text", key: "eyebrow", label: "Rótulo", max: 40 },
@@ -209,12 +202,11 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
       itemTitle: (item) => String(item.name ?? ""),
       min: 2,
       maxItems: 6,
-      newItem: () => ({ name: "", title: "", body: "", image: emptyImage() }),
+      newItem: () => ({ name: "", title: "", body: "" }),
       fields: [
         { type: "text", key: "name", label: "Nome", max: 24 },
         { type: "text", key: "title", label: "Título", max: 80 },
         { type: "text", key: "body", label: "Texto", max: 220, multiline: true },
-        { type: "image", key: "image", label: "Foto da etapa", minWidth: 1200 },
       ],
     },
   ],

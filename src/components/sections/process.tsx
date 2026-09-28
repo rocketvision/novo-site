@@ -3,11 +3,13 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { m, useSpring, useTransform, type MotionValue } from "motion/react";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Photo } from "@/components/ui/photo";
+import { StepVisual } from "@/components/visuals/step-visuals";
 import { Reveal } from "@/components/animations/reveal";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
+import { useRevealProgress } from "@/hooks/use-reveal-progress";
+import { segment } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
 
 type Workflow = Resolved<"workflow">;
@@ -15,9 +17,9 @@ type Step = Workflow["steps"][number];
 
 /**
  * Como trabalhamos.
- * Desktop: a rolagem vertical conduz uma faixa horizontal de fotografias (sem sequestrar o scroll),
- * com parallax dentro de cada quadro.
- * Mobile e reduced motion: linha do tempo vertical com as mesmas fotos.
+ * Desktop: a rolagem vertical conduz uma faixa horizontal de quadros (sem sequestrar o scroll),
+ * com parallax dentro de cada quadro. Cada etapa tem uma ilustração própria.
+ * Mobile e reduced motion: linha do tempo vertical com os mesmos quadros.
  */
 export function Process({ workflow }: { workflow: Workflow }) {
   const reduceMotion = usePrefersReducedMotion();
@@ -117,7 +119,9 @@ function StepFrame({ step, index, total, progress }: { step: Step; index: number
   const focus = useTransform(progress, [center - 0.36, center - 0.08, center + 0.08, center + 0.36], [0, 1, 1, 0]);
   const opacity = useTransform(focus, [0, 1], [0.45, 1]);
   const frameScale = useTransform(focus, [0, 1], [0.94, 1]);
-  // Parallax dentro do quadro: a foto anda mais devagar que a faixa.
+  // O artefato da etapa se completa enquanto o quadro chega ao centro.
+  const t = useTransform(progress, (v) => segment(v, center - 0.36, center - 0.04));
+  // Parallax dentro do quadro: o visual anda mais devagar que a faixa.
   const photoX = useTransform(progress, [0, 1], ["7%", "-7%"]);
 
   return (
@@ -127,7 +131,7 @@ function StepFrame({ step, index, total, progress }: { step: Step; index: number
         className="relative h-[clamp(11rem,32svh,22rem)] origin-bottom-left overflow-hidden rounded-[1.5rem]"
       >
         <m.div style={{ x: photoX }} className="absolute -inset-x-[14%] inset-y-0">
-          <Photo photo={step.image} sizes="40vw" />
+          <StepVisual index={index} t={t} />
         </m.div>
         <span className="absolute top-5 left-6 font-mono text-xs text-white tabular-nums mix-blend-difference">
           {String(index + 1).padStart(2, "0")}
@@ -137,6 +141,16 @@ function StepFrame({ step, index, total, progress }: { step: Step; index: number
       <h3 className="mt-3 max-w-md text-[clamp(1.375rem,1rem+1vw,2rem)] leading-tight font-semibold tracking-[-0.03em] text-ink">{step.title}</h3>
       <p className="mt-3 max-w-md text-[0.9375rem] leading-relaxed text-muted">{step.body}</p>
     </m.li>
+  );
+}
+
+function VerticalStepVisual({ index }: { index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const t = useRevealProgress(ref);
+  return (
+    <div ref={ref} className="absolute inset-0">
+      <StepVisual index={index} t={t} />
+    </div>
   );
 }
 
@@ -162,7 +176,7 @@ function VerticalProcess({ workflow, idSuffix = "" }: { workflow: Workflow; idSu
             <h3 className="text-title mt-3 text-ink">{step.title}</h3>
             <p className="text-body mt-3 max-w-xl text-muted">{step.body}</p>
             <Reveal className="relative mt-6 aspect-[16/10] overflow-hidden rounded-[1.25rem]">
-              <Photo photo={step.image} sizes="100vw" />
+              <VerticalStepVisual index={i} />
             </Reveal>
           </li>
         ))}

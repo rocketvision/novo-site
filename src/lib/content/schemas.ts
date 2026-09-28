@@ -62,28 +62,13 @@ export const optionalHttpsUrl = z
 export const uuid = z.string().uuid("Identificador inválido.");
 
 /**
- * Imagem de uma seção. `mediaId` aponta para a biblioteca de mídia.
+ * Imagem de uma seção. Só o hero e o convite final usam fotografia; as demais seções
+ * têm visuais desenhados em código a partir da própria copy.
+ * `mediaId` aponta para a biblioteca de mídia.
  * `fallback` (definido pelo sistema, não editável) aponta para a foto original embutida no site:
  * se nenhuma imagem for escolhida, a landing continua com a foto de direção de arte original.
  */
-export const FALLBACK_KEYS = [
-  "hero",
-  "shift-0",
-  "shift-1",
-  "shift-2",
-  "statement",
-  "service-site",
-  "service-store",
-  "service-system",
-  "service-app",
-  "service-brand",
-  "differentials",
-  "workflow-0",
-  "workflow-1",
-  "workflow-2",
-  "workflow-3",
-  "cta",
-] as const;
+export const FALLBACK_KEYS = ["hero", "cta"] as const;
 export type FallbackKey = (typeof FALLBACK_KEYS)[number];
 
 export const image = z.object({
@@ -133,10 +118,9 @@ export const shiftSchema = z.object({
   groups: z
     .array(
       z.object({
-        image: imageRequired,
         pairs: z
           .array(z.object({ before: text(70, "O antes"), after: text(110, "O depois") }))
-          .length(2, "Cada foto acompanha duas transformações."),
+          .length(2, "Cada grupo tem duas transformações."),
       }),
     )
     .min(1)
@@ -146,7 +130,6 @@ export const shiftSchema = z.object({
 export const statementSchema = z.object({
   title: text(160, "O título"),
   body: text(320, "O texto"),
-  image: imageRequired,
 });
 
 export const serviceItemSchema = z.object({
@@ -157,7 +140,6 @@ export const serviceItemSchema = z.object({
   what: text(240, "O que fazemos"),
   outcomes: z.array(text(80, "Cada resultado")).min(1).max(4, "Use até 4 resultados."),
   signal: text(50, "O sinal de resultado"),
-  image: imageRequired,
 });
 
 export const servicesSchema = z.object({
@@ -178,7 +160,6 @@ export const differentialsSchema = z.object({
     .array(z.object({ title: text(60, "O título"), body: text(220, "O texto") }))
     .min(1)
     .max(8, "Use até 8 diferenciais."),
-  image: imageRequired,
 });
 
 export const workflowSchema = z.object({
@@ -191,7 +172,6 @@ export const workflowSchema = z.object({
         name: text(24, "O nome da etapa"),
         title: text(80, "O título"),
         body: text(220, "O texto"),
-        image: imageRequired,
       }),
     )
     .min(2)

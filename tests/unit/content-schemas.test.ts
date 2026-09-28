@@ -32,3 +32,24 @@ describe("travessão", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("conteúdo salvo antes dos visuais desenhados", () => {
+  const oldImage = (fallback: string) => ({ mediaId: null, alt: "Foto antiga", fallback });
+
+  it("continua válido e descarta as imagens que as seções não usam mais", () => {
+    const legacy = {
+      ...DEFAULT_CONTENT.shift,
+      groups: DEFAULT_CONTENT.shift.groups.map((g, i) => ({ ...g, image: oldImage(`shift-${i}`) })),
+    };
+    const result = SECTION_SCHEMAS.shift.safeParse(legacy);
+    expect(result.success, JSON.stringify(result.error?.issues)).toBe(true);
+    expect(result.data?.groups.every((g) => !("image" in g))).toBe(true);
+
+    const services = {
+      ...DEFAULT_CONTENT.services,
+      items: DEFAULT_CONTENT.services.items.map((s) => ({ ...s, image: oldImage("service-site") })),
+    };
+    expect(SECTION_SCHEMAS.services.safeParse(services).success).toBe(true);
+    expect(SECTION_SCHEMAS.statement.safeParse({ ...DEFAULT_CONTENT.statement, image: oldImage("statement") }).success).toBe(true);
+  });
+});

@@ -71,9 +71,9 @@ export default async function Home() {
       <Header />
       <main id="conteudo">
         <HeroScene hero={content.hero} problem={content.problem} />
-        <ShiftScene shift={content.shift} />
-        <Statement statement={content.statement} />
-        <Services services={content.services} />
+        <ShiftScene shift={content.shift} problem={content.problem} />
+        <Statement statement={content.statement} problem={content.problem} />
+        <Services services={content.services} problem={content.problem} />
         <Differentials differentials={content.differentials} />
         <Proof />
         <Process workflow={content.workflow} />

@@ -5,20 +5,22 @@ import { m, useMotionValueEvent, useTransform, type MotionValue } from "motion/r
 import Link from "next/link";
 import { ArrowUpRight, Check } from "lucide-react";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Photo } from "@/components/ui/photo";
+import { ServiceVisual } from "@/components/visuals/service-visuals";
 import { Reveal } from "@/components/animations/reveal";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
+import { useRevealProgress } from "@/hooks/use-reveal-progress";
 import { insetClip, segment } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
 
 type Content = Resolved<"services">;
+type Problem = Resolved<"problem">;
 type Service = Content["items"][number];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export function Services({ services }: { services: Content }) {
+export function Services({ services, problem }: { services: Content; problem: Problem }) {
   const items = services.items;
   const reduceMotion = usePrefersReducedMotion();
 
@@ -40,15 +42,15 @@ export function Services({ services }: { services: Content }) {
         </Reveal>
       </div>
       {reduceMotion ? (
-        <ServicesStack items={items} />
+        <ServicesStack items={items} problem={problem} />
       ) : (
         // As duas composições saem do servidor; o CSS escolhe pelo breakpoint, sem salto após carregar.
         <>
           <div className="hidden lg:block">
-            <ServicesStage items={items} />
+            <ServicesStage items={items} problem={problem} />
           </div>
           <div className="lg:hidden">
-            <ServicesStack items={items} idSuffix="-m" />
+            <ServicesStack items={items} problem={problem} idSuffix="-m" />
           </div>
         </>
       )}
@@ -56,8 +58,8 @@ export function Services({ services }: { services: Content }) {
   );
 }
 
-/** Palco fixo: a fotografia troca por cortina e o texto acompanha, serviço a serviço. */
-function ServicesStage({ items }: { items: Service[] }) {
+/** Palco fixo: o visual do serviço troca por cortina e o texto acompanha, serviço a serviço. */
+function ServicesStage({ items, problem }: { items: Service[]; problem: Problem }) {
   const ref = useRef<HTMLDivElement>(null);
   const total = items.length;
   const progress = useScrollProgress(ref, ["start start", "end end"]);
@@ -112,9 +114,8 @@ function ServicesStage({ items }: { items: Service[] }) {
 
         <div className="relative my-[calc(var(--header-height)+0.75rem)] flex-1 overflow-hidden rounded-l-[2rem] bg-mist">
           {items.map((service, i) => (
-            <ServicePhoto key={service.id} service={service} index={i} total={total} progress={progress} />
+            <ServicePanel key={service.id} service={service} index={i} total={total} progress={progress} problem={problem} />
           ))}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/35 to-transparent" />
           <p className="absolute top-8 right-10 font-mono text-xs text-white/85 tabular-nums mix-blend-difference" aria-hidden="true">
             {pad(active + 1)} / {pad(total)}
           </p>
@@ -166,9 +167,11 @@ function ServiceCopy({ service, index, total, progress }: SlideProps) {
   );
 }
 
-function ServicePhoto({ service, index, total, progress }: SlideProps) {
+function ServicePanel({ service, index, total, progress, problem }: SlideProps & { problem: Problem }) {
   const { start, end, w } = segmentOf(index, total);
-  // A foto seguinte entra da direita como uma cortina, com a câmera ainda se aproximando.
+  // O improviso chega ao resultado enquanto o serviço entra; o selo fecha a cena.
+  const t = useTransform(progress, (v) => segment(v, start - w * 0.2, start + w * 0.2));
+  // O visual seguinte entra da direita como uma cortina, com a câmera ainda se aproximando.
   const clipPath = useTransform(progress, (v) => {
     if (index === 0) return insetClip(0, 0, 0, 0);
     const t = segment(v, start - w * 0.28, start + w * 0.12);
@@ -181,7 +184,7 @@ function ServicePhoto({ service, index, total, progress }: SlideProps) {
   return (
     <m.div style={{ clipPath }} className="absolute inset-0">
       <m.div style={{ scale }} className="absolute inset-0">
-        <Photo photo={service.image} sizes="60vw" />
+        <ServiceVisual service={service} t={t} problem={problem} />
       </m.div>
       <m.div style={{ opacity: signalOpacity, y: signalY }} className="absolute bottom-10 left-10 z-10">
         <Signal text={service.signal} />
@@ -190,7 +193,7 @@ function ServicePhoto({ service, index, total, progress }: SlideProps) {
   );
 }
 
-/** O resultado do serviço, como uma notificação discreta sobre a foto. */
+/** O resultado do serviço, como uma notificação discreta sobre o visual. */
 function Signal({ text }: { text: string }) {
   return (
     <p className="flex items-center gap-3 rounded-full bg-white/90 py-2.5 pr-5 pl-2.5 text-sm font-medium tracking-tight text-ink shadow-[0_20px_50px_-20px_rgb(0_0_0/0.5)] backdrop-blur-md">
@@ -202,15 +205,25 @@ function Signal({ text }: { text: string }) {
   );
 }
 
-/** Mobile e reduced motion: cada serviço com a própria fotografia, em sequência. */
-function ServicesStack({ items, idSuffix = "" }: { items: Service[]; idSuffix?: string }) {
+/** Mobile e reduced motion: o visual do serviço acontece quando entra na tela. */
+function StackVisual({ service, problem }: { service: Service; problem: Problem }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const t = useRevealProgress(ref);
+  return (
+    <div ref={ref} className="absolute inset-0">
+      <ServiceVisual service={service} t={t} problem={problem} size={[2.8, 3.4]} />
+    </div>
+  );
+}
+
+/** Mobile e reduced motion: cada serviço com o próprio visual, em sequência. */
+function ServicesStack({ items, problem, idSuffix = "" }: { items: Service[]; problem: Problem; idSuffix?: string }) {
   return (
     <div className="pb-24">
       {items.map((service, i) => (
         <article key={service.id} aria-labelledby={`servico-${service.id}-titulo${idSuffix}`} className="mt-14 first:mt-4 md:mt-24">
           <Reveal className="relative mx-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] sm:mx-8 sm:aspect-[16/10]">
-            <Photo photo={service.image} sizes="100vw" />
-            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
+            <StackVisual service={service} problem={problem} />
             <div className="absolute bottom-5 left-5">
               <Signal text={service.signal} />
             </div>
