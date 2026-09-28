@@ -5,6 +5,7 @@ import { audit } from "@/server/audit";
 import { cmsOrigin } from "@/server/env";
 import { log } from "@/server/log";
 import { sendMail } from "@/server/mail";
+import { selfResetMail } from "@/server/mail-templates";
 import { HttpError, unauthorized } from "@/server/http/errors";
 import { enforce, hashIdentifier, POLICIES } from "@/server/security/rate-limit";
 import { getDummyHash, hashPassword, needsRehash, verifyPassword } from "./password";
@@ -231,19 +232,7 @@ export async function requestPasswordReset(emailInput: string, ctx: RequestCtx) 
     return t;
   });
 
-  await sendMail({
-    to: user.email,
-    subject: "Redefinição de senha do CMS Rocket Vision",
-    text: [
-      `Olá, ${user.name}.`,
-      "",
-      "Recebemos um pedido para redefinir a sua senha do CMS da Rocket Vision.",
-      `Para criar uma senha nova, acesse: ${tokenUrl("password_reset", token)}`,
-      "",
-      "O link vale por 1 hora e só pode ser usado uma vez.",
-      "Se você não fez esse pedido, ignore este e-mail. A sua senha atual continua valendo.",
-    ].join("\n"),
-  });
+  await sendMail(selfResetMail(user, tokenUrl("password_reset", token)));
 }
 
 /** Troca de senha pelo próprio usuário logado: exige a senha atual e encerra as outras sessões. */

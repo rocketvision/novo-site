@@ -328,6 +328,48 @@ html:not(.intro-done) .animate-fade-in {
   }
 }
 
+/* Content Studio (CMS): "Content Studio" sob o logo. Letras entram uma a uma; depois, um brilho discreto de tempos em tempos. */
+.studio-word {
+  letter-spacing: 0.42em;
+}
+.studio-letter {
+  display: inline-block;
+  animation: studio-letter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.studio-shine {
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  background: linear-gradient(100deg, transparent 35%, #0a0a0b 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%;
+  background-position: 120% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  pointer-events: none;
+  animation: studio-shine 8s ease-in-out 1.1s infinite;
+}
+@keyframes studio-letter {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes studio-shine {
+  0% {
+    background-position: 120% 0;
+  }
+  30%,
+  100% {
+    background-position: -20% 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { STUDIO_NAME } from "@/lib/cms/brand";
 import { ToastProvider } from "@/components/cms/ui/toast";
 
 export const metadata: Metadata = {
-  title: { template: "%s | CMS Rocket Vision", default: "CMS Rocket Vision" },
+  title: { template: `%s | ${STUDIO_NAME}`, default: STUDIO_NAME },
   robots: { index: false, follow: false },
 };
 
