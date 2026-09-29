@@ -13,6 +13,7 @@ import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
   bigserial,
+  customType,
   boolean,
   check,
   date,
@@ -298,6 +299,166 @@ export const projectImages = pgTable(
     index("project_images_project_idx").on(t.projectId, t.role, t.position),
     index("project_images_media_idx").on(t.mediaId),
   ],
+);
+
+/* -------------------------------------------------------------------------- */
+/* Blog                                                                        */
+/* -------------------------------------------------------------------------- */
+
+/** Vetor de busca textual do Postgres (calculado na publicação, a partir da versão publicada). */
+const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" });
+
+/** `team`: gente da Rocket. `guest`: colunista convidado, que não é apresentado como funcionário. */
+export const blogAffiliation = pgEnum("blog_affiliation", ["team", "guest"]);
+
+/**
+ * Estados do fluxo editorial:
+ * rascunho → em revisão → aprovado → agendado ou publicado → arquivado.
+ * As transições permitidas ficam em src/lib/blog/workflow.ts e são validadas no servidor.
+ */
+export const blogStatus = pgEnum("blog_status", ["draft", "in_review", "approved", "scheduled", "published", "archived"]);
+
+export const blogCommentKind = pgEnum("blog_comment_kind", ["comment", "changes_requested"]);
+
+export const blogAuthors = pgTable(
+  "blog_authors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Conta do Studio ligada ao perfil (opcional: a Redação, por exemplo, não é uma pessoa). */
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    /** Cargo ou especialidade exibido junto ao nome. */
+    roleTitle: text("role_title").notNull().default(""),
+    bio: text("bio").notNull().default(""),
+    photoMediaId: uuid("photo_media_id").references(() => media.id, { onDelete: "restrict" }),
+    /** Links profissionais: [{ label, url }], só https. */
+    links: jsonb("links").notNull().default(sql`'[]'::jsonb`),
+    affiliation: blogAffiliation("affiliation").notNull().default("guest"),
+    isActive: boolean("is_active").notNull().default(true),
+    version: integer("version").notNull().default(1),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("blog_authors_slug_unique").on(t.slug),
+    uniqueIndex("blog_authors_user_unique").on(t.userId).where(sql`${t.userId} IS NOT NULL`),
+    check("blog_authors_slug_format", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+  ],
+);
+
+export const blogCategories = pgTable(
+  "blog_categories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    description: text("description").notNull().default(""),
+    sortOrder: integer("sort_order").notNull().default(0),
+    version: integer("version").notNull().default(1),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("blog_categories_slug_unique").on(t.slug),
+    check("blog_categories_slug_format", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+  ],
+);
+
+export const blogArticles = pgTable(
+  "blog_articles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    subtitle: text("subtitle").notNull().default(""),
+    /** Resumo curto: listagens, busca e descrição padrão para buscadores. */
+    excerpt: text("excerpt").notNull().default(""),
+    /** Documento do editor (JSON validado por src/lib/blog/document.ts). Nunca HTML. */
+    content: jsonb("content").notNull(),
+    categoryId: uuid("category_id").references(() => blogCategories.id, { onDelete: "restrict" }),
+    authorId: uuid("author_id").references(() => blogAuthors.id, { onDelete: "restrict" }),
+    coverMediaId: uuid("cover_media_id").references(() => media.id, { onDelete: "restrict" }),
+    coverAlt: text("cover_alt").notNull().default(""),
+    coverCaption: text("cover_caption").notNull().default(""),
+    seoTitle: text("seo_title").notNull().default(""),
+    seoDescription: text("seo_description").notNull().default(""),
+    featured: boolean("featured").notNull().default(false),
+    readingMinutes: integer("reading_minutes").notNull().default(1),
+    status: blogStatus("status").notNull().default("draft"),
+    /** Data e hora da publicação agendada (status `scheduled`). */
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+    /**
+     * Versão publicada, congelada na publicação. O site público lê só isto:
+     * editar um artigo publicado não muda o site até publicar de novo.
+     */
+    publishedSnapshot: jsonb("published_snapshot"),
+    /** Busca pública: calculada a partir da versão publicada. */
+    searchVector: tsvector("search_vector"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    firstPublishedAt: timestamp("first_published_at", { withTimezone: true }),
+    publishedBy: uuid("published_by").references(() => users.id, { onDelete: "set null" }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    approvedBy: uuid("approved_by").references(() => users.id, { onDelete: "set null" }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+    version: integer("version").notNull().default(1),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("blog_articles_slug_unique").on(t.slug),
+    // O endereço público vem da versão publicada: dois artigos no ar nunca disputam a mesma URL.
+    uniqueIndex("blog_articles_published_slug_unique")
+      .on(sql`(${t.publishedSnapshot} ->> 'slug')`)
+      .where(sql`${t.status} = 'published'`),
+    index("blog_articles_status_published_idx").on(t.status, t.publishedAt.desc()),
+    index("blog_articles_category_idx").on(t.categoryId),
+    index("blog_articles_author_idx").on(t.authorId),
+    index("blog_articles_created_by_idx").on(t.createdBy),
+    index("blog_articles_updated_idx").on(t.updatedAt.desc()),
+    index("blog_articles_scheduled_idx").on(t.scheduledAt).where(sql`${t.status} = 'scheduled'`),
+    index("blog_articles_search_idx").using("gin", t.searchVector),
+    check("blog_articles_slug_format", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    check("blog_articles_published_has_snapshot", sql`${t.status} <> 'published' OR ${t.publishedSnapshot} IS NOT NULL`),
+    check("blog_articles_scheduled_has_date", sql`${t.status} <> 'scheduled' OR ${t.scheduledAt} IS NOT NULL`),
+    check("blog_articles_reading_positive", sql`${t.readingMinutes} > 0`),
+  ],
+);
+
+/** Histórico de versões de um artigo: cada marco do fluxo e salvamentos relevantes. Restaurar cria uma nova revisão. */
+export const blogRevisions = pgTable(
+  "blog_revisions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    articleId: uuid("article_id")
+      .notNull()
+      .references(() => blogArticles.id, { onDelete: "cascade" }),
+    number: integer("number").notNull(),
+    /** Conteúdo e metadados editáveis no momento da revisão. */
+    snapshot: jsonb("snapshot").notNull(),
+    /** save, submit, approve, publish, restore, schedule. */
+    reason: text("reason").notNull(),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("blog_revisions_article_number_unique").on(t.articleId, t.number), index("blog_revisions_article_idx").on(t.articleId, t.createdAt.desc())],
+);
+
+/** Comentários editoriais (inclusive a devolução com pedido de ajustes). Nunca aparecem no site. */
+export const blogComments = pgTable(
+  "blog_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    articleId: uuid("article_id")
+      .notNull()
+      .references(() => blogArticles.id, { onDelete: "cascade" }),
+    authorUserId: uuid("author_user_id").references(() => users.id, { onDelete: "set null" }),
+    kind: blogCommentKind("kind").notNull().default("comment"),
+    body: text("body").notNull(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolvedBy: uuid("resolved_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("blog_comments_article_idx").on(t.articleId, t.createdAt)],
 );
 
 /* -------------------------------------------------------------------------- */

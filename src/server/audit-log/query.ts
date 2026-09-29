@@ -10,6 +10,7 @@ export const AUDIT_CATEGORIES = {
   media: { label: "Mídia", prefix: "media." },
   user: { label: "Usuários", prefix: "user." },
   role: { label: "Funções", prefix: "role." },
+  blog: { label: "Blog", prefix: "blog." },
 } as const;
 
 export type AuditCategory = keyof typeof AUDIT_CATEGORIES;

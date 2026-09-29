@@ -10,7 +10,7 @@ export type UploadItem = { key: string; name: string; status: "queued" | "upload
  * Fila de envio: um arquivo por vez (respeita o rate limit e não satura a conexão),
  * com o estado de cada arquivo visível para a pessoa.
  */
-export function useUpload(onUploaded: (media: MediaDTO, duplicate: boolean) => void) {
+export function useUpload(onUploaded: (media: MediaDTO, duplicate: boolean) => void, endpoint = "/api/cms/media") {
   const [items, setItems] = useState<UploadItem[]>([]);
   const running = useRef(false);
   const queue = useRef<{ key: string; file: File }[]>([]);
@@ -26,7 +26,7 @@ export function useUpload(onUploaded: (media: MediaDTO, duplicate: boolean) => v
       try {
         const form = new FormData();
         form.append("file", file);
-        const result = await api<{ media: MediaDTO; duplicate: boolean }>("/api/cms/media", { formData: form });
+        const result = await api<{ media: MediaDTO; duplicate: boolean }>(endpoint, { formData: form });
         update(key, { status: result.duplicate ? "duplicate" : "done" });
         onUploaded(result.media, result.duplicate);
       } catch (e) {
@@ -34,7 +34,7 @@ export function useUpload(onUploaded: (media: MediaDTO, duplicate: boolean) => v
       }
     }
     running.current = false;
-  }, [onUploaded]);
+  }, [onUploaded, endpoint]);
 
   const add = useCallback(
     (files: FileList | File[]) => {

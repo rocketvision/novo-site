@@ -5,7 +5,7 @@ import { ShiftScene } from "@/components/sections/shift-scene";
 import { Statement } from "@/components/sections/statement";
 import { Services } from "@/components/sections/services";
 import { Differentials } from "@/components/sections/differentials";
-import { Proof } from "@/components/sections/proof";
+import { ProjectsShowcase } from "@/components/sections/projects-showcase";
 import { Process } from "@/components/sections/process";
 import { Turn } from "@/components/sections/turn";
 import { FinalCta } from "@/components/sections/final-cta";
@@ -13,6 +13,8 @@ import type { Metadata } from "next";
 import { PreviewBar } from "@/components/layout/preview-bar";
 import { site } from "@/lib/site";
 import { getLandingContent, getSectionContent, isPreviewing } from "@/server/content/public";
+import { getPublishedProjects } from "@/server/projects/public";
+import { realProjects } from "@/lib/projects/service-match";
 
 /**
  * Página estática, reconstruída só quando uma seção é publicada (cache por tag).
@@ -32,11 +34,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * Narrativa: promessa sobre o vídeo de abertura, problema, o que muda,
- * virada para a solução, serviços, diferenciais, provas, processo,
+ * virada para a solução, serviços, diferenciais, projetos reais, processo,
  * momento tipográfico e conversa.
  */
 export default async function Home() {
-  const [content, previewing] = await Promise.all([getLandingContent(), isPreviewing()]);
+  const [content, previewing, published] = await Promise.all([getLandingContent(), isPreviewing(), getPublishedProjects()]);
+  // Só projetos reais (os de exemplo nunca vão para a landing), na ordem do CMS: destacados primeiro.
+  const projects = realProjects(published);
   const settings = content.site;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -70,12 +74,12 @@ export default async function Home() {
       />
       <Header />
       <main id="conteudo">
-        <HeroScene hero={content.hero} problem={content.problem} services={content.services} workflow={content.workflow} />
+        <HeroScene hero={content.hero} problem={content.problem} services={content.services} workflow={content.workflow} projects={projects} />
         <ShiftScene shift={content.shift} problem={content.problem} />
         <Statement statement={content.statement} problem={content.problem} />
-        <Services services={content.services} problem={content.problem} />
+        <Services services={content.services} problem={content.problem} projects={projects} />
         <Differentials differentials={content.differentials} />
-        <Proof />
+        <ProjectsShowcase projects={projects} />
         <Process workflow={content.workflow} />
         <Turn turn={content.turn} />
         <FinalCta cta={content.cta} contact={settings.contact} />

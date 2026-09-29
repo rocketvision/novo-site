@@ -37,6 +37,10 @@ export const POLICIES = {
   apiReadByUser: { name: "read-user", limit: 600, windowSeconds: 60, onError: "open" },
   contactByIp: { name: "contact-ip", limit: 5, windowSeconds: 10 * 60, onError: "open" },
   previewByUser: { name: "preview-user", limit: 60, windowSeconds: 60, onError: "open" },
+  /** Busca pública do Blog: consulta de texto no banco, limitada por IP. */
+  blogSearchByIp: { name: "blog-search-ip", limit: 30, windowSeconds: 60, onError: "open" },
+  /** Rota do cron: protegida por segredo, o limite só evita abuso de quem tente adivinhar. */
+  cronByIp: { name: "cron-ip", limit: 30, windowSeconds: 60, onError: "open" },
 } satisfies Record<string, Policy>;
 
 /** Identificadores como e-mail entram na chave só como hash: a tabela não guarda dados pessoais. */

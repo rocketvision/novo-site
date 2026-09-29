@@ -34,6 +34,17 @@ export const PERMISSIONS = {
   "settings.view": "Ver as configurações do site",
   "settings.edit": "Editar as configurações do site",
   "settings.publish": "Publicar as configurações do site",
+
+  "blog.view": "Acessar o Blog no Studio",
+  "blog.create": "Criar artigos",
+  "blog.edit_own": "Editar os próprios artigos e enviar para revisão",
+  "blog.edit_any": "Editar artigos de qualquer autor",
+  "blog.review": "Ver a fila de revisão e comentar artigos",
+  "blog.approve": "Aprovar artigos e devolver com comentários",
+  "blog.publish": "Publicar, agendar e despublicar artigos",
+  "blog.delete": "Excluir artigos",
+  "blog.categories": "Gerenciar categorias do Blog",
+  "blog.authors": "Gerenciar autores do Blog",
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -51,7 +62,14 @@ export const PERMISSION_GROUPS: { label: string; prefix: string }[] = [
   { label: "Usuários", prefix: "users." },
   { label: "Auditoria", prefix: "audit." },
   { label: "Configurações", prefix: "settings." },
+  { label: "Blog", prefix: "blog." },
 ];
+
+/** Todas as permissões do Blog (editores e administradores recebem o módulo inteiro). */
+export const BLOG_PERMISSIONS = ALL_PERMISSIONS.filter((p) => p.startsWith("blog."));
+
+/** O que um autor precisa para escrever: criar, editar os próprios artigos e enviar para revisão. */
+export const BLOG_AUTHOR_PERMISSIONS: Permission[] = ["blog.view", "blog.create", "blog.edit_own"];
 
 /** Função com acesso total e proteções extras (não pode ficar sem ao menos um usuário ativo). */
 export const OWNER_ROLE_KEY = "owner";
@@ -96,6 +114,7 @@ export const DEFAULT_ROLES: {
       "media.upload",
       "media.edit",
       "settings.view",
+      ...BLOG_PERMISSIONS,
     ],
   },
   {
@@ -112,6 +131,15 @@ export const DEFAULT_ROLES: {
       "media.view",
       "media.upload",
       "media.edit",
+      ...BLOG_AUTHOR_PERMISSIONS,
     ],
+  },
+  {
+    key: "columnist",
+    name: "Colunista",
+    description: "Escreve artigos para o Blog e envia para revisão. Vê só o Blog e a própria conta.",
+    isSystem: false,
+    // Sem permissões de mídia: as imagens do Colunista passam pelas rotas do Blog, que mostram só as dele.
+    permissions: BLOG_AUTHOR_PERMISSIONS,
   },
 ];

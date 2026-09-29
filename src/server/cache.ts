@@ -14,6 +14,9 @@ export const CACHE_TAGS = {
   project: (slug: string) => `project:${slug}`,
   /** Tudo que exibe imagens resolvidas a partir da biblioteca de mídia. */
   media: "media",
+  /** Listagens, busca, RSS e sitemap do Blog. */
+  blog: "blog",
+  blogArticle: (slug: string) => `blog:${slug}`,
 } as const;
 
 export function invalidate(...tags: string[]) {

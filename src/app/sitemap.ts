@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 import { getPublishedProjects } from "@/server/projects/public";
+import { getBlogSitemapEntries } from "@/server/blog/public";
 
-/** Revalida junto com os projetos: publicar ou despublicar invalida a tag "projects". */
+/** Revalida junto com os projetos e o Blog: publicar ou despublicar invalida as tags "projects" e "blog". */
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -15,6 +16,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   for (const project of real) {
     pages.push({ url: `${site.url}/projetos/${project.slug}`, changeFrequency: "yearly", priority: 0.6 });
+  }
+  // Blog: só o que está publicado. Rascunhos, revisões e agendados nunca entram.
+  const blog = await getBlogSitemapEntries();
+  if (blog.cards.length > 0) {
+    pages.push({ url: `${site.url}/blog`, lastModified: new Date(blog.cards[0].updatedAt), changeFrequency: "weekly", priority: 0.8 });
+    for (const c of blog.cards) pages.push({ url: `${site.url}/blog/${c.slug}`, lastModified: new Date(c.updatedAt), changeFrequency: "monthly", priority: 0.7 });
+    for (const c of blog.categories) pages.push({ url: `${site.url}/blog/categoria/${c.slug}`, changeFrequency: "weekly", priority: 0.5 });
+    for (const a of blog.authors) pages.push({ url: `${site.url}/blog/autor/${a.author.slug}`, changeFrequency: "monthly", priority: 0.4 });
   }
   return pages;
 }

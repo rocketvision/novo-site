@@ -7,7 +7,7 @@ import sharp from "sharp";
 
 /**
  * Prepara o banco de e2e do zero: migrations reais, seed, e duas contas de teste com senhas aleatórias
- * (owner e colaborador). Nada disso vai para o Git: as senhas ficam em tests/e2e/.state (ignorado).
+ * (owner, colaborador, editora e colunista). Nada disso vai para o Git: as senhas ficam em tests/e2e/.state (ignorado).
  */
 export default async function globalSetup() {
   const url = process.env.DATABASE_URL_E2E;
@@ -29,6 +29,8 @@ export default async function globalSetup() {
   const accounts = {
     owner: { email: "owner.e2e@rocketvision.local", name: "Owner E2E", role: "owner", password: randomBytes(18).toString("base64url") },
     collaborator: { email: "colab.e2e@rocketvision.local", name: "Colaboradora E2E", role: "collaborator", password: randomBytes(18).toString("base64url") },
+    editor: { email: "editor.e2e@rocketvision.local", name: "Editora E2E", role: "editor", password: randomBytes(18).toString("base64url") },
+    columnist: { email: "colunista.e2e@exemplo.com", name: "Colunista E2E", role: "columnist", password: randomBytes(18).toString("base64url") },
   };
 
   const db = new pg.Client({ connectionString: url });

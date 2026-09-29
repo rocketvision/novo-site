@@ -35,6 +35,7 @@ export const site = {
 export const nav = [
   { label: "Serviços", href: "/#servicos" },
   { label: "Projetos", href: "/projetos" },
+  { label: "Blog", href: "/blog" },
   { label: "Como trabalhamos", href: "/#processo" },
   { label: "Por que a Rocket", href: "/#diferenciais" },
 ] as const;

@@ -20,3 +20,12 @@ export function isPreviewPath(path: string) {
 export function canPreview(permissions: ReadonlySet<string>) {
   return permissions.has("landing.view") || permissions.has("settings.view");
 }
+
+/**
+ * Pré-visualização de artigos do Blog: basta acessar o Blog no Studio. A página do artigo ainda confere
+ * se a pessoa pode ver aquele artigo (o Colunista só pré-visualiza os próprios).
+ */
+export function canPreviewPath(permissions: ReadonlySet<string>, path: string) {
+  if (path === "/blog" || path.startsWith("/blog/")) return permissions.has("blog.view") || canPreview(permissions);
+  return canPreview(permissions);
+}

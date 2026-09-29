@@ -8,7 +8,8 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument-serif",
   weight: "400",
-  style: "italic",
+  // Itálico no hero; normal nos títulos e citações do Blog.
+  style: ["normal", "italic"],
   subsets: ["latin"],
   display: "swap",
 });

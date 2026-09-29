@@ -230,62 +230,17 @@ export const workflow = {
   ],
 };
 
-export type CaseStudy = {
-  client: string;
-  segment: string;
-  title: string;
-  result: string;
-  image?: { src: string; alt: string };
-  href?: string;
-};
-
-export type Testimonial = {
-  quote: string;
-  author: string;
-  role: string;
-};
-
 /**
- * CONFIRMAR: prova social.
- *
- * Nunca preencha com dados inventados. Enquanto as listas estiverem vazias,
- * a seção não aparece em produção. Em desenvolvimento (npm run dev) ela mostra
- * exemplos claramente sinalizados para que o layout possa ser revisado.
+ * Projetos reais na home. Os projetos em si vêm do CMS (publicados e que não são de exemplo);
+ * aqui fica só a moldura da seção. Sem projetos publicados, a seção não aparece.
  */
-export const proof: {
-  eyebrow: string;
-  title: string;
-  cases: CaseStudy[];
-  testimonials: Testimonial[];
-} = {
+export const projectsShowcase = {
   eyebrow: "Projetos",
   title: "Trabalho que fala por si.",
-  cases: [],
-  testimonials: [],
-};
-
-export const proofPlaceholder: { cases: CaseStudy[]; testimonials: Testimonial[] } = {
-  cases: [
-    {
-      client: "[Nome do cliente]",
-      segment: "[Segmento]",
-      title: "[O que foi construído]",
-      result: "[Resultado real e verificável do projeto]",
-    },
-    {
-      client: "[Nome do cliente]",
-      segment: "[Segmento]",
-      title: "[O que foi construído]",
-      result: "[Resultado real e verificável do projeto]",
-    },
-  ],
-  testimonials: [
-    {
-      quote: "[Depoimento real do cliente, com autorização para publicação.]",
-      author: "[Nome]",
-      role: "[Cargo, empresa]",
-    },
-  ],
+  lead: "Alguns dos produtos que a Rocket colocou no ar. Role para navegar por eles.",
+  clients: "Quem já construiu com a gente",
+  all: "Ver todos os projetos",
+  open: "Ver projeto",
 };
 
 export const cta = {

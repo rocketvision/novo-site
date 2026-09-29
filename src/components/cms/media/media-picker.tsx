@@ -20,12 +20,15 @@ export function MediaPicker({
   onPick,
   canUpload,
   title = "Escolher imagem",
+  endpoint = "/api/cms/media",
 }: {
   open: boolean;
   onClose: () => void;
   onPick: (media: MediaDTO) => void;
   canUpload: boolean;
   title?: string;
+  /** Rota de listagem e envio. O Blog usa a própria, que mostra ao Colunista só as imagens dele. */
+  endpoint?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -48,8 +51,8 @@ export function MediaPicker({
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (after) params.set("cursor", after);
-    return api<{ items: MediaDTO[]; nextCursor: string | null }>(`/api/cms/media?${params}`);
-  }, []);
+    return api<{ items: MediaDTO[]; nextCursor: string | null }>(`${endpoint}?${params}`);
+  }, [endpoint]);
 
   useEffect(() => {
     if (!open) return;
@@ -71,7 +74,7 @@ export function MediaPicker({
     setItems((list) => [media, ...(list ?? []).filter((m) => m.id !== media.id)]);
     setSelected(media);
   }, []);
-  const upload = useUpload(onUploaded);
+  const upload = useUpload(onUploaded, endpoint);
   const lastError = upload.items.find((i) => i.status === "error");
 
   async function loadMore() {
