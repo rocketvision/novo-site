@@ -185,6 +185,18 @@
   }
 }
 
+/* Título do Hero: surge com opacidade e um deslocamento curto, sem salto. */
+@keyframes headline-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.18em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -201,6 +213,11 @@
 
 @utility animate-rise {
   animation: rise 1.1s var(--ease-out) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+@utility animate-headline {
+  animation: headline-in 1.3s var(--ease-out) both;
   animation-delay: var(--delay, 0ms);
 }
 
@@ -312,7 +329,8 @@
 
 /* No carregamento da página, a entrada dos títulos espera a cortina da abertura subir. */
 html:not(.intro-done) .animate-rise,
-html:not(.intro-done) .animate-fade-up {
+html:not(.intro-done) .animate-fade-up,
+html:not(.intro-done) .animate-headline {
   animation-delay: calc(var(--delay, 0ms) + 1650ms);
 }
 

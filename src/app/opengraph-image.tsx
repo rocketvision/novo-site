@@ -23,11 +23,14 @@ export default function OpengraphImage() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 30, letterSpacing: -0.5 }}>
           <div style={{ width: 14, height: 14, borderRadius: 7, background: "#ff5b1f" }} />
-          Rocket Vision
+          {site.name}
+          <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 22, letterSpacing: 4, textTransform: "uppercase", marginLeft: 8 }}>
+            {site.slogan}
+          </span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", fontSize: 72, fontWeight: 600, lineHeight: 1.05, letterSpacing: -2.5 }}>
-          <span>A tecnologia certa</span>
-          <span>muda o rumo do seu negócio.</span>
+          <span>Sua visão é</span>
+          <span>só o começo.</span>
         </div>
         <div style={{ fontSize: 28, color: "rgba(255,255,255,0.55)" }}>
           Sites, lojas virtuais, sistemas e aplicativos para empresas.

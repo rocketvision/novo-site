@@ -50,21 +50,21 @@ test("senha errada mostra mensagem genérica", async ({ page }) => {
 
 test("editar o Hero: rascunho não muda o site, pré-visualização mostra, publicar muda", async ({ page, browser }) => {
   await login(page, accounts().owner, "/cms/landing/hero");
-  const eyebrow = page.getByLabel("Rótulo");
-  const original = await eyebrow.inputValue();
+  const lead = page.getByLabel("Descrição");
+  const original = await lead.inputValue();
 
-  await eyebrow.fill("Rótulo publicado pelo teste e2e");
+  await lead.fill("Descrição publicada pelo teste e2e.");
   await expect(page.getByText("Alterações não salvas", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Salvar rascunho" }).click();
   await expect(page.getByText("Rascunho salvo")).toBeVisible();
 
   const guest = await visitor(browser);
   await guest.goto("/");
-  await expect(guest.locator("#inicio p").first()).toHaveText(original);
+  await expect(guest.locator("#inicio h1 + p").first()).toHaveText(original);
 
   const [preview] = await Promise.all([page.context().waitForEvent("page"), page.getByRole("button", { name: "Pré-visualizar" }).click()]);
   await preview.waitForURL("**/");
-  await expect(preview.locator("#inicio p").first()).toHaveText("Rótulo publicado pelo teste e2e");
+  await expect(preview.locator("#inicio h1 + p").first()).toHaveText("Descrição publicada pelo teste e2e.");
   await expect(preview.getByText("Pré-visualização do rascunho")).toBeVisible();
   await preview.close();
 
@@ -72,14 +72,14 @@ test("editar o Hero: rascunho não muda o site, pré-visualização mostra, publ
   await confirmAndWait(page, "Publicar", /\/publish$/);
 
   await guest.goto("/");
-  await expect(guest.locator("#inicio p").first()).toHaveText("Rótulo publicado pelo teste e2e");
+  await expect(guest.locator("#inicio h1 + p").first()).toHaveText("Descrição publicada pelo teste e2e.");
 
   // Volta ao texto original, também pelo CMS.
-  await page.getByLabel("Rótulo").fill(original);
+  await page.getByLabel("Descrição").fill(original);
   await page.getByRole("button", { name: "Publicar" }).click();
   await confirmAndWait(page, "Publicar", /\/publish$/);
   await guest.goto("/");
-  await expect(guest.locator("#inicio p").first()).toHaveText(original);
+  await expect(guest.locator("#inicio h1 + p").first()).toHaveText(original);
 });
 
 test("projeto: criar com imagem e cor, publicar, editar, republicar e despublicar", async ({ page, browser }) => {

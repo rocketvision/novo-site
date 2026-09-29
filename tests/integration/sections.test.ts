@@ -39,13 +39,13 @@ describe("rascunho e publicação", () => {
     const state = await getSectionState("hero");
     expect(state.hasChanges).toBe(false);
 
-    const draft = { ...hero(), eyebrow: "Novo rótulo de teste" };
+    const draft = { ...hero(), lead: "Nova descrição de teste." };
     const { version } = await saveDraft(actor, "hero", draft, state.version, ctx);
     expect(version).toBe(state.version + 1);
 
     const after = await getSectionState("hero");
-    expect(after.draft.eyebrow).toBe("Novo rótulo de teste");
-    expect(after.published?.eyebrow).toBe(DEFAULT_CONTENT.hero.eyebrow);
+    expect(after.draft.lead).toBe("Nova descrição de teste.");
+    expect(after.published?.lead).toBe(DEFAULT_CONTENT.hero.lead);
     expect(after.hasChanges).toBe(true);
   });
 
@@ -72,10 +72,10 @@ describe("rascunho e publicação", () => {
 
   it("recusa gravar sobre uma versão desatualizada (409)", async () => {
     const state = await getSectionState("hero");
-    await saveDraft(actor, "hero", { ...hero(), eyebrow: "Primeira pessoa" }, state.version, ctx);
-    const error = await expectStatus(saveDraft(actor, "hero", { ...hero(), eyebrow: "Segunda pessoa" }, state.version, ctx), 409);
+    await saveDraft(actor, "hero", { ...hero(), lead: "Primeira pessoa" }, state.version, ctx);
+    const error = await expectStatus(saveDraft(actor, "hero", { ...hero(), lead: "Segunda pessoa" }, state.version, ctx), 409);
     expect(error.code).toBe("stale");
-    expect((await getSectionState("hero")).draft.eyebrow).toBe("Primeira pessoa");
+    expect((await getSectionState("hero")).draft.lead).toBe("Primeira pessoa");
 
     await expectStatus(publishSection(actor, "hero", state.version, ctx), 409);
   });
@@ -90,8 +90,8 @@ describe("validação no servidor", () => {
 
   it("recusa travessão", async () => {
     const state = await getSectionState("hero");
-    const error = await expectStatus(saveDraft(actor, "hero", { ...hero(), eyebrow: "Sites \u2014 apps" }, state.version, ctx), 422);
-    expect(error.extra?.fields?.eyebrow).toMatch(/travessão/);
+    const error = await expectStatus(saveDraft(actor, "hero", { ...hero(), lead: "Sites \u2014 apps" }, state.version, ctx), 422);
+    expect(error.extra?.fields?.lead).toMatch(/travessão/);
   });
 
   it("recusa links perigosos", async () => {

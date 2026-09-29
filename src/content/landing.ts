@@ -8,19 +8,14 @@
  */
 
 export const hero = {
-  eyebrow: "Sites, lojas virtuais, sistemas e aplicativos",
-  /** Entre asteriscos: a palavra em serifa itálica (um único gesto tipográfico). */
-  title: ["A tecnologia certa", "muda o *rumo*", "do seu negócio."],
-  lead: "A Rocket Vision projeta e desenvolve a tecnologia que sua empresa precisa para vender mais, trabalhar com menos retrabalho e crescer com organização.",
-  primaryCta: "Quero um orçamento",
-  secondaryCta: "Ver o que fazemos",
-  /** Ao lado do botão: a garantia mais direta que a Rocket pode dar. */
-  proof: { title: "Você fala com quem constrói", text: "Sem intermediários, do início ao fim" },
-  /** Cartões de vidro. Compromissos, não números: nada aqui depende de dado a confirmar. */
-  highlights: [
-    { value: "Sob medida", label: "Feito para o seu negócio, não um modelo pronto" },
-    { value: "1 só time", label: "Design e tecnologia trabalhando juntos" },
-  ],
+  /**
+   * O rótulo acima do título é a assinatura institucional (site.name + site.slogan), fixa no código.
+   * Entre asteriscos: a palavra em serifa itálica (um único gesto tipográfico).
+   */
+  title: ["Sua visão é só o começo."],
+  lead: "Transformamos ideias ambiciosas em soluções digitais extraordinárias. Tecnologia, estratégia e inovação para levar seu negócio além do imaginável.",
+  primaryCta: "Vamos criar o futuro",
+  secondaryCta: "Explore nossas soluções",
 };
 
 export const problem = {

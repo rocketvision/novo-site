@@ -8,6 +8,8 @@
 export const site = {
   name: "Rocket Vision",
   shortName: "Rocket",
+  /** Slogan oficial. Aparece na assinatura do hero, no rodapé e nos metadados. */
+  slogan: "Beyond the Vision.",
   // CONFIRMAR: domínio definitivo. O README cita beta.rocketvision.com.br.
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://rocketvision.com.br",
   locale: "pt_BR",

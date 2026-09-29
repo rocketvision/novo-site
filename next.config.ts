@@ -52,6 +52,11 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
       },
       {
+        // Vídeo do foguete (abertura) e seus quadros, nas versões 16:9 e vertical.
+        source: "/video/:file*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      },
+      {
         // O CMS nunca deve ser guardado em cache compartilhado nem indexado.
         source: "/cms/:path*",
         headers: [
