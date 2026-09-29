@@ -15,6 +15,13 @@
       "when": 1790606670308,
       "tag": "0001_project_published_slug",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790704977470,
+      "tag": "0002_blog",
+      "breakpoints": true
     }
   ]
 }
