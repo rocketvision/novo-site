@@ -1,17 +1,16 @@
 # Créditos das imagens
 
-Direção de arte "Ofício": quatro fotografias da mesma família de luz (baixa, quente, fundo escuro).
+Direção de arte "Ofício": três fotografias da mesma família de luz (baixa, quente, fundo escuro).
 As demais seções (O que muda, manifesto e serviços) têm composições desenhadas em código
 em `src/components/visuals`, a partir da própria copy, e não dependem de arquivos de imagem.
 
 | Arquivo | Seção | Fonte e página original | Autor e coleção | Licença |
 |---|---|---|---|---|
-| `cafe-owner-paperwork.jpg` | Hero | iStock, ID 1285929089, https://www.istockphoto.com/photo/gm1285929089-383007738 | Charli Bandit, E+ | Royalty-free padrão, com autorização de modelo e propriedade |
 | `violin-maker-hands.jpg` | Por que a Rocket | Getty Images, ID 482564297, https://www.gettyimages.com/detail/photo/violin-maker-at-work-close-up-of-hands-royalty-free-image/482564297 | Kathrin Ziegler, Stone | Royalty-free criativa, com autorização de modelo e propriedade |
 | `concrete-stairs-light.jpg` | Como trabalhamos | Getty Images, ID 1897228123, https://www.gettyimages.com/detail/photo/light-effects-on-concrete-walls-and-staircases-royalty-free-image/1897228123 | zhihao, Moment | Royalty-free, sem necessidade de autorização |
 | `bistro-table-for-two.jpg` | Próximo passo | Getty Images, ID 1623569581, https://www.gettyimages.com/detail/photo/restaurant-interior-royalty-free-image/1623569581 | wilatlak villette, Moment | Royalty-free, sem necessidade de autorização |
 
-**Situação:** as quatro fotos ainda não foram licenciadas. Os arquivos atuais são os previews oficiais
+**Situação:** as três fotos ainda não foram licenciadas. Os arquivos atuais são os previews oficiais
 com marca d'água, usados só para revisão no preview da Vercel. **Não publicar em produção assim.**
 Antes do merge, substitua cada arquivo pelo original licenciado no mesmo caminho, registre aqui
 o número da licença e faça o merge com squash, para os previews não entrarem no histórico da main.
@@ -41,3 +40,9 @@ As fotografias que aparecem dentro das telas também são do Unsplash, sob a mes
 - https://unsplash.com/photos/rm7rZYdl3rY
 - https://unsplash.com/photos/pTrhfmj2jDA
 - https://unsplash.com/photos/H9lg5Noj660
+
+## Vídeo de abertura
+
+`public/hero-loop.mp4` (e o quadro `public/hero-poster.jpg`) vem do template de prompt "Fluxora", baixado uma vez e servido pelo próprio site. Foi recodificado sem áudio (H.264, 1280 × 720, cerca de 1,6 MB).
+
+**Situação:** o direito de uso comercial precisa ser confirmado antes da produção. Se não for possível, o vídeo é trocado por um fundo gerado em código com o mesmo layout.

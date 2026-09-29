@@ -13,7 +13,7 @@ export const SECTIONS: {
   /** Onde a seção aparece no site, para o preview. */
   path: string;
 }[] = [
-  { key: "hero", slug: "hero", label: "Hero", description: "Título, descrição, botões e foto de abertura.", area: "landing", path: "/" },
+  { key: "hero", slug: "hero", label: "Hero", description: "Título, descrição, botões e cartões da abertura.", area: "landing", path: "/" },
   { key: "problem", slug: "problema", label: "Problema", description: "Os improvisos que caem sobre a foto e a conclusão.", area: "landing", path: "/" },
   { key: "shift", slug: "o-que-muda", label: "O que muda", description: "Pares de antes e depois com as fotos de cada grupo.", area: "landing", path: "/" },
   { key: "statement", slug: "virada", label: "Virada", description: "A proposta da Rocket e a foto que sobe por trás.", area: "landing", path: "/" },

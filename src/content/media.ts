@@ -1,7 +1,7 @@
 /**
  * Fotografia da landing page.
  *
- * Direção "Ofício": quatro fotografias da mesma família de luz (baixa, quente, fundo escuro),
+ * Direção "Ofício": três fotografias da mesma família de luz (baixa, quente, fundo escuro),
  * escolhidas por associação de conceito. As demais seções usam composições desenhadas
  * a partir da própria copy (src/components/visuals).
  *
@@ -10,7 +10,6 @@
  * Origem e licença de cada foto: src/assets/images/CREDITS.md
  */
 
-import cafeOwnerPaperwork from "@/assets/images/cafe-owner-paperwork.jpg";
 import violinMakerHands from "@/assets/images/violin-maker-hands.jpg";
 import concreteStairsLight from "@/assets/images/concrete-stairs-light.jpg";
 import bistroTableForTwo from "@/assets/images/bistro-table-for-two.jpg";
@@ -20,10 +19,6 @@ import type { FallbackKey } from "@/lib/content/schemas";
 export type Photo = { src: StaticImageData; alt: string };
 
 export const media = {
-  hero: {
-    src: cafeOwnerPaperwork,
-    alt: "Dono de café sentado sozinho à mesa do salão, à noite, com a cabeça apoiada na mão, preenchendo papéis",
-  },
   differentials: {
     src: violinMakerHands,
     alt: "Mãos de um luthier ajustando a lateral curva de um violino em construção, entre aparas de madeira na bancada",

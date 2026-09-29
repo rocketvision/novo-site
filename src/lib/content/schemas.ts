@@ -62,13 +62,13 @@ export const optionalHttpsUrl = z
 export const uuid = z.string().uuid("Identificador inválido.");
 
 /**
- * Imagem de uma seção. Só hero, diferenciais, processo e convite final usam fotografia;
+ * Imagem de uma seção. Só diferenciais, processo e convite final usam fotografia;
  * as demais seções têm composições desenhadas a partir da própria copy.
  * `mediaId` aponta para a biblioteca de mídia.
  * `fallback` (definido pelo sistema, não editável) aponta para a foto original embutida no site:
  * se nenhuma imagem for escolhida, a landing continua com a foto de direção de arte original.
  */
-export const FALLBACK_KEYS = ["hero", "differentials", "workflow", "cta"] as const;
+export const FALLBACK_KEYS = ["differentials", "workflow", "cta"] as const;
 export type FallbackKey = (typeof FALLBACK_KEYS)[number];
 
 export const image = z.object({
@@ -94,7 +94,17 @@ export const heroSchema = z.object({
   lead: text(260, "A descrição"),
   primaryCta: link,
   secondaryCta: link,
-  image: imageRequired,
+  // A abertura é um vídeo embutido no site; a antiga foto do hero salva no banco é ignorada.
+  proof: z
+    .object({ title: text(40, "O destaque"), text: text(60, "O complemento") })
+    .default({ title: "Você fala com quem constrói", text: "Sem intermediários, do início ao fim" }),
+  highlights: z
+    .array(z.object({ value: text(16, "O destaque"), label: text(60, "O texto") }))
+    .length(2, "Use dois cartões.")
+    .default([
+      { value: "Sob medida", label: "Feito para o seu negócio, não um modelo pronto" },
+      { value: "1 só time", label: "Design e tecnologia trabalhando juntos" },
+    ]),
 });
 
 export const problemSchema = z.object({

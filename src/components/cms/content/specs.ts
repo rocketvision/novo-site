@@ -42,15 +42,38 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
       max: 40,
       min: 1,
       maxItems: 4,
-      hint: "Cada linha entra em sequência na animação de abertura. Use de 1 a 4 linhas curtas.",
+      hint: "Cada linha entra em sequência na animação de abertura. Use de 1 a 4 linhas curtas. Coloque uma palavra entre asteriscos (*rumo*) para destacá-la em itálico.",
     },
     { type: "text", key: "lead", label: "Descrição", max: 260, multiline: true },
     { type: "link", key: "primaryCta", label: "Botão principal", hint: "Use #contato para levar ao formulário no fim da página." },
     { type: "link", key: "secondaryCta", label: "Link secundário", hint: "Aparece ao lado do botão, com uma seta para baixo." },
-    { type: "image", key: "image", label: "Foto de abertura", minWidth: 1920, hint: "Ocupa a tela inteira durante o scroll. Prefira fotos horizontais com pelo menos 1920 px de largura." },
+    {
+      type: "group",
+      key: "proof",
+      label: "Garantia ao lado do botão",
+      fields: [
+        { type: "text", key: "title", label: "Destaque", max: 40 },
+        { type: "text", key: "text", label: "Complemento", max: 60 },
+      ],
+    },
+    {
+      type: "list",
+      key: "highlights",
+      label: "Cartões",
+      itemLabel: "Cartão",
+      itemTitle: (item) => String(item.value ?? ""),
+      min: 2,
+      maxItems: 2,
+      fixed: true,
+      hint: "Os dois cartões de vidro abaixo do botão. Use compromissos reais, não números inventados.",
+      fields: [
+        { type: "text", key: "value", label: "Destaque", max: 16 },
+        { type: "text", key: "label", label: "Texto", max: 60 },
+      ],
+    },
   ],
   problem: [
-    { type: "text", key: "eyebrow", label: "Rótulo", max: 60, hint: "Aparece no centro da tela quando os objetos começam a cair." },
+    { type: "text", key: "eyebrow", label: "Rótulo", max: 60, hint: "Aparece acima do manifesto, logo depois da abertura." },
     {
       type: "list",
       key: "symptoms",
@@ -60,7 +83,7 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
       min: 4,
       maxItems: 4,
       fixed: true,
-      hint: "Os quatro objetos que caem sobre a foto, um em cada canto.",
+      hint: "As quatro frases acendem uma a uma no manifesto da abertura. Os objetos reaparecem em O que muda, no manifesto e em Serviços.",
       fields: [
         {
           type: "select",
@@ -82,7 +105,7 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
           optional: true,
           disabledWhen: (item) => (item.kind === "note" ? "O post-it não exibe complemento." : null),
         },
-        { type: "text", key: "text", label: "Legenda", max: 70, hint: "Frase exibida abaixo do objeto." },
+        { type: "text", key: "text", label: "Frase", max: 70, hint: "Frase do manifesto logo depois da abertura." },
       ],
     },
     {

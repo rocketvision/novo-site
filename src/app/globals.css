@@ -8,6 +8,8 @@
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+  /* Só para uma palavra do título da abertura: o único gesto em serifa da página. */
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
 
   --color-ink: #0a0a0b;
   --color-ink-soft: #161618;
@@ -22,6 +24,9 @@
   --color-accent-soft: #ff8a5c;
   /* Acento para texto pequeno sobre fundo claro (contraste AA). */
   --color-accent-strong: #c2410c;
+  /* Brasa: o fundo quente da abertura, entre o grafite e o acento. */
+  --color-ember: #2a0b02;
+  --color-ember-deep: #120400;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -186,23 +191,6 @@
   }
   to {
     opacity: 1;
-  }
-}
-
-/* Flutuação lenta dos improvisos do hero: a nuvem respira mesmo parada. */
-@keyframes drift {
-  from {
-    transform: translate3d(0, -7px, 0) rotate(-1.2deg);
-  }
-  to {
-    transform: translate3d(0, 7px, 0) rotate(1.2deg);
-  }
-}
-
-@utility animate-drift {
-  animation: drift var(--drift, 8s) ease-in-out infinite alternate;
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
   }
 }
 

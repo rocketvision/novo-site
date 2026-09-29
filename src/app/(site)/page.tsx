@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Narrativa: promessa que se abre em fotografia, problema, o que muda,
+ * Narrativa: promessa sobre o vídeo de abertura, problema, o que muda,
  * virada para a solução, serviços, diferenciais, provas, processo,
  * momento tipográfico e conversa.
  */
@@ -70,7 +70,7 @@ export default async function Home() {
       />
       <Header />
       <main id="conteudo">
-        <HeroScene hero={content.hero} problem={content.problem} />
+        <HeroScene hero={content.hero} problem={content.problem} services={content.services} workflow={content.workflow} />
         <ShiftScene shift={content.shift} problem={content.problem} />
         <Statement statement={content.statement} problem={content.problem} />
         <Services services={content.services} problem={content.problem} />

@@ -63,4 +63,15 @@ describe("conteúdo salvo antes da direção de arte atual", () => {
     expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
     expect(parsed.data?.image).toEqual({ mediaId: null, alt: "", fallback: "workflow" });
   });
+
+  it("abertura com foto antiga: descarta a foto e recebe a garantia e os cartões padrão", () => {
+    const legacy: Record<string, unknown> = { ...DEFAULT_CONTENT.hero, image: oldImage("hero") };
+    delete legacy.proof;
+    delete legacy.highlights;
+    const parsed = SECTION_SCHEMAS.hero.safeParse(legacy);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
+    expect(parsed.data).not.toHaveProperty("image");
+    expect(parsed.data?.proof).toEqual(DEFAULT_CONTENT.hero.proof);
+    expect(parsed.data?.highlights).toEqual(DEFAULT_CONTENT.hero.highlights);
+  });
 });

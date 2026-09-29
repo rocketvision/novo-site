@@ -112,9 +112,9 @@ describe("validação no servidor", () => {
   });
 
   it("só aceita as fotos originais conhecidas como fallback", async () => {
-    const state = await getSectionState("hero");
-    const draft = { ...hero(), image: { mediaId: null, alt: "", fallback: "../../etc/passwd" } };
-    await expectStatus(saveDraft(actor, "hero", draft, state.version, ctx), 422);
+    const state = await getSectionState("cta");
+    const draft = { ...structuredClone(DEFAULT_CONTENT.cta), image: { mediaId: null, alt: "", fallback: "../../etc/passwd" } };
+    await expectStatus(saveDraft(actor, "cta", draft, state.version, ctx), 422);
   });
 
   it("a palavra riscada precisa existir na frase", async () => {
@@ -127,16 +127,17 @@ describe("validação no servidor", () => {
 describe("uso de mídia", () => {
   it("registra onde a imagem é usada e impede removê-la", async () => {
     const buffer = await sharp({ create: { width: 64, height: 64, channels: 3, background: "#224466" } }).jpeg().toBuffer();
-    const { media } = await uploadMedia(actor, { buffer, filename: "hero.jpg" }, ctx);
+    const { media } = await uploadMedia(actor, { buffer, filename: "convite.jpg" }, ctx);
 
-    const state = await getSectionState("hero");
-    const saved = await saveDraft(actor, "hero", { ...hero(), image: { mediaId: media.id, alt: "Nova foto", fallback: "hero" } }, state.version, ctx);
+    const state = await getSectionState("cta");
+    const cta = structuredClone(DEFAULT_CONTENT.cta);
+    const saved = await saveDraft(actor, "cta", { ...cta, image: { mediaId: media.id, alt: "Nova foto", fallback: "cta" } }, state.version, ctx);
     let detail = await getMedia(media.id);
-    expect(detail?.usages.map((u) => u.label)).toEqual(["Hero · Imagem (rascunho)"]);
+    expect(detail?.usages.map((u) => u.label)).toEqual(["Contato · Imagem (rascunho)"]);
 
-    await publishSection(actor, "hero", saved.version, ctx);
+    await publishSection(actor, "cta", saved.version, ctx);
     detail = await getMedia(media.id);
-    expect(detail?.usages.map((u) => u.label).sort()).toEqual(["Hero · Imagem (publicado)", "Hero · Imagem (rascunho)"]);
+    expect(detail?.usages.map((u) => u.label).sort()).toEqual(["Contato · Imagem (publicado)", "Contato · Imagem (rascunho)"]);
 
     await expectStatus(deleteMedia(actor, media.id, ctx), 409);
   });

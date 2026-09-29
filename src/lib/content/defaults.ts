@@ -33,7 +33,8 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     lead: hero.lead,
     primaryCta: { label: hero.primaryCta, href: "#contato" },
     secondaryCta: { label: hero.secondaryCta, href: "#servicos" },
-    image: img("hero"),
+    proof: { ...hero.proof },
+    highlights: hero.highlights.map((h) => ({ ...h })),
   },
   problem: {
     eyebrow: problem.eyebrow,

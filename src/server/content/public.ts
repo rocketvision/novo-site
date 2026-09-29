@@ -44,7 +44,7 @@ function resolveImages(value: unknown, media: Map<string, MediaInfo>): unknown {
     const fallback = value.fallback ? FALLBACK_IMAGES[value.fallback as keyof typeof FALLBACK_IMAGES] : undefined;
     if (fallback) return { src: fallback.src, alt: value.alt || fallback.alt } satisfies ResolvedImage;
     // Sem arquivo e sem foto original: o schema impede, mas o site nunca quebra por isso.
-    return { src: FALLBACK_IMAGES.hero.src, alt: "" } satisfies ResolvedImage;
+    return { src: FALLBACK_IMAGES.differentials.src, alt: "" } satisfies ResolvedImage;
   }
   if (Array.isArray(value)) return value.map((v) => resolveImages(v, media));
   if (typeof value === "object" && value !== null) {
