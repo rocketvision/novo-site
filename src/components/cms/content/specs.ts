@@ -212,7 +212,6 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
         { type: "text", key: "body", label: "Texto", max: 220, multiline: true },
       ],
     },
-    { type: "image", key: "image", label: "Foto", minWidth: 2400, hint: "Fica fixa na lateral; a cada diferencial o enquadramento se aproxima de um detalhe dela. Prefira uma foto horizontal rica em detalhes, com pelo menos 2400 px de largura." },
   ],
   workflow: [
     { type: "text", key: "eyebrow", label: "Rótulo", max: 40 },
@@ -233,7 +232,6 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
         { type: "text", key: "body", label: "Texto", max: 220, multiline: true },
       ],
     },
-    { type: "image", key: "image", label: "Foto do caminho", minWidth: 2400, hint: "Uma única foto para todas as etapas: cada quadro mostra um trecho dela, em sequência. Prefira uma foto horizontal com um caminho ou percurso, com pelo menos 2400 px de largura." },
   ],
   turn: [
     { type: "text", key: "from", label: "Primeira frase", max: 90, hint: "É riscada e se desmonta palavra por palavra." },
@@ -247,7 +245,6 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
     { type: "lines", key: "interests", label: "Opções de interesse", itemLabel: "Opção", max: 30, min: 1, maxItems: 10, hint: "Botões que a pessoa marca no formulário." },
     { type: "text", key: "submit", label: "Texto do botão de envio", max: 40 },
     { type: "text", key: "reassurance", label: "Texto de apoio", max: 80, optional: true, hint: "Aparece ao lado do botão. Deixe vazio para não exibir." },
-    { type: "image", key: "image", label: "Foto", minWidth: 1920, hint: "Decorativa: abre até as bordas da tela por trás do título." },
   ],
   projectsPage: [
     { type: "text", key: "eyebrow", label: "Rótulo", max: 30 },

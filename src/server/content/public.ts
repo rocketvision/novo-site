@@ -3,7 +3,6 @@ import { cache } from "react";
 import { draftMode } from "next/headers";
 import { unstable_cache } from "next/cache";
 import { eq, inArray } from "drizzle-orm";
-import { FALLBACK_IMAGES } from "@/content/media";
 import { DEFAULT_CONTENT } from "@/lib/content/defaults";
 import { SECTION_SCHEMAS, type SectionContent, type SectionKey } from "@/lib/content/schemas";
 import type { LandingContent, Resolved, ResolvedImage } from "@/lib/content/resolved";
@@ -41,10 +40,8 @@ function resolveImages(value: unknown, media: Map<string, MediaInfo>): unknown {
     if (file) {
       return { src: file.url, alt: value.alt || file.alt, ...(file.blurDataUrl && { blurDataURL: file.blurDataUrl }) } satisfies ResolvedImage;
     }
-    const fallback = value.fallback ? FALLBACK_IMAGES[value.fallback as keyof typeof FALLBACK_IMAGES] : undefined;
-    if (fallback) return { src: fallback.src, alt: value.alt || fallback.alt } satisfies ResolvedImage;
-    // Sem arquivo e sem foto original: o schema impede, mas o site nunca quebra por isso.
-    return { src: FALLBACK_IMAGES.differentials.src, alt: "" } satisfies ResolvedImage;
+    // Sem arquivo na biblioteca: a seção decide como seguir sem a imagem.
+    return null;
   }
   if (Array.isArray(value)) return value.map((v) => resolveImages(v, media));
   if (typeof value === "object" && value !== null) {

@@ -1,22 +1,7 @@
 # Créditos das imagens
 
-Direção de arte "Ofício": três fotografias da mesma família de luz (baixa, quente, fundo escuro).
-As demais seções (O que muda, manifesto e serviços) têm composições desenhadas em código
-em `src/components/visuals`, a partir da própria copy, e não dependem de arquivos de imagem.
-
-| Arquivo | Seção | Fonte e página original | Autor e coleção | Licença |
-|---|---|---|---|---|
-| `violin-maker-hands.jpg` | Por que a Rocket | Getty Images, ID 482564297, https://www.gettyimages.com/detail/photo/violin-maker-at-work-close-up-of-hands-royalty-free-image/482564297 | Kathrin Ziegler, Stone | Royalty-free criativa, com autorização de modelo e propriedade |
-| `concrete-stairs-light.jpg` | Como trabalhamos | Getty Images, ID 1897228123, https://www.gettyimages.com/detail/photo/light-effects-on-concrete-walls-and-staircases-royalty-free-image/1897228123 | zhihao, Moment | Royalty-free, sem necessidade de autorização |
-| `bistro-table-for-two.jpg` | Próximo passo | Getty Images, ID 1623569581, https://www.gettyimages.com/detail/photo/restaurant-interior-royalty-free-image/1623569581 | wilatlak villette, Moment | Royalty-free, sem necessidade de autorização |
-
-**Situação:** as três fotos ainda não foram licenciadas. Os arquivos atuais são os previews oficiais
-com marca d'água, usados só para revisão no preview da Vercel. **Não publicar em produção assim.**
-Antes do merge, substitua cada arquivo pelo original licenciado no mesmo caminho, registre aqui
-o número da licença e faça o merge com squash, para os previews não entrarem no histórico da main.
-
-Ajustes de enquadramento: a foto da escada é espelhada na horizontal para subir no sentido da leitura;
-Por que a Rocket e Como trabalhamos usam enquadramentos da mesma foto (ver `src/lib/framing.ts`).
+A landing não usa fotografia. A abertura e o convite final usam o vídeo abaixo; as demais seções
+são composições desenhadas em código em `src/components/visuals` e nas próprias seções, a partir da copy.
 
 ## Projetos de exemplo (rota /projetos)
 

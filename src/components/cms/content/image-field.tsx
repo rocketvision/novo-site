@@ -2,12 +2,11 @@
 
 import { createContext, useContext, useState } from "react";
 import Image from "next/image";
-import { ImageIcon, RotateCcw } from "lucide-react";
+import { ImageIcon, X } from "lucide-react";
 import { Button } from "@/components/cms/ui/button";
 import { Field, Input } from "@/components/cms/ui/field";
 import { MediaPicker } from "@/components/cms/media/media-picker";
 import type { MediaDTO } from "@/components/cms/media/types";
-import { FALLBACK_IMAGES } from "@/content/media";
 import type { ImageField as ImageValue } from "@/lib/content/schemas";
 
 export type MediaPreview = Pick<MediaDTO, "id" | "url" | "alt" | "width" | "height" | "filename" | "blurDataUrl">;
@@ -41,9 +40,8 @@ export function ImageField({
   const [picking, setPicking] = useState(false);
 
   const chosen = value.mediaId ? media[value.mediaId] : undefined;
-  const original = value.fallback ? FALLBACK_IMAGES[value.fallback] : undefined;
-  const preview = chosen ? { src: chosen.url, alt: chosen.alt, blur: chosen.blurDataUrl ?? undefined } : original ? { src: original.src, alt: original.alt, blur: undefined } : null;
-  const defaultAlt = chosen?.alt || original?.alt || "";
+  const preview = chosen ? { src: chosen.url, alt: chosen.alt, blur: chosen.blurDataUrl ?? undefined } : null;
+  const defaultAlt = chosen?.alt || "";
   const lowRes = chosen && minWidth && chosen.width < minWidth;
   const noAlt = Boolean(chosen) && !value.alt && !chosen?.alt;
 
@@ -80,8 +78,6 @@ export function ImageField({
               </>
             ) : value.mediaId ? (
               <span className="text-red-600">A imagem escolhida não está mais na biblioteca.</span>
-            ) : original ? (
-              "Foto original do site"
             ) : (
               "Nenhuma imagem escolhida"
             )}
@@ -93,12 +89,12 @@ export function ImageField({
           )}
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={() => setPicking(true)}>
-              {value.mediaId || original ? "Trocar imagem" : "Escolher imagem"}
+              {value.mediaId ? "Trocar imagem" : "Escolher imagem"}
             </Button>
-            {value.mediaId && original && (
-              // O texto alternativo descrevia a imagem anterior: volta a usar o da foto original.
+            {value.mediaId && (
+              // O texto alternativo descrevia a imagem removida: sai junto com ela.
               <Button variant="ghost" size="sm" onClick={() => onChange({ ...value, mediaId: null, alt: "" })}>
-                <RotateCcw className="size-3.5" /> Voltar para a foto original
+                <X className="size-3.5" /> Remover imagem
               </Button>
             )}
           </div>

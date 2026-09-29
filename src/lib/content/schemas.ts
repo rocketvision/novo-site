@@ -62,25 +62,16 @@ export const optionalHttpsUrl = z
 export const uuid = z.string().uuid("Identificador inválido.");
 
 /**
- * Imagem de uma seção. Só diferenciais, processo e convite final usam fotografia;
- * as demais seções têm composições desenhadas a partir da própria copy.
- * `mediaId` aponta para a biblioteca de mídia.
- * `fallback` (definido pelo sistema, não editável) aponta para a foto original embutida no site:
- * se nenhuma imagem for escolhida, a landing continua com a foto de direção de arte original.
+ * Imagem da biblioteca de mídia (`mediaId`) com texto alternativo.
+ * A landing não usa fotografia hoje: as seções são composições em código e o vídeo de abertura.
+ * O campo fica disponível para quando houver fotos reais de clientes e projetos.
+ * Conteúdo salvo com fotos antigas continua válido: os campos que as seções não usam mais são descartados.
  */
-export const FALLBACK_KEYS = ["differentials", "workflow", "cta"] as const;
-export type FallbackKey = (typeof FALLBACK_KEYS)[number];
-
 export const image = z.object({
   mediaId: uuid.nullable(),
   alt: optionalText(200, "O texto alternativo"),
-  // Só aceita as fotos embutidas no site: o cliente não consegue apontar para outro arquivo.
-  fallback: z.enum(FALLBACK_KEYS).optional(),
 });
 export type ImageField = z.infer<typeof image>;
-
-const requireImage = (value: ImageField) => value.mediaId !== null || Boolean(value.fallback);
-const imageRequired = image.refine(requireImage, "Escolha uma imagem.");
 
 const link = z.object({ label: text(40, "O texto do botão"), href });
 
@@ -170,7 +161,6 @@ export const differentialsSchema = z.object({
     .array(z.object({ title: text(60, "O título"), body: text(220, "O texto") }))
     .min(1)
     .max(8, "Use até 8 diferenciais."),
-  image: imageRequired,
 });
 
 export const workflowSchema = z.object({
@@ -187,9 +177,6 @@ export const workflowSchema = z.object({
     )
     .min(2)
     .max(6, "Use até 6 etapas."),
-  // Uma única fotografia para o caminho inteiro; cada etapa mostra um enquadramento dela.
-  // Conteúdo salvo antes dela (com uma foto por etapa) recebe a foto original.
-  image: imageRequired.default({ mediaId: null, alt: "", fallback: "workflow" }),
 });
 
 export const turnSchema = z
@@ -210,7 +197,6 @@ export const ctaSchema = z.object({
   submit: text(40, "O texto do botão"),
   interests: z.array(text(30, "Cada opção")).min(1).max(10, "Use até 10 opções."),
   reassurance: optionalText(80, "O texto de apoio"),
-  image: imageRequired,
 });
 
 export const projectsPageSchema = z.object({

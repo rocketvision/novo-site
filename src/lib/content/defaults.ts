@@ -4,9 +4,6 @@
  * Usado em dois momentos:
  * 1. No seed, para criar as seções no banco já publicadas com o conteúdo atual do site.
  * 2. Como rede de segurança: se o banco estiver indisponível, a landing continua exibindo este conteúdo.
- *
- * As imagens apontam para as fotos originais pela chave `fallback` (ver FALLBACK_IMAGES em src/content/media.ts).
- * O texto alternativo fica vazio: assim vale o da própria foto original, que muda junto com ela.
  */
 
 import {
@@ -22,9 +19,8 @@ import {
   workflow,
 } from "@/content/landing";
 import { site } from "@/lib/site";
-import type { FallbackKey, SectionContent, SectionKey } from "./schemas";
+import type { SectionContent, SectionKey } from "./schemas";
 
-const img = (fallback: FallbackKey) => ({ mediaId: null, alt: "", fallback });
 
 export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
   hero: {
@@ -70,14 +66,12 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     eyebrow: differentials.eyebrow,
     title: differentials.title,
     items: differentials.items.map((i) => ({ title: i.title, body: i.body })),
-    image: img("differentials"),
   },
   workflow: {
     eyebrow: workflow.eyebrow,
     title: workflow.title,
     lead: workflow.lead,
     steps: workflow.steps.map((s) => ({ name: s.name, title: s.title, body: s.body })),
-    image: img("workflow"),
   },
   turn: { from: turn.from, strike: "complicar", to: turn.to },
   cta: {
@@ -87,7 +81,6 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     submit: cta.submit,
     interests: [...cta.interests],
     reassurance: cta.reassurance,
-    image: img("cta"),
   },
   projectsPage: {
     eyebrow: projectsPage.eyebrow,

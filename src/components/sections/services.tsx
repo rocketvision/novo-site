@@ -7,6 +7,7 @@ import { ArrowUpRight, Check } from "lucide-react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { ServiceVisual } from "@/components/visuals/service-visuals";
 import { Reveal } from "@/components/animations/reveal";
+import { scrollToY } from "@/components/animations/smooth-scroll";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
@@ -71,7 +72,7 @@ function ServicesStage({ items, problem }: { items: Service[]; problem: Problem 
     if (!el) return;
     const scrollable = el.offsetHeight - window.innerHeight;
     const top = el.getBoundingClientRect().top + window.scrollY + ((index + 0.3) / total) * scrollable;
-    window.scrollTo({ top, behavior: "smooth" });
+    scrollToY(top);
   };
 
   return (
@@ -125,6 +126,8 @@ function ServicesStage({ items, problem }: { items: Service[]; problem: Problem 
   );
 }
 
+const easeOutCubic = (x: number) => 1 - (1 - x) ** 3;
+
 function segmentOf(index: number, total: number) {
   const start = index / total;
   const end = (index + 1) / total;
@@ -168,25 +171,30 @@ function ServiceCopy({ service, index, total, progress }: SlideProps) {
 }
 
 function ServicePanel({ service, index, total, progress, problem }: SlideProps & { problem: Problem }) {
-  const { start, end, w } = segmentOf(index, total);
+  const { start, end, w, last } = segmentOf(index, total);
   // O improviso chega ao resultado enquanto o serviço entra; o selo fecha a cena.
   const t = useTransform(progress, (v) => segment(v, start - w * 0.2, start + w * 0.2));
-  // O visual seguinte entra da direita como uma cortina, com a câmera ainda se aproximando.
+  // O visual seguinte nasce como uma janela no centro e se abre até as bordas, com a câmera se aproximando.
   const clipPath = useTransform(progress, (v) => {
     if (index === 0) return insetClip(0, 0, 0, 0);
-    const t = segment(v, start - w * 0.28, start + w * 0.12);
-    return insetClip(0, 0, 0, (1 - t) * 100);
+    // Começa como um ponto (invisível) e se abre com desaceleração.
+    const k = 1 - easeOutCubic(segment(v, start - w * 0.32, start + w * 0.1));
+    return insetClip(k * 50, k * 50, k * 50, k * 50, 40 * Math.min(1, k * 3));
   });
-  const scale = useTransform(progress, [start - w * 0.28, end], [1.18, 1.02]);
+  // Ao dar lugar ao próximo, o visual passa pela câmera: cresce e escurece.
+  const scale = useTransform(progress, [start - w * 0.32, start + w * 0.1, end - w * 0.3, end + w * 0.1], [0.72, 1, 1, last ? 1 : 1.18]);
+  const dim = useTransform(progress, [end - w * 0.3, end + w * 0.1], [0, last ? 0 : 0.55]);
   const signalOpacity = useTransform(progress, [start + w * 0.1, start + w * 0.25, end - w * 0.1, end], [index === 0 ? 1 : 0, 1, 1, 0]);
   const signalY = useTransform(progress, [start + w * 0.1, start + w * 0.25], [index === 0 ? 0 : 24, 0]);
+  const signalScale = useTransform(progress, [start + w * 0.1, start + w * 0.25], [index === 0 ? 1 : 0.85, 1]);
 
   return (
     <m.div style={{ clipPath }} className="absolute inset-0">
       <m.div style={{ scale }} className="absolute inset-0">
         <ServiceVisual service={service} t={t} problem={problem} />
       </m.div>
-      <m.div style={{ opacity: signalOpacity, y: signalY }} className="absolute bottom-10 left-10 z-10">
+      <m.div style={{ opacity: dim }} className="pointer-events-none absolute inset-0 bg-ink" />
+      <m.div style={{ opacity: signalOpacity, y: signalY, scale: signalScale }} className="absolute bottom-10 left-10 z-10 origin-bottom-left">
         <Signal text={service.signal} />
       </m.div>
     </m.div>

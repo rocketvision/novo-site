@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cubicBezier, m, useTransform, type MotionValue } from "motion/react";
 import { ArrowDown, ArrowRight, Globe, LayoutDashboard, PenTool, ShoppingBag, Smartphone, Sparkle } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo";
+import { EmberVideo } from "@/components/ui/ember-video";
 import type { Resolved } from "@/lib/content/resolved";
 import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
@@ -74,44 +75,6 @@ function TitleLine({ line }: { line: string }) {
   );
 }
 
-/**
- * Vídeo em loop, servido pelo próprio site. Aparece desde o primeiro instante:
- * o poster é o primeiro quadro, então não há salto quando ele começa a tocar.
- * (Não esperamos o evento canplay: ele pode disparar antes da hidratação e se perder.)
- */
-function HeroVideo({ play }: { play: boolean }) {
-  const ref = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    if (!play) {
-      video.pause();
-      return;
-    }
-    // Alguns navegadores só iniciam o autoplay com um empurrão explícito.
-    video.play().catch(() => {});
-  }, [play]);
-
-  return (
-    <video
-      ref={ref}
-      className="absolute inset-0 size-full object-cover object-[68%_center]"
-      poster="/hero-poster.jpg"
-      autoPlay={play}
-      muted
-      loop
-      playsInline
-      preload="auto"
-      aria-hidden="true"
-    >
-      {/* WebM (VP9) é quatro vezes menor e começa antes; o MP4 (H.264) cobre o resto. */}
-      <source src="/hero-loop.webm" type="video/webm" />
-      <source src="/hero-loop.mp4" type="video/mp4" />
-    </video>
-  );
-}
-
 /** Fundo da abertura: brasa, vídeo, a máscara que protege a leitura e as linhas finas. */
 function HeroMedia({ play }: { play: boolean }) {
   return (
@@ -120,7 +83,7 @@ function HeroMedia({ play }: { play: boolean }) {
       className="absolute inset-0 bg-ember-deep bg-[url(/hero-poster.jpg)] bg-cover bg-[68%_center]"
       aria-hidden="true"
     >
-      <HeroVideo play={play} />
+      <EmberVideo play={play} />
       {/* O vídeo é laranja do horizonte para a direita e quase preto no alto à esquerda:
           a máscara é assimétrica, pesada sob o texto e quase nula sobre o personagem. */}
       <div className="absolute inset-0 bg-[linear-gradient(96deg,rgb(10_3_0/0.9)_0%,rgb(14_4_0/0.7)_34%,rgb(20_6_0/0.2)_56%,rgb(20_6_0/0)_72%),linear-gradient(0deg,rgb(9_2_0/0.78)_0%,rgb(9_2_0/0.12)_28%,transparent_46%),linear-gradient(180deg,rgb(8_2_0/0.5)_0%,transparent_22%)] max-md:bg-[linear-gradient(180deg,rgb(8_2_0/0.55)_0%,rgb(10_3_0/0.35)_30%,rgb(10_3_0/0.78)_62%,rgb(9_2_0/0.92)_100%)]" />

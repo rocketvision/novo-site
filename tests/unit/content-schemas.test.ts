@@ -53,15 +53,21 @@ describe("conteúdo salvo antes da direção de arte atual", () => {
     expect(SECTION_SCHEMAS.statement.safeParse({ ...DEFAULT_CONTENT.statement, image: oldImage("statement") }).success).toBe(true);
   });
 
-  it("recebe a foto única do caminho quando as etapas tinham uma foto cada", () => {
-    const legacy: Record<string, unknown> = {
+  it("descarta as fotos que diferenciais, processo e convite final tinham", () => {
+    const workflow = {
       ...DEFAULT_CONTENT.workflow,
+      image: oldImage("workflow"),
       steps: DEFAULT_CONTENT.workflow.steps.map((s, i) => ({ ...s, image: oldImage(`workflow-${i}`) })),
     };
-    delete legacy.image;
-    const parsed = SECTION_SCHEMAS.workflow.safeParse(legacy);
-    expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
-    expect(parsed.data?.image).toEqual({ mediaId: null, alt: "", fallback: "workflow" });
+    const parsedWorkflow = SECTION_SCHEMAS.workflow.safeParse(workflow);
+    expect(parsedWorkflow.success, JSON.stringify(parsedWorkflow.error?.issues)).toBe(true);
+    expect(parsedWorkflow.data).not.toHaveProperty("image");
+
+    for (const key of ["differentials", "cta"] as const) {
+      const parsed = SECTION_SCHEMAS[key].safeParse({ ...DEFAULT_CONTENT[key], image: oldImage(key) });
+      expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
+      expect(parsed.data).not.toHaveProperty("image");
+    }
   });
 
   it("abertura com foto antiga: descarta a foto e recebe a garantia e os cartões padrão", () => {

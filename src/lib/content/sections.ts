@@ -14,14 +14,14 @@ export const SECTIONS: {
   path: string;
 }[] = [
   { key: "hero", slug: "hero", label: "Hero", description: "Título, descrição, botões e cartões da abertura.", area: "landing", path: "/" },
-  { key: "problem", slug: "problema", label: "Problema", description: "Os improvisos que caem sobre a foto e a conclusão.", area: "landing", path: "/" },
-  { key: "shift", slug: "o-que-muda", label: "O que muda", description: "Pares de antes e depois com as fotos de cada grupo.", area: "landing", path: "/" },
-  { key: "statement", slug: "virada", label: "Virada", description: "A proposta da Rocket e a foto que sobe por trás.", area: "landing", path: "/" },
-  { key: "services", slug: "servicos", label: "Serviços", description: "Cada serviço com problema, solução, resultados e foto.", area: "landing", path: "/#servicos" },
-  { key: "differentials", slug: "diferenciais", label: "Diferenciais", description: "Os compromissos da Rocket e a foto da seção.", area: "landing", path: "/#diferenciais" },
-  { key: "workflow", slug: "processo", label: "Processo", description: "As etapas de trabalho e a foto de cada uma.", area: "landing", path: "/#processo" },
+  { key: "problem", slug: "problema", label: "Problema", description: "Os improvisos do manifesto e a conclusão.", area: "landing", path: "/" },
+  { key: "shift", slug: "o-que-muda", label: "O que muda", description: "Pares de antes e depois, em cartões que passam na horizontal.", area: "landing", path: "/" },
+  { key: "statement", slug: "virada", label: "Virada", description: "A proposta da Rocket e os improvisos se encaixando.", area: "landing", path: "/" },
+  { key: "services", slug: "servicos", label: "Serviços", description: "Cada serviço com problema, solução e resultados.", area: "landing", path: "/#servicos" },
+  { key: "differentials", slug: "diferenciais", label: "Diferenciais", description: "Os compromissos da Rocket, um capítulo por vez.", area: "landing", path: "/#diferenciais" },
+  { key: "workflow", slug: "processo", label: "Processo", description: "As etapas do caminho que o foguete percorre.", area: "landing", path: "/#processo" },
   { key: "turn", slug: "momento-tipografico", label: "Momento tipográfico", description: "A frase que se desmonta e dá lugar à outra.", area: "landing", path: "/" },
-  { key: "cta", slug: "contato", label: "Contato", description: "Convite final, formulário e foto.", area: "landing", path: "/#contato" },
+  { key: "cta", slug: "contato", label: "Contato", description: "Convite final sobre o vídeo e o formulário.", area: "landing", path: "/#contato" },
   { key: "projectsPage", slug: "pagina-de-projetos", label: "Página de projetos", description: "Abertura e convite final da página de projetos.", area: "landing", path: "/projetos" },
   { key: "site", slug: "site", label: "Site", description: "SEO, contato, redes sociais e dados do rodapé.", area: "settings", path: "/" },
 ];
