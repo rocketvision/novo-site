@@ -5,8 +5,10 @@ import { getImageProps } from "next/image";
 import { cn } from "@/lib/utils";
 
 /**
- * Vídeo de abertura: o lançamento do foguete (8 s, em loop), servido pelo próprio site.
+ * Vídeo de abertura: o lançamento do foguete, servido pelo próprio site.
  *
+ * - Loop sem emenda: o fim (o mar de nuvens) se dissolve no começo (a plataforma) dentro do
+ *   próprio arquivo, e o último quadro encaixa no primeiro. Não há transição em código.
  * - Duas versões: 16:9 (1280 × 720) e um recorte vertical 3:4 (540 × 720) centrado no foguete,
  *   para celulares e tablets em pé baixarem menos e não perderem o assunto no `object-fit: cover`.
  *   Cada uma em VP9 (menor, preferido) e H.264 (para quem não tem VP9).
@@ -56,10 +58,10 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
   const common = { alt: "", sizes: "100vw", loading: "eager", fetchPriority: "high" } as const;
   const {
     props: { srcSet: portraitSrcSet },
-  } = getImageProps({ ...common, src: "/video/hero-rocket-poster-portrait.jpg", width: 540, height: 720 });
+  } = getImageProps({ ...common, src: "/video/hero-loop-rocket-poster-portrait.jpg", width: 540, height: 720 });
   const {
     props: { srcSet, ...image },
-  } = getImageProps({ ...common, src: "/video/hero-rocket-poster.jpg", width: 1280, height: 720 });
+  } = getImageProps({ ...common, src: "/video/hero-loop-rocket-poster.jpg", width: 1280, height: 720 });
 
   return (
     <div className={cn("absolute inset-0 overflow-hidden bg-ink", className)} aria-hidden="true">
@@ -86,11 +88,11 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
           onLoadedData={() => setReady(true)}
           onError={() => setFailed(true)}
         >
-          <source src="/video/hero-rocket-portrait.webm" type="video/webm" media={PORTRAIT} />
-          <source src="/video/hero-rocket-portrait.mp4" type="video/mp4" media={PORTRAIT} />
-          <source src="/video/hero-rocket.webm" type="video/webm" />
+          <source src="/video/hero-loop-rocket-portrait.webm" type="video/webm" media={PORTRAIT} />
+          <source src="/video/hero-loop-rocket-portrait.mp4" type="video/mp4" media={PORTRAIT} />
+          <source src="/video/hero-loop-rocket.webm" type="video/webm" />
           {/* O erro de carregamento chega pela última fonte, não pelo <video>. */}
-          <source src="/video/hero-rocket.mp4" type="video/mp4" onError={() => setFailed(true)} />
+          <source src="/video/hero-loop-rocket.mp4" type="video/mp4" onError={() => setFailed(true)} />
         </video>
       )}
     </div>
