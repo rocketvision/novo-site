@@ -17,6 +17,7 @@
     "cms:bootstrap-owner": "tsx --env-file-if-exists=.env.local scripts/bootstrap-owner.mts",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "db:seed-blog": "tsx --tsconfig scripts/tsconfig.json --env-file-if-exists=.env.local scripts/seed-blog.mts",
     "db:seed-samples": "tsx --tsconfig scripts/tsconfig.json --env-file-if-exists=.env.local scripts/seed-samples.mts"
   },
   "dependencies": {
