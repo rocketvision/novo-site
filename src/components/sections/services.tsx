@@ -7,6 +7,9 @@ import { ArrowUpRight, Check } from "lucide-react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { ServiceVisual } from "@/components/visuals/service-visuals";
 import { Reveal } from "@/components/animations/reveal";
+import { BrowserFrame } from "@/components/projects/devices";
+import { projectsByService } from "@/lib/projects/service-match";
+import type { PublicProject } from "@/lib/projects/types";
 import { scrollToY } from "@/components/animations/smooth-scroll";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
@@ -21,8 +24,11 @@ type Service = Content["items"][number];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export function Services({ services, problem }: { services: Content; problem: Problem }) {
+export function Services({ services, problem, projects = [] }: { services: Content; problem: Problem; projects?: PublicProject[] }) {
   const items = services.items;
+  // Projeto real que ilustra cada serviço (o primeiro da categoria correspondente, na ordem do CMS).
+  const real = projectsByService(projects);
+  const proofOf = (service: Service) => real[service.id]?.[0];
   const reduceMotion = usePrefersReducedMotion();
 
   return (
@@ -43,15 +49,15 @@ export function Services({ services, problem }: { services: Content; problem: Pr
         </Reveal>
       </div>
       {reduceMotion ? (
-        <ServicesStack items={items} problem={problem} />
+        <ServicesStack items={items} problem={problem} proofOf={proofOf} />
       ) : (
         // As duas composições saem do servidor; o CSS escolhe pelo breakpoint, sem salto após carregar.
         <>
           <div className="hidden lg:block">
-            <ServicesStage items={items} problem={problem} />
+            <ServicesStage items={items} problem={problem} proofOf={proofOf} />
           </div>
           <div className="lg:hidden">
-            <ServicesStack items={items} problem={problem} idSuffix="-m" />
+            <ServicesStack items={items} problem={problem} proofOf={proofOf} idSuffix="-m" />
           </div>
         </>
       )}
@@ -60,7 +66,7 @@ export function Services({ services, problem }: { services: Content; problem: Pr
 }
 
 /** Palco fixo: o visual do serviço troca por cortina e o texto acompanha, serviço a serviço. */
-function ServicesStage({ items, problem }: { items: Service[]; problem: Problem }) {
+function ServicesStage({ items, problem, proofOf }: { items: Service[]; problem: Problem; proofOf: ProofOf }) {
   const ref = useRef<HTMLDivElement>(null);
   const total = items.length;
   const progress = useScrollProgress(ref, ["start start", "end end"]);
@@ -115,7 +121,7 @@ function ServicesStage({ items, problem }: { items: Service[]; problem: Problem 
 
         <div className="relative my-[calc(var(--header-height)+0.75rem)] flex-1 overflow-hidden rounded-l-[2rem] bg-mist">
           {items.map((service, i) => (
-            <ServicePanel key={service.id} service={service} index={i} total={total} progress={progress} problem={problem} />
+            <ServicePanel key={service.id} service={service} index={i} total={total} progress={progress} problem={problem} project={proofOf(service)} />
           ))}
           <p className="absolute top-8 right-10 font-mono text-xs text-white/85 tabular-nums mix-blend-difference" aria-hidden="true">
             {pad(active + 1)} / {pad(total)}
@@ -170,7 +176,7 @@ function ServiceCopy({ service, index, total, progress }: SlideProps) {
   );
 }
 
-function ServicePanel({ service, index, total, progress, problem }: SlideProps & { problem: Problem }) {
+function ServicePanel({ service, index, total, progress, problem, project }: SlideProps & { problem: Problem; project?: PublicProject }) {
   const { start, end, w, last } = segmentOf(index, total);
   // O improviso chega ao resultado enquanto o serviço entra; o selo fecha a cena.
   const t = useTransform(progress, (v) => segment(v, start - w * 0.2, start + w * 0.2));
@@ -191,13 +197,45 @@ function ServicePanel({ service, index, total, progress, problem }: SlideProps &
   return (
     <m.div style={{ clipPath }} className="absolute inset-0">
       <m.div style={{ scale }} className="absolute inset-0">
-        <ServiceVisual service={service} t={t} problem={problem} />
+        {project ? <RealScreen project={project} /> : <ServiceVisual service={service} t={t} problem={problem} />}
       </m.div>
       <m.div style={{ opacity: dim }} className="pointer-events-none absolute inset-0 bg-ink" />
       <m.div style={{ opacity: signalOpacity, y: signalY, scale: signalScale }} className="absolute bottom-10 left-10 z-10 origin-bottom-left">
-        <Signal text={service.signal} />
+        {project ? <ProjectBadge project={project} /> : <Signal text={service.signal} />}
       </m.div>
     </m.div>
+  );
+}
+
+type ProofOf = (service: Service) => PublicProject | undefined;
+
+/** A tela real de um projeto feito pela Rocket, numa janela de navegador sobre um fundo neutro. */
+function RealScreen({ project }: { project: PublicProject }) {
+  const screen = project.cover ?? project.screens.desktop;
+  if (!screen) return null;
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-mist bg-[radial-gradient(80%_60%_at_70%_20%,rgb(255_91_31/0.08),transparent_70%)] p-[6%]">
+      <BrowserFrame screen={screen} sizes="(min-width: 1024px) 50vw, 90vw" className="w-full" />
+    </div>
+  );
+}
+
+/** Selo com o projeto real que ilustra o serviço, com link para a página dele. */
+function ProjectBadge({ project }: { project: PublicProject }) {
+  return (
+    <Link
+      href={`/projetos/${project.slug}`}
+      className="group flex items-center gap-3 rounded-full bg-ink py-2.5 pr-5 pl-2.5 text-sm font-medium tracking-tight text-white shadow-[0_20px_50px_-20px_rgb(0_0_0/0.5)]"
+    >
+      <span className="flex size-7 items-center justify-center rounded-full bg-accent text-white">
+        <Check className="size-3.5" strokeWidth={2.5} />
+      </span>
+      <span>
+        <span className="text-white/60">Projeto real: </span>
+        {project.name}
+      </span>
+      <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+    </Link>
   );
 }
 
@@ -214,7 +252,12 @@ function Signal({ text }: { text: string }) {
 }
 
 /** Mobile e reduced motion: o visual do serviço acontece quando entra na tela. */
-function StackVisual({ service, problem }: { service: Service; problem: Problem }) {
+function StackVisual({ service, problem, project }: { service: Service; problem: Problem; project?: PublicProject }) {
+  return project ? <RealScreen project={project} /> : <ComposedVisual service={service} problem={problem} />;
+}
+
+/** A composição ilustrativa do serviço, que acontece quando entra na tela. */
+function ComposedVisual({ service, problem }: { service: Service; problem: Problem }) {
   const ref = useRef<HTMLDivElement>(null);
   const t = useRevealProgress(ref);
   return (
@@ -225,15 +268,15 @@ function StackVisual({ service, problem }: { service: Service; problem: Problem 
 }
 
 /** Mobile e reduced motion: cada serviço com o próprio visual, em sequência. */
-function ServicesStack({ items, problem, idSuffix = "" }: { items: Service[]; problem: Problem; idSuffix?: string }) {
+function ServicesStack({ items, problem, proofOf, idSuffix = "" }: { items: Service[]; problem: Problem; proofOf: ProofOf; idSuffix?: string }) {
   return (
     <div className="pb-24">
       {items.map((service, i) => (
         <article key={service.id} aria-labelledby={`servico-${service.id}-titulo${idSuffix}`} className="mt-14 first:mt-4 md:mt-24">
           <Reveal className="relative mx-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] sm:mx-8 sm:aspect-[16/10]">
-            <StackVisual service={service} problem={problem} />
+            <StackVisual service={service} problem={problem} project={proofOf(service)} />
             <div className="absolute bottom-5 left-5">
-              <Signal text={service.signal} />
+              {proofOf(service) ? <ProjectBadge project={proofOf(service)!} /> : <Signal text={service.signal} />}
             </div>
           </Reveal>
           <div className="container-page mt-8 max-w-2xl sm:mx-0">

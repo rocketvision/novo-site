@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { cubicBezier, m, useTransform, type MotionValue } from "motion/react";
-import { ArrowDown, ArrowRight, Globe, LayoutDashboard, PenTool, ShoppingBag, Smartphone, Sparkle } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Globe, LayoutDashboard, PenTool, ShoppingBag, Smartphone, Sparkle } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo";
 import { EmberVideo } from "@/components/ui/ember-video";
 import type { Resolved } from "@/lib/content/resolved";
+import type { PublicProject } from "@/lib/projects/types";
 import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { ease } from "@/lib/motion";
@@ -20,7 +21,12 @@ type Content = {
   problem: Resolved<"problem">;
   services: Resolved<"services">;
   workflow: Resolved<"workflow">;
+  /** Projetos reais publicados no CMS; os clientes aparecem como prova discreta no rodapé do hero. */
+  projects?: PublicProject[];
 };
+
+/** Clientes dos projetos recentes, sem repetir, na ordem do CMS. */
+const recentClients = (projects: PublicProject[] = []) => [...new Set(projects.map((p) => (p.client || p.name).trim()))].slice(0, 3);
 
 /** Momentos da cena, em progresso do scroll (0 a 1). */
 const T = {
@@ -96,7 +102,8 @@ function HeroMedia({ play }: { play: boolean }) {
   );
 }
 
-function HeroContent({ hero, services, workflow }: Omit<Content, "problem">) {
+function HeroContent({ hero, services, workflow, projects }: Omit<Content, "problem">) {
+  const clients = recentClients(projects);
   return (
     <div className="container-page relative flex min-h-svh flex-col pt-[calc(var(--header-height)+2rem)] pb-6 md:pt-[calc(var(--header-height)+0.75rem)]">
       <div className="grid flex-1 content-center gap-10 min-[1120px]:grid-cols-[minmax(0,1fr)_minmax(0,0.5fr)] min-[1120px]:items-start">
@@ -188,10 +195,20 @@ function HeroContent({ hero, services, workflow }: Omit<Content, "problem">) {
           ROCKET
         </span>
         <div className="text-right max-[860px]:text-left">
-          <a href={hero.secondaryCta.href} className="group mb-3.5 inline-flex items-center gap-1.5 text-[11.5px] text-white/50 transition-colors hover:text-white">
-            <span className="link-underline">{hero.secondaryCta.label}</span>
-            <ArrowDown className="size-3 transition-transform duration-300 group-hover:translate-y-0.5" />
-          </a>
+          <div className="mb-3.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 min-[861px]:justify-end">
+            {clients.length > 0 && (
+              <Link href="/projetos" className="group inline-flex items-center gap-1.5 text-[11.5px] text-white/50 transition-colors hover:text-white">
+                <span>
+                  Projetos recentes: <span className="link-underline text-white/80">{clients.join(" · ")}</span>
+                </span>
+                <ArrowUpRight className="size-3 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Link>
+            )}
+            <a href={hero.secondaryCta.href} className="group inline-flex items-center gap-1.5 text-[11.5px] text-white/50 transition-colors hover:text-white">
+              <span className="link-underline">{hero.secondaryCta.label}</span>
+              <ArrowDown className="size-3 transition-transform duration-300 group-hover:translate-y-0.5" />
+            </a>
+          </div>
           <ul className="flex flex-wrap items-center gap-x-[clamp(16px,2.2vw,32px)] gap-y-2 min-[861px]:justify-end">
             {services.items.map((service) => {
               const Icon = SERVICE_ICONS[service.id] ?? Sparkle;
@@ -209,7 +226,7 @@ function HeroContent({ hero, services, workflow }: Omit<Content, "problem">) {
   );
 }
 
-function AnimatedHero({ hero, problem, services, workflow }: Content) {
+function AnimatedHero({ hero, problem, services, workflow, projects }: Content) {
   const sectionRef = useRef<HTMLElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)", true);
   const progress = useScrollProgress(sectionRef, ["start start", "end end"]);
@@ -237,7 +254,7 @@ function AnimatedHero({ hero, problem, services, workflow }: Content) {
           <HeroMedia play={playing} />
           <m.div style={{ opacity: dim }} className="absolute inset-0 bg-ink-soft" aria-hidden="true" />
           <m.div style={{ opacity: textOpacity, y: textY }} className="absolute inset-0">
-            <HeroContent hero={hero} services={services} workflow={workflow} />
+            <HeroContent hero={hero} services={services} workflow={workflow} projects={projects} />
           </m.div>
         </m.div>
 
@@ -294,12 +311,12 @@ function Word({ text, accent, progress, range }: { text: string; accent: boolean
 }
 
 /** Versão para prefers-reduced-motion: a mesma abertura e o manifesto, sem movimento. */
-function StaticHero({ hero, problem, services, workflow }: Content) {
+function StaticHero({ hero, problem, services, workflow, projects }: Content) {
   return (
     <section id="inicio" data-header="dark" className="bg-ink text-white">
       <div className="relative overflow-hidden">
         <HeroMedia play={false} />
-        <HeroContent hero={hero} services={services} workflow={workflow} />
+        <HeroContent hero={hero} services={services} workflow={workflow} projects={projects} />
       </div>
       <div className="container-page py-28 text-center">
         <h2 className="text-eyebrow text-white/55">{problem.eyebrow}</h2>
