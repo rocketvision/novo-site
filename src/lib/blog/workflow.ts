@@ -18,6 +18,16 @@ export const STATUS_LABELS: Record<BlogStatus, string> = {
   archived: "Arquivado",
 };
 
+/** Cor do selo de cada estado no Studio. */
+export const STATUS_TONE: Record<BlogStatus, "neutral" | "blue" | "green" | "amber"> = {
+  draft: "neutral",
+  in_review: "blue",
+  approved: "amber",
+  scheduled: "amber",
+  published: "green",
+  archived: "neutral",
+};
+
 export type BlogAction = "submit" | "request_changes" | "approve" | "publish" | "schedule" | "unschedule" | "unpublish" | "archive" | "restore";
 
 type Rule = {
