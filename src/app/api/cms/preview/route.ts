@@ -1,6 +1,6 @@
 import { draftMode } from "next/headers";
 import { NextResponse } from "next/server";
-import { canPreview, isPreviewPath } from "@/server/content/access";
+import { canPreviewPath, isPreviewPath } from "@/server/content/access";
 import { authedRoute } from "@/server/http/handler";
 import { badRequest, forbidden } from "@/server/http/errors";
 import { POLICIES } from "@/server/security/rate-limit";
@@ -12,9 +12,9 @@ import { POLICIES } from "@/server/security/rate-limit";
 export const GET = authedRoute(
   { permission: true, rateLimit: { policy: POLICIES.previewByUser, by: "user" } },
   async ({ request, user }) => {
-    if (!canPreview(user.permissions)) throw forbidden();
     const path = request.nextUrl.searchParams.get("path") ?? "/";
     if (!isPreviewPath(path)) throw badRequest("Caminho de pré-visualização inválido.");
+    if (!canPreviewPath(user.permissions, path)) throw forbidden();
     (await draftMode()).enable();
     return NextResponse.redirect(new URL(path, request.nextUrl.origin));
   },
