@@ -1,184 +1,238 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
-import { m, useSpring, useTransform, type MotionValue } from "motion/react";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { StepVisual } from "@/components/visuals/step-visuals";
+import { useRef } from "react";
 import { Reveal } from "@/components/animations/reveal";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { LogoMark } from "@/components/ui/logo";
 import type { Resolved } from "@/lib/content/resolved";
-import { usePrefersReducedMotion } from "@/hooks/use-media-query";
-import { useScrollProgress } from "@/hooks/use-scroll-progress";
-import { useRevealProgress } from "@/hooks/use-reveal-progress";
-import { segment } from "@/lib/scroll";
+import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { gsap, MotionPathPlugin, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 
 type Workflow = Resolved<"workflow">;
-type Step = Workflow["steps"][number];
+
+/**
+ * O caminho, em coordenadas do SVG. Sobe da esquerda para a direita no desktop
+ * e de baixo para cima, em zigue-zague, no celular. O SVG mantém a proporção (sem esticar o traço);
+ * as etapas são posicionadas a partir das coordenadas do caminho na tela.
+ * `stroke` é a espessura em unidades do SVG, para dar cerca de 3 px na tela em cada formato.
+ */
+const ROUTES = {
+  wide: {
+    w: 1000,
+    h: 500,
+    stroke: 3,
+    d: "M 20 470 C 170 470 210 380 330 350 S 520 300 610 250 S 790 170 870 110 S 960 40 1010 -10",
+  },
+  tall: {
+    w: 400,
+    h: 1000,
+    stroke: 5.5,
+    d: "M 70 1010 C 70 860 330 840 330 690 S 70 520 70 380 S 330 200 330 60 L 330 -20",
+  },
+} as const;
+
+/** Onde cada etapa fica no caminho (0 a 1), com folga no começo e no fim. */
+const stopOf = (i: number, total: number) => (total > 1 ? 0.1 + (0.72 * i) / (total - 1) : 0.5);
 
 /**
  * Como trabalhamos.
- * Desktop: a rolagem vertical conduz uma faixa horizontal de quadros (sem sequestrar o scroll),
- * com parallax dentro de cada quadro. Cada etapa tem uma ilustração própria.
- * Mobile e reduced motion: linha do tempo vertical com os mesmos quadros.
+ * A seção fica presa e o scroll desenha o caminho em laranja. O foguete da marca percorre o traço
+ * e cada etapa acende quando ele passa por ela. No fim, o foguete decola para fora da tela.
  */
 export function Process({ workflow }: { workflow: Workflow }) {
   const reduceMotion = usePrefersReducedMotion();
-
   return (
     <section id="processo" aria-labelledby="processo-titulo" className="bg-mist">
-      {reduceMotion ? (
-        <VerticalProcess workflow={workflow} />
-      ) : (
-        // As duas composições saem do servidor; o CSS escolhe pelo breakpoint, sem salto após carregar.
-        <>
-          <div className="hidden lg:block">
-            <HorizontalProcess workflow={workflow} />
-          </div>
-          <div className="lg:hidden">
-            <VerticalProcess workflow={workflow} idSuffix="-m" />
-          </div>
-        </>
-      )}
+      {reduceMotion ? <StaticProcess workflow={workflow} /> : <RocketPath workflow={workflow} />}
     </section>
   );
 }
 
-function Heading({ workflow, compact = false, idSuffix = "" }: { workflow: Workflow; compact?: boolean; idSuffix?: string }) {
+function Heading({ workflow }: { workflow: Workflow }) {
   return (
-    <div className={cn(compact ? "grid items-end gap-6 lg:grid-cols-12 lg:gap-12" : "max-w-3xl")}>
-      <div className={cn(compact && "lg:col-span-7")}>
+    <div className="grid items-end gap-4 lg:grid-cols-12 lg:gap-12">
+      <div className="lg:col-span-7">
         <Eyebrow>{workflow.eyebrow}</Eyebrow>
-        <h2
-          id={`processo-titulo${idSuffix}`}
-          className={cn(
-            "mt-6 text-ink",
-            compact ? "text-[clamp(2rem,0.8rem+2.6vw,3.75rem)] leading-[1.04] font-semibold tracking-[-0.04em]" : "text-headline",
-          )}
-        >
+        <h2 id="processo-titulo" className="mt-4 text-[clamp(1.875rem,0.8rem+2.4vw,3.5rem)] leading-[1.04] font-semibold tracking-[-0.04em] text-ink">
           {workflow.title}
         </h2>
       </div>
-      <p className={cn("text-lead text-muted", compact ? "lg:col-span-4 lg:col-start-9 lg:pb-2" : "mt-6 max-w-2xl")}>
-        {workflow.lead}
-      </p>
+      <p className="text-body text-muted max-lg:hidden lg:col-span-4 lg:col-start-9 lg:pb-1.5">{workflow.lead}</p>
     </div>
   );
 }
 
-function HorizontalProcess({ workflow }: { workflow: Workflow }) {
+function RocketPath({ workflow }: { workflow: Workflow }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const wide = useMediaQuery("(min-width: 768px)", true);
+  const route = wide ? ROUTES.wide : ROUTES.tall;
   const total = workflow.steps.length;
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLOListElement>(null);
-  const [distance, setDistance] = useState(0);
 
-  // Distância horizontal que a faixa precisa percorrer para mostrar a última etapa.
-  useLayoutEffect(() => {
-    const viewport = viewportRef.current;
-    const track = trackRef.current;
-    if (!viewport || !track) return;
-    const measure = () => setDistance(Math.max(0, track.offsetWidth - viewport.clientWidth));
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(viewport);
-    observer.observe(track);
-    return () => observer.disconnect();
-  }, []);
+  useGSAP(
+    () => {
+      const q = gsap.utils.selector(ref);
+      const path = q<SVGPathElement>("[data-route]")[0];
+      const rocket = q("[data-rocket]")[0];
+      if (!path || !rocket) return;
 
-  const scrollYProgress = useScrollProgress(sectionRef, ["start start", "end end"]);
-  const x = useTransform(scrollYProgress, [0.06, 0.94], [0, -distance]);
-  const progress = useSpring(useTransform(scrollYProgress, [0.06, 0.94], [0, 1]), { stiffness: 120, damping: 30 });
+      // Posiciona cada etapa sobre o ponto certo do caminho, convertido para a tela.
+      const raw = MotionPathPlugin.getRawPath(path);
+      MotionPathPlugin.cacheRawPathMeasurements(raw);
+      const stops = q("[data-stop]");
+      const place = () => {
+        const stage = path.ownerSVGElement?.parentElement;
+        const matrix = path.getScreenCTM();
+        if (!stage || !matrix) return;
+        const box = stage.getBoundingClientRect();
+        stops.forEach((stop, i) => {
+          const p = MotionPathPlugin.getPositionOnPath(raw, stopOf(i, total));
+          const x = matrix.a * p.x + matrix.c * p.y + matrix.e - box.left;
+          const y = matrix.b * p.x + matrix.d * p.y + matrix.f - box.top;
+          gsap.set(stop, { left: x, top: y });
+          // O texto fica do lado com mais espaço: acima ou abaixo no desktop, à esquerda ou à direita no celular.
+          const side = wide ? (y > box.height / 2 ? "above" : "below") : x < box.width / 2 ? "right" : "left";
+          stop.dataset.side = side;
+          // No celular, a largura do texto é o espaço que sobra ao lado do ponto.
+          const room = (side === "right" ? box.width - x : x) - 28;
+          gsap.set(stop.querySelector("[data-label]"), { width: wide ? "" : Math.min(256, room) });
+        });
+      };
+      place();
+
+      const tl = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: ref.current,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.8,
+          onRefresh: place,
+        },
+      });
+      const travel = 0.9;
+      tl.fromTo(path, { drawSVG: "0%" }, { drawSVG: "100%", duration: travel }, 0).to(
+        rocket,
+        {
+          motionPath: { path, align: path, alignOrigin: [0.5, 0.5] },
+          duration: travel,
+        },
+        0,
+      );
+
+      stops.forEach((stop, i) => {
+        const at = stopOf(i, total) * travel;
+        tl.fromTo(
+          stop.querySelector("[data-dot]"),
+          { scale: 0.4, backgroundColor: "#d4d4d8" },
+          {
+            scale: 1,
+            backgroundColor: "#ff5b1f",
+            duration: 0.03,
+            ease: "back.out(3)",
+          },
+          at,
+        ).fromTo(
+          stop.querySelector("[data-card]"),
+          { autoAlpha: 0, y: 24, scale: 0.96 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: 0.06, ease: "power2.out" },
+          at,
+        );
+      });
+
+      // Chegada: o foguete acelera e sai da tela.
+      tl.to(
+        rocket,
+        {
+          scale: 0.5,
+          opacity: 0,
+          x: "+=12vw",
+          y: "-=18vh",
+          duration: 1 - travel,
+          ease: "power2.in",
+        },
+        travel,
+      );
+    },
+    { scope: ref, dependencies: [wide, total], revertOnUpdate: true },
+  );
 
   return (
-    // Altura proporcional ao número de etapas: com as 4 originais, 360vh.
-    <div ref={sectionRef} style={{ height: `${Math.round((total * 360) / 4)}vh` }} className="relative">
-      <div className="sticky top-0 flex h-svh flex-col justify-center overflow-hidden pt-(--header-height)">
+    // Altura proporcional ao número de etapas: com as 4 originais, 400vh.
+    <div ref={ref} style={{ height: `${Math.round(total * 100)}vh` }} className="relative">
+      <div className="sticky top-0 flex h-svh flex-col overflow-hidden pt-[calc(var(--header-height)+1.5rem)] pb-8">
         <div className="container-page">
-          <Heading workflow={workflow} compact />
-
-          <div className="relative mt-8 flex h-px items-center bg-black/10" aria-hidden="true">
-            <m.div style={{ scaleX: progress }} className="absolute inset-0 origin-left bg-ink" />
-          </div>
+          <Heading workflow={workflow} />
         </div>
 
-        <div ref={viewportRef} className="container-page mt-7">
-          <m.ol ref={trackRef} style={{ x }} className="flex w-max gap-8 will-change-transform">
-            {workflow.steps.map((step, i) => (
-              <StepFrame key={i} step={step} index={i} total={total} progress={progress} />
-            ))}
-          </m.ol>
+        <div className="container-page relative mt-6 flex-1">
+          <div className="relative size-full">
+            <svg viewBox={`0 0 ${route.w} ${route.h}`} className="absolute inset-0 size-full overflow-visible" aria-hidden="true">
+              <path
+                d={route.d}
+                fill="none"
+                stroke="rgb(0 0 0 / 0.1)"
+                strokeWidth={route.stroke / 2}
+                strokeDasharray={`${route.stroke * 0.7} ${route.stroke * 2.7}`}
+                strokeLinecap="round"
+              />
+              <path data-route d={route.d} fill="none" stroke="var(--color-accent)" strokeWidth={route.stroke} strokeLinecap="round" />
+            </svg>
+
+            <ol>
+              {workflow.steps.map((step, i) => (
+                <li key={i} data-stop className="group absolute size-0">
+                  <span data-dot aria-hidden="true" className="absolute top-0 left-0 size-4 -translate-1/2 rounded-full bg-zinc-300 ring-[6px] ring-mist" />
+                  {/* O invólucro posiciona (translate do CSS); o cartão dentro dele é o que o GSAP anima. */}
+                  <div
+                    data-label
+                    className={cn(
+                      "absolute w-[min(16rem,58vw)]",
+                      "group-data-[side=above]:bottom-6 group-data-[side=above]:left-0 group-data-[side=above]:-translate-x-1/2",
+                      "group-data-[side=below]:top-6 group-data-[side=below]:left-0 group-data-[side=below]:-translate-x-1/2",
+                      "group-data-[side=right]:top-0 group-data-[side=right]:left-6 group-data-[side=right]:-translate-y-1/2",
+                      "group-data-[side=left]:top-0 group-data-[side=left]:right-6 group-data-[side=left]:-translate-y-1/2 group-data-[side=left]:text-right",
+                    )}
+                  >
+                    <div data-card className="invisible">
+                      <p className="text-eyebrow text-accent-strong">
+                        {String(i + 1).padStart(2, "0")} · {step.name}
+                      </p>
+                      <h3 className="mt-2 text-lg leading-snug font-semibold tracking-tight text-ink md:text-xl">{step.title}</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-muted max-md:hidden">{step.body}</p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            <div
+              data-rocket
+              aria-hidden="true"
+              className="absolute top-0 left-0 grid size-14 place-items-center rounded-full bg-ink text-accent shadow-[0_18px_40px_-12px_rgb(255_91_31/0.6)]"
+            >
+              <LogoMark className="size-8" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function StepFrame({ step, index, total, progress }: { step: Step; index: number; total: number; progress: MotionValue<number> }) {
-  // A etapa ganha destaque quando o progresso chega à sua posição na faixa.
-  const center = index / (total - 1);
-  const focus = useTransform(progress, [center - 0.36, center - 0.08, center + 0.08, center + 0.36], [0, 1, 1, 0]);
-  const opacity = useTransform(focus, [0, 1], [0.45, 1]);
-  const frameScale = useTransform(focus, [0, 1], [0.94, 1]);
-  // O artefato da etapa se completa enquanto o quadro chega ao centro.
-  const t = useTransform(progress, (v) => segment(v, center - 0.36, center - 0.04));
-  // Parallax dentro do quadro: o visual anda mais devagar que a faixa.
-  const photoX = useTransform(progress, [0, 1], ["7%", "-7%"]);
-
-  return (
-    <m.li style={{ opacity }} className="w-[min(34rem,36vw)] shrink-0">
-      <m.div
-        style={{ scale: frameScale }}
-        className="relative h-[clamp(11rem,32svh,22rem)] origin-bottom-left overflow-hidden rounded-[1.5rem]"
-      >
-        <m.div style={{ x: photoX }} className="absolute -inset-x-[14%] inset-y-0">
-          <StepVisual index={index} t={t} />
-        </m.div>
-        <span className="absolute top-5 left-6 font-mono text-xs text-white tabular-nums mix-blend-difference">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-      </m.div>
-      <p className="text-eyebrow mt-5 text-accent-strong">{step.name}</p>
-      <h3 className="mt-3 max-w-md text-[clamp(1.375rem,1rem+1vw,2rem)] leading-tight font-semibold tracking-[-0.03em] text-ink">{step.title}</h3>
-      <p className="mt-3 max-w-md text-[0.9375rem] leading-relaxed text-muted">{step.body}</p>
-    </m.li>
-  );
-}
-
-function VerticalStepVisual({ index }: { index: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const t = useRevealProgress(ref);
-  return (
-    <div ref={ref} className="absolute inset-0">
-      <StepVisual index={index} t={t} />
-    </div>
-  );
-}
-
-function VerticalProcess({ workflow, idSuffix = "" }: { workflow: Workflow; idSuffix?: string }) {
-  const listRef = useRef<HTMLOListElement>(null);
-  const scrollYProgress = useScrollProgress(listRef, ["start center", "end center"]);
-
+function StaticProcess({ workflow }: { workflow: Workflow }) {
   return (
     <div className="container-page py-24 md:py-32">
-      <Heading workflow={workflow} idSuffix={idSuffix} />
-      <ol ref={listRef} className="relative mt-14 space-y-16 pl-10 md:pl-14">
-        <span aria-hidden="true" className="absolute top-2 bottom-2 left-[0.3125rem] w-px bg-black/10">
-          <m.span style={{ scaleY: scrollYProgress }} className="absolute inset-0 origin-top bg-ink" />
-        </span>
+      <Heading workflow={workflow} />
+      <ol className="mt-14 grid gap-10 md:grid-cols-2 lg:grid-cols-4">
         {workflow.steps.map((step, i) => (
-          <li key={i} className="relative">
-            <span aria-hidden="true" className="absolute top-1.5 -left-10 size-2.5 rounded-full bg-accent ring-4 ring-mist md:-left-14" />
-            <p className="text-eyebrow text-muted">
-              <span className="text-ink tabular-nums">{String(i + 1).padStart(2, "0")}</span>
-              <span className="mx-2 text-black/20">/</span>
-              {step.name}
+          <Reveal as="li" key={i} className="border-t border-black/10 pt-6">
+            <p className="text-eyebrow text-accent-strong">
+              {String(i + 1).padStart(2, "0")} · {step.name}
             </p>
-            <h3 className="text-title mt-3 text-ink">{step.title}</h3>
-            <p className="text-body mt-3 max-w-xl text-muted">{step.body}</p>
-            <Reveal className="relative mt-6 aspect-[16/10] overflow-hidden rounded-[1.25rem]">
-              <VerticalStepVisual index={i} />
-            </Reveal>
-          </li>
+            <h3 className="mt-3 text-xl leading-snug font-semibold tracking-tight text-ink xl:text-2xl">{step.title}</h3>
+            <p className="text-body mt-3 text-muted">{step.body}</p>
+          </Reveal>
         ))}
       </ol>
     </div>

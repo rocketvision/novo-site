@@ -1,6 +1,8 @@
 import { MotionProvider } from "@/components/animations/motion-provider";
 import { Preloader } from "@/components/layout/preloader";
 import { IntroDone } from "@/components/layout/intro-done";
+import { SmoothScroll } from "@/components/animations/smooth-scroll";
+import "lenis/dist/lenis.css";
 
 /** Layout do site público: abertura, animações e atalho de acessibilidade. O CMS não usa nada disso. */
 export default function SiteLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -16,6 +18,7 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
       </a>
       <Preloader />
       <IntroDone />
+      <SmoothScroll />
       <MotionProvider>{children}</MotionProvider>
     </>
   );

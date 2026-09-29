@@ -13,15 +13,17 @@ export function OrderedStack({ problem }: { problem: Problem }) {
   return (
     <Stage size={[4.4, 2.5]} className="bg-mist">
       <div className="relative flex flex-col items-center">
-        <span className="flex size-[3.4em] items-center justify-center rounded-full bg-ink text-accent shadow-[0_1em_2em_-1em_rgb(0_0_0/0.5)]">
+        <span data-stack-logo className="flex size-[3.4em] items-center justify-center rounded-full bg-ink text-accent shadow-[0_1em_2em_-1em_rgb(0_0_0/0.5)]">
           <LogoMark className="size-[1.9em]" />
         </span>
         <ul className="relative mt-[1.4em] space-y-[1.1em]">
-          <span className="absolute top-[-1.4em] bottom-[2em] left-1/2 w-px -translate-x-1/2 bg-ink/15" />
+          <span data-stack-line className="absolute top-[-1.4em] bottom-[2em] left-1/2 w-px -translate-x-1/2 bg-ink/15" />
           {problem.symptoms.map((symptom, i) => (
-            <li key={i} className="relative">
+            <li key={i} data-stack-item className="relative">
               <Symptom symptom={symptom} />
-              <CheckDot className="absolute -top-[0.6em] -right-[0.6em] ring-[0.25em] ring-mist" />
+              <span data-stack-check className="absolute -top-[0.6em] -right-[0.6em] block">
+                <CheckDot className="ring-[0.25em] ring-mist" />
+              </span>
             </li>
           ))}
         </ul>

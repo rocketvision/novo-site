@@ -1,15 +1,7 @@
 # Créditos das imagens
 
-A landing usa fotografia em apenas dois lugares: o hero e o convite final (Próximo passo).
-As demais seções (O que muda, manifesto, serviços, Por que a Rocket e Como trabalhamos) têm visuais
-desenhados em código em `src/components/visuals`, a partir da própria copy. Não dependem de nenhum arquivo de imagem.
-
-| Arquivo | Seção | Situação |
-|---|---|---|
-| `cafe-counter-night.jpg` | Hero | Provisória (Unsplash, https://unsplash.com/photos/7dYSpTrDxhc). Será substituída pela fotografia premium escolhida e licenciada. |
-| `two-chairs-window.jpg` | Próximo passo | Provisória (Unsplash, https://unsplash.com/photos/al-o2zPeVNk). Será substituída pela fotografia premium escolhida e licenciada. |
-
-Ao trocar, registre aqui: fonte, URL da página original, autor, coleção, tipo de licença e número da licença.
+A landing não usa fotografia. A abertura e o convite final usam o vídeo abaixo; as demais seções
+são composições desenhadas em código em `src/components/visuals` e nas próprias seções, a partir da copy.
 
 ## Projetos de exemplo (rota /projetos)
 
@@ -33,3 +25,9 @@ As fotografias que aparecem dentro das telas também são do Unsplash, sob a mes
 - https://unsplash.com/photos/rm7rZYdl3rY
 - https://unsplash.com/photos/pTrhfmj2jDA
 - https://unsplash.com/photos/H9lg5Noj660
+
+## Vídeo de abertura
+
+`public/hero-loop.webm` e `public/hero-loop.mp4` (e o quadro `public/hero-poster.jpg`) vem do template de prompt "Fluxora", baixado uma vez e servido pelo próprio site. Foi recodificado sem áudio, 1280 × 720, quadro-chave a cada 2 s: VP9 (cerca de 450 KB, carregado primeiro) e H.264 (cerca de 1,6 MB, para os navegadores sem VP9).
+
+**Situação:** direito de uso confirmado pelo responsável da Rocket Vision.

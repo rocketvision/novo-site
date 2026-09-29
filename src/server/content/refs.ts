@@ -1,7 +1,7 @@
 import type { MediaRef } from "@/server/media/service";
 
 /** Um campo de imagem no conteúdo: objeto com `mediaId` e `alt`. */
-export function isImageField(value: unknown): value is { mediaId: string | null; alt: string; fallback?: string } {
+export function isImageField(value: unknown): value is { mediaId: string | null; alt: string } {
   return typeof value === "object" && value !== null && !Array.isArray(value) && "mediaId" in value && "alt" in value;
 }
 

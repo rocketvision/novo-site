@@ -1,49 +1,65 @@
 "use client";
 
 import { useRef } from "react";
-import { m, useTransform } from "motion/react";
-import { Reveal, RevealGroup, RevealItem } from "@/components/animations/reveal";
+import { Reveal } from "@/components/animations/reveal";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Photo } from "@/components/ui/photo";
+import { EmberVideo } from "@/components/ui/ember-video";
 import type { Resolved } from "@/lib/content/resolved";
-import { useScrollProgress } from "@/hooks/use-scroll-progress";
-import { insetClip, segment } from "@/lib/scroll";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { gsap, SplitText, useGSAP } from "@/lib/gsap";
 import { ContactForm } from "./contact-form";
 
 /**
- * Convite final: a fotografia noturna se abre até as bordas da tela
- * com o título sobre ela, e o formulário surge logo abaixo, no mesmo escuro.
+ * Convite final: o vídeo em brasa da abertura volta. Ele surge como uma janela pequena
+ * com cantos arredondados e se abre até as bordas da tela enquanto o título sobe linha a linha.
+ * O formulário vem logo abaixo, no mesmo escuro. A página termina onde começou.
  */
 export function FinalCta({ cta, contact }: { cta: Resolved<"cta">; contact: Resolved<"site">["contact"] }) {
   const bandRef = useRef<HTMLDivElement>(null);
-  const progress = useScrollProgress(bandRef, ["start end", "end start"]);
-  const clipPath = useTransform(progress, (v) => {
-    const t = segment(v, 0.05, 0.42);
-    return insetClip(0, (1 - t) * 5, 0, (1 - t) * 5, (1 - t) * 32);
-  });
-  const scale = useTransform(progress, [0, 1], [1.2, 1]);
+  const reduceMotion = usePrefersReducedMotion();
+
+  useGSAP(
+    () => {
+      if (reduceMotion) return;
+      const q = gsap.utils.selector(bandRef);
+      const split = SplitText.create(q("[data-cta-title] > span"), { type: "words", mask: "words" });
+      const tl = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: { trigger: bandRef.current, start: "top top", end: "bottom bottom", scrub: 0.6 },
+      });
+      tl.fromTo(q("[data-window]"), { clipPath: "inset(22% 18% 22% 18% round 40px)" }, { clipPath: "inset(0% 0% 0% 0% round 0px)", duration: 0.6, ease: "power2.inOut" }, 0)
+        .fromTo(q("[data-video]"), { scale: 1.35 }, { scale: 1, duration: 1 }, 0)
+        .fromTo(q("[data-shade]"), { opacity: 0.2 }, { opacity: 1, duration: 0.5 }, 0.3)
+        .fromTo(q("[data-eyebrow]"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.15 }, 0.45)
+        .fromTo(split.words, { yPercent: 110 }, { yPercent: 0, stagger: 0.03, duration: 0.25, ease: "power3.out" }, 0.5);
+      return () => split.revert();
+    },
+    { scope: bandRef, dependencies: [reduceMotion] },
+  );
 
   return (
     <section id="contato" aria-labelledby="contato-titulo" className="relative bg-ink text-white" data-header="dark">
-      <div ref={bandRef} className="relative h-[92svh] min-h-[34rem]">
-        <m.div style={{ clipPath }} className="absolute inset-0 overflow-hidden">
-          <m.div style={{ scale }} className="absolute inset-0">
-            <Photo photo={cta.image} sizes="100vw" decorative />
-          </m.div>
-          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-ink/10" />
-        </m.div>
+      <div ref={bandRef} className={reduceMotion ? "relative" : "relative h-[220vh]"}>
+        <div className="sticky top-0 h-svh overflow-hidden">
+          <div data-window className="absolute inset-0 overflow-hidden">
+            <div data-video className="absolute inset-0">
+              <EmberVideo lazy play={!reduceMotion} />
+            </div>
+            <div data-shade className="absolute inset-0 bg-[linear-gradient(0deg,var(--color-ink)_0%,rgb(10_10_11/0.55)_45%,rgb(10_10_11/0.15)_100%)]" />
+          </div>
 
-        <div className="container-page relative flex h-full flex-col justify-end pb-16 md:pb-24">
-          <Eyebrow className="text-white/60">{cta.eyebrow}</Eyebrow>
-          <h2 id="contato-titulo" className="text-display mt-6 max-w-5xl">
-            <RevealGroup as="span" className="block">
+          <div className="container-page relative flex h-full flex-col justify-end pb-16 md:pb-24">
+            <div data-eyebrow>
+              <Eyebrow className="text-white/70">{cta.eyebrow}</Eyebrow>
+            </div>
+            <h2 id="contato-titulo" data-cta-title className="text-display mt-6 max-w-5xl">
               {cta.titleLines.map((line, i) => (
-                <RevealItem as="span" key={i} className="block">
+                <span key={i} className="block">
                   {line}
-                </RevealItem>
+                </span>
               ))}
-            </RevealGroup>
-          </h2>
+            </h2>
+          </div>
         </div>
       </div>
 

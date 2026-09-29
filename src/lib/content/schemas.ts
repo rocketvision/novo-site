@@ -62,25 +62,16 @@ export const optionalHttpsUrl = z
 export const uuid = z.string().uuid("Identificador inválido.");
 
 /**
- * Imagem de uma seção. Só o hero e o convite final usam fotografia; as demais seções
- * têm visuais desenhados em código a partir da própria copy.
- * `mediaId` aponta para a biblioteca de mídia.
- * `fallback` (definido pelo sistema, não editável) aponta para a foto original embutida no site:
- * se nenhuma imagem for escolhida, a landing continua com a foto de direção de arte original.
+ * Imagem da biblioteca de mídia (`mediaId`) com texto alternativo.
+ * A landing não usa fotografia hoje: as seções são composições em código e o vídeo de abertura.
+ * O campo fica disponível para quando houver fotos reais de clientes e projetos.
+ * Conteúdo salvo com fotos antigas continua válido: os campos que as seções não usam mais são descartados.
  */
-export const FALLBACK_KEYS = ["hero", "cta"] as const;
-export type FallbackKey = (typeof FALLBACK_KEYS)[number];
-
 export const image = z.object({
   mediaId: uuid.nullable(),
   alt: optionalText(200, "O texto alternativo"),
-  // Só aceita as fotos embutidas no site: o cliente não consegue apontar para outro arquivo.
-  fallback: z.enum(FALLBACK_KEYS).optional(),
 });
 export type ImageField = z.infer<typeof image>;
-
-const requireImage = (value: ImageField) => value.mediaId !== null || Boolean(value.fallback);
-const imageRequired = image.refine(requireImage, "Escolha uma imagem.");
 
 const link = z.object({ label: text(40, "O texto do botão"), href });
 
@@ -94,7 +85,17 @@ export const heroSchema = z.object({
   lead: text(260, "A descrição"),
   primaryCta: link,
   secondaryCta: link,
-  image: imageRequired,
+  // A abertura é um vídeo embutido no site; a antiga foto do hero salva no banco é ignorada.
+  proof: z
+    .object({ title: text(40, "O destaque"), text: text(60, "O complemento") })
+    .default({ title: "Você fala com quem constrói", text: "Sem intermediários, do início ao fim" }),
+  highlights: z
+    .array(z.object({ value: text(16, "O destaque"), label: text(60, "O texto") }))
+    .length(2, "Use dois cartões.")
+    .default([
+      { value: "Sob medida", label: "Feito para o seu negócio, não um modelo pronto" },
+      { value: "1 só time", label: "Design e tecnologia trabalhando juntos" },
+    ]),
 });
 
 export const problemSchema = z.object({
@@ -196,7 +197,6 @@ export const ctaSchema = z.object({
   submit: text(40, "O texto do botão"),
   interests: z.array(text(30, "Cada opção")).min(1).max(10, "Use até 10 opções."),
   reassurance: optionalText(80, "O texto de apoio"),
-  image: imageRequired,
 });
 
 export const projectsPageSchema = z.object({

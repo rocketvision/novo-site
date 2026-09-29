@@ -1,19 +1,16 @@
 "use client";
 
 import { useRef } from "react";
-import { m, useTransform } from "motion/react";
 import type { Resolved } from "@/lib/content/resolved";
 import { LogoMark } from "@/components/ui/logo";
 import { OrderedStack } from "@/components/visuals/ordered-stack";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
-import { useScrollProgress } from "@/hooks/use-scroll-progress";
-import { useHeaderTheme } from "@/hooks/use-header-theme";
-import { insetClip, segment } from "@/lib/scroll";
+import { gsap, SplitText, useGSAP } from "@/lib/gsap";
 
 /**
  * Virada da narrativa: o escuro do problema dá lugar à luz da solução.
- * O fundo clareia, a proposta ganha foco e sobe por trás do texto o visual da ordem:
- * os improvisos do hero, agora alinhados e ligados à Rocket.
+ * O fundo clareia, a proposta acende letra por letra e, ao lado, os improvisos do começo
+ * voam de todos os lados até se encaixarem em coluna, ligados à Rocket, cada um com o seu check.
  */
 type Content = Resolved<"statement">;
 type Problem = Resolved<"problem">;
@@ -25,58 +22,81 @@ export function Statement({ statement, problem }: { statement: Content; problem:
 
 function AnimatedStatement({ statement, problem }: { statement: Content; problem: Problem }) {
   const ref = useRef<HTMLElement>(null);
-  const progress = useScrollProgress(ref, ["start start", "end end"]);
-  useHeaderTheme(ref, progress, (v) => v < 0.18);
 
-  const background = useTransform(progress, [0, 0.3], ["#0a0a0b", "#fbfbfd"]);
-  const color = useTransform(progress, [0.04, 0.3], ["#ffffff", "#0a0a0b"]);
-  const bodyColor = useTransform(progress, [0.04, 0.3], ["rgba(255,255,255,0.6)", "rgba(29,29,31,0.72)"]);
-  const titleOpacity = useTransform(progress, [0, 0.22], [0.25, 1]);
-  const titleY = useTransform(progress, [0, 0.4], [60, 0]);
-  const bodyOpacity = useTransform(progress, [0.4, 0.56], [0, 1]);
-  const bodyY = useTransform(progress, [0.4, 0.56], [24, 0]);
+  useGSAP(
+    () => {
+      const section = ref.current;
+      if (!section) return;
+      const q = gsap.utils.selector(section);
+      const split = SplitText.create(q("[data-statement-title]"), { type: "chars,words" });
 
-  const photoY = useTransform(progress, [0.08, 0.62], ["55%", "0%"]);
-  const photoClip = useTransform(progress, (v) => {
-    const t = segment(v, 0.08, 0.62);
-    return insetClip((1 - t) * 45, 0, 0, 0, 28);
-  });
-  const photoScale = useTransform(progress, [0.08, 1], [1.25, 1]);
+      const tl = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.6,
+          // O header acompanha a virada do escuro para o claro.
+          onUpdate: (self) => section.setAttribute("data-header", self.progress < 0.16 ? "dark" : "light"),
+        },
+      });
+
+      // A virada: o escuro do problema dá lugar à luz da solução.
+      tl.fromTo(section, { backgroundColor: "#0a0a0b" }, { backgroundColor: "#fbfbfd", duration: 0.28 }, 0)
+        .fromTo(q("[data-copy]"), { color: "#ffffff" }, { color: "#0a0a0b", duration: 0.26 }, 0.02)
+        .fromTo(q("[data-mark]"), { rotation: -90, scale: 0.4, opacity: 0 }, { rotation: 0, scale: 1, opacity: 1, duration: 0.2, ease: "back.out(2)" }, 0.04)
+        // A promessa acende letra por letra.
+        .fromTo(split.chars, { opacity: 0.12 }, { opacity: 1, stagger: 0.45 / split.chars.length, duration: 0.05 }, 0.08)
+        .fromTo(q("[data-body]"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 0.55)
+        // O palco sobe e os improvisos voam de todos os lados até se encaixarem em coluna.
+        .fromTo(q("[data-stack]"), { clipPath: "inset(40% 10% 10% 10% round 28px)", y: 80 }, { clipPath: "inset(0% 0% 0% 0% round 28px)", y: 0, duration: 0.3, ease: "power2.out" }, 0.1)
+        .from(
+          q("[data-stack-item]"),
+          {
+            x: (i: number) => (i % 2 === 0 ? -1 : 1) * (220 + i * 40),
+            y: (i: number) => 260 + i * 60,
+            rotation: (i: number) => (i % 2 === 0 ? -1 : 1) * (14 + i * 6),
+            opacity: 0,
+            stagger: 0.07,
+            duration: 0.25,
+            ease: "power3.out",
+          },
+          0.22,
+        )
+        .from(q("[data-stack-line]"), { scaleY: 0, transformOrigin: "top", duration: 0.2 }, 0.5)
+        .from(q("[data-stack-check]"), { scale: 0, stagger: 0.04, duration: 0.08, ease: "back.out(3)" }, 0.58)
+        .from(q("[data-stack-logo]"), { scale: 0, rotation: -120, duration: 0.12, ease: "back.out(2)" }, 0.48);
+
+      return () => split.revert();
+    },
+    { scope: ref },
+  );
 
   return (
-    <m.section
-      ref={ref}
-      aria-labelledby="statement-titulo"
-      style={{ backgroundColor: background }}
-      data-header="dark"
-      className="relative h-[220vh]"
-    >
+    <section ref={ref} aria-labelledby="statement-titulo" data-header="dark" className="relative h-[260vh] bg-ink">
       <div className="sticky top-0 h-svh overflow-hidden">
         <div className="container-page relative grid h-full grid-rows-[auto_1fr] gap-8 pt-[calc(var(--header-height)+3rem)] pb-8 lg:grid-cols-12 lg:grid-rows-1 lg:items-center lg:gap-10 lg:py-0">
-          <m.div style={{ color }} className="relative z-10 lg:col-span-7">
-            <LogoMark className="size-9 text-accent" />
-            <m.h2
-              id="statement-titulo"
-              style={{ opacity: titleOpacity, y: titleY }}
-              className="mt-6 text-[clamp(2.125rem,1rem+3vw,4.25rem)] leading-[1.04] font-semibold tracking-[-0.04em] lg:mt-8"
-            >
+          <div data-copy className="relative z-10 text-white lg:col-span-7">
+            <span data-mark className="inline-block">
+              <LogoMark className="size-9 text-accent" />
+            </span>
+            <h2 id="statement-titulo" data-statement-title className="mt-6 text-[clamp(2.125rem,1rem+3vw,4.25rem)] leading-[1.04] font-semibold tracking-[-0.04em] lg:mt-8">
               <StatementTitle title={statement.title} />
-            </m.h2>
-            <m.p style={{ opacity: bodyOpacity, y: bodyY, color: bodyColor }} className="text-lead mt-6 max-w-xl lg:mt-8">
+            </h2>
+            <p data-body className="text-lead mt-6 max-w-xl text-muted lg:mt-8">
               {statement.body}
-            </m.p>
-          </m.div>
+            </p>
+          </div>
 
           <div className="relative min-h-0 lg:col-span-5 lg:h-[72svh]">
-            <m.div style={{ y: photoY, clipPath: photoClip }} className="absolute inset-0 overflow-hidden rounded-[1.75rem]">
-              <m.div style={{ scale: photoScale }} className="absolute inset-0">
-                <OrderedStack problem={problem} />
-              </m.div>
-            </m.div>
+            <div data-stack className="absolute inset-0 overflow-hidden rounded-[1.75rem]">
+              <OrderedStack problem={problem} />
+            </div>
           </div>
         </div>
       </div>
-    </m.section>
+    </section>
   );
 }
 
@@ -105,7 +125,8 @@ function StatementTitle({ title }: { title: string }) {
   if (rest.length === 0) return <>{title}</>;
   return (
     <>
-      {first}. <span className="opacity-40">{rest.join(". ")}</span>
+      {`${first}. `}
+      <span className="opacity-40">{rest.join(". ")}</span>
     </>
   );
 }

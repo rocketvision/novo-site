@@ -7,7 +7,7 @@ import type { ImageField, SectionContent, SectionKey } from "./schemas";
  */
 export type ResolvedImage = { src: string | StaticImageData; alt: string; blurDataURL?: string };
 
-type Resolve<T> = T extends ImageField ? ResolvedImage : T extends object ? { [K in keyof T]: Resolve<T[K]> } : T;
+type Resolve<T> = T extends ImageField ? ResolvedImage | null : T extends object ? { [K in keyof T]: Resolve<T[K]> } : T;
 
 export type Resolved<K extends SectionKey> = Resolve<SectionContent<K>>;
 

@@ -55,6 +55,18 @@ function truncate(value: unknown): unknown {
 }
 
 /**
+ * JSON com as chaves em ordem alfabética. O jsonb do Postgres não preserva a ordem das chaves,
+ * então uma lista de objetos lida do banco não pode ser comparada com JSON.stringify puro.
+ */
+function stableStringify(value: unknown): string | undefined {
+  return JSON.stringify(value, (_key, v: unknown) =>
+    typeof v === "object" && v !== null && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : v,
+  );
+}
+
+/**
  * Compara dois objetos e devolve só os campos alterados (comparação por caminho, até 3 níveis).
  * Listas são comparadas inteiras. Campos sensíveis são ignorados.
  */
@@ -72,7 +84,7 @@ export function diff(before: unknown, after: unknown, prefix = "", depth = 0): R
 
   const a = before instanceof Date ? before.toISOString() : before;
   const b = after instanceof Date ? after.toISOString() : after;
-  if (JSON.stringify(a) !== JSON.stringify(b)) {
+  if (stableStringify(a) !== stableStringify(b)) {
     out[prefix || "valor"] = { before: truncate(a), after: truncate(b) };
   }
   return out;

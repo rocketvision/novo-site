@@ -1,11 +1,9 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import sharp from "sharp";
 import { eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/server/db";
 import { HttpError } from "@/server/http/errors";
 import { discardDraft, getSectionState, publishSection, saveDraft } from "@/server/content/sections";
 import { assertSectionPermission, isPreviewPath } from "@/server/content/access";
-import { deleteMedia, getMedia, uploadMedia } from "@/server/media/service";
 import { DEFAULT_CONTENT } from "@/lib/content/defaults";
 import type { SessionUser } from "@/server/auth/session";
 import type { Permission } from "@/server/authz/permissions";
@@ -111,34 +109,18 @@ describe("validação no servidor", () => {
     expect(row.version).toBe(state.version + 1);
   });
 
-  it("só aceita as fotos originais conhecidas como fallback", async () => {
-    const state = await getSectionState("hero");
-    const draft = { ...hero(), image: { mediaId: null, alt: "", fallback: "../../etc/passwd" } };
-    await expectStatus(saveDraft(actor, "hero", draft, state.version, ctx), 422);
+  it("descarta a foto antiga do convite final, inclusive um caminho forjado", async () => {
+    const state = await getSectionState("cta");
+    const draft = { ...structuredClone(DEFAULT_CONTENT.cta), image: { mediaId: null, alt: "", fallback: "../../etc/passwd" } };
+    await saveDraft(actor, "cta", draft, state.version, ctx);
+    const [row] = await getDb().select().from(schema.contentSections).where(eq(schema.contentSections.key, "cta"));
+    expect(row.draft).not.toHaveProperty("image");
   });
 
   it("a palavra riscada precisa existir na frase", async () => {
     const state = await getSectionState("turn");
     const error = await expectStatus(saveDraft(actor, "turn", { from: "Uma frase qualquer.", strike: "inexistente", to: "Outra." }, state.version, ctx), 422);
     expect(error.extra?.fields).toHaveProperty("strike");
-  });
-});
-
-describe("uso de mídia", () => {
-  it("registra onde a imagem é usada e impede removê-la", async () => {
-    const buffer = await sharp({ create: { width: 64, height: 64, channels: 3, background: "#224466" } }).jpeg().toBuffer();
-    const { media } = await uploadMedia(actor, { buffer, filename: "hero.jpg" }, ctx);
-
-    const state = await getSectionState("hero");
-    const saved = await saveDraft(actor, "hero", { ...hero(), image: { mediaId: media.id, alt: "Nova foto", fallback: "hero" } }, state.version, ctx);
-    let detail = await getMedia(media.id);
-    expect(detail?.usages.map((u) => u.label)).toEqual(["Hero · Imagem (rascunho)"]);
-
-    await publishSection(actor, "hero", saved.version, ctx);
-    detail = await getMedia(media.id);
-    expect(detail?.usages.map((u) => u.label).sort()).toEqual(["Hero · Imagem (publicado)", "Hero · Imagem (rascunho)"]);
-
-    await expectStatus(deleteMedia(actor, media.id, ctx), 409);
   });
 });
 
