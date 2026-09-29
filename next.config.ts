@@ -45,6 +45,11 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: securityHeaders },
       {
+        // Vídeo de abertura: guardado no navegador e na CDN para começar a tocar na hora nas próximas visitas.
+        source: "/:file(hero-loop\\.mp4|hero-loop\\.webm|hero-poster\\.jpg)",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      },
+      {
         // O CMS nunca deve ser guardado em cache compartilhado nem indexado.
         source: "/cms/:path*",
         headers: [

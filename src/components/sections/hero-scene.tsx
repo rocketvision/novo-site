@@ -74,10 +74,13 @@ function TitleLine({ line }: { line: string }) {
   );
 }
 
-/** Vídeo em loop, servido pelo próprio site. Aparece suavemente quando pode tocar. */
+/**
+ * Vídeo em loop, servido pelo próprio site. Aparece desde o primeiro instante:
+ * o poster é o primeiro quadro, então não há salto quando ele começa a tocar.
+ * (Não esperamos o evento canplay: ele pode disparar antes da hidratação e se perder.)
+ */
 function HeroVideo({ play }: { play: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const video = ref.current;
@@ -93,11 +96,7 @@ function HeroVideo({ play }: { play: boolean }) {
   return (
     <video
       ref={ref}
-      className={cn(
-        "absolute inset-0 size-full object-cover object-[68%_center] transition-[opacity,scale] duration-[1100ms,2400ms] ease-out",
-        ready || !play ? "scale-100 opacity-100" : "scale-[1.04] opacity-0",
-      )}
-      src="/hero-loop.mp4"
+      className="absolute inset-0 size-full object-cover object-[68%_center]"
       poster="/hero-poster.jpg"
       autoPlay={play}
       muted
@@ -105,8 +104,11 @@ function HeroVideo({ play }: { play: boolean }) {
       playsInline
       preload="auto"
       aria-hidden="true"
-      onCanPlay={() => setReady(true)}
-    />
+    >
+      {/* WebM (VP9) é quatro vezes menor e começa antes; o MP4 (H.264) cobre o resto. */}
+      <source src="/hero-loop.webm" type="video/webm" />
+      <source src="/hero-loop.mp4" type="video/mp4" />
+    </video>
   );
 }
 

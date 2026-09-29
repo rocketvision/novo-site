@@ -43,6 +43,6 @@ As fotografias que aparecem dentro das telas também são do Unsplash, sob a mes
 
 ## Vídeo de abertura
 
-`public/hero-loop.mp4` (e o quadro `public/hero-poster.jpg`) vem do template de prompt "Fluxora", baixado uma vez e servido pelo próprio site. Foi recodificado sem áudio (H.264, 1280 × 720, cerca de 1,6 MB).
+`public/hero-loop.webm` e `public/hero-loop.mp4` (e o quadro `public/hero-poster.jpg`) vem do template de prompt "Fluxora", baixado uma vez e servido pelo próprio site. Foi recodificado sem áudio, 1280 × 720, quadro-chave a cada 2 s: VP9 (cerca de 450 KB, carregado primeiro) e H.264 (cerca de 1,6 MB, para os navegadores sem VP9).
 
-**Situação:** o direito de uso comercial precisa ser confirmado antes da produção. Se não for possível, o vídeo é trocado por um fundo gerado em código com o mesmo layout.
+**Situação:** direito de uso confirmado pelo responsável da Rocket Vision.
