@@ -189,6 +189,23 @@
   }
 }
 
+/* Flutuação lenta dos improvisos do hero: a nuvem respira mesmo parada. */
+@keyframes drift {
+  from {
+    transform: translate3d(0, -7px, 0) rotate(-1.2deg);
+  }
+  to {
+    transform: translate3d(0, 7px, 0) rotate(1.2deg);
+  }
+}
+
+@utility animate-drift {
+  animation: drift var(--drift, 8s) ease-in-out infinite alternate;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
 @utility animate-fade-in {
   animation: fade-in 1.2s var(--ease-out) both;
   animation-delay: var(--delay, 500ms);
