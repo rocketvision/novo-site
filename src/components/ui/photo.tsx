@@ -11,10 +11,12 @@ type PhotoProps = {
   priority?: boolean;
   /** Foto decorativa: o conteúdo já está no texto ao redor. */
   decorative?: boolean;
+  /** Enquadramento (object-position, transform) quando a seção anima o recorte. */
+  style?: React.CSSProperties;
 };
 
 /** Fotografia que preenche o contêiner pai (que precisa ser relative). */
-export function Photo({ photo, sizes, className, priority, decorative }: PhotoProps) {
+export function Photo({ photo, sizes, className, priority, decorative, style }: PhotoProps) {
   // Import estático já traz o blur; imagem do CMS traz o blur gerado no upload.
   const hasBlur = typeof photo.src !== "string" || Boolean(photo.blurDataURL);
   return (
@@ -28,6 +30,7 @@ export function Photo({ photo, sizes, className, priority, decorative }: PhotoPr
       blurDataURL={photo.blurDataURL}
       quality={80}
       className={cn("object-cover", className)}
+      style={style}
     />
   );
 }

@@ -4,21 +4,30 @@ import { useEffect, useRef, useState } from "react";
 import { m, useTransform } from "motion/react";
 import { Reveal } from "@/components/animations/reveal";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { GlassIllustration, type GlyphName } from "@/components/visuals/illustrations";
-import { Stage } from "@/components/visuals/primitives";
+import { Photo } from "@/components/ui/photo";
 import type { Resolved } from "@/lib/content/resolved";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
-import { transition } from "@/lib/motion";
-
-/** Uma ilustração por compromisso, na ordem da copy. */
-const GLYPHS: GlyphName[] = ["talk", "scope", "craft", "shield", "grow"];
-const glyphOf = (i: number) => GLYPHS[i] ?? "scope";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { framingStyle, type Framing } from "@/lib/framing";
 
 /**
- * Diferenciais em composição editorial: o painel fica fixo e sangra pela
- * borda esquerda enquanto os compromissos passam ao lado dele.
- * No desktop, o painel mostra a ilustração do compromisso que está no centro da tela;
- * no mobile, as ilustrações aparecem juntas acima da lista.
+ * Enquadramentos da foto dos diferenciais, na ordem dos compromissos.
+ * Na foto original (as mãos de um luthier): as mãos, o encaixe da lateral, a curva da madeira,
+ * as ferramentas e, por fim, a vista inteira.
+ */
+const FRAMES: Framing[] = [
+  { x: 47, y: 22, scale: 1.6 },
+  { x: 52, y: 42, scale: 1.7 },
+  { x: 22, y: 72, scale: 1.5 },
+  { x: 86, y: 60, scale: 1.6 },
+  { x: 50, y: 50, scale: 1 },
+];
+const OVERVIEW: Framing = { x: 50, y: 50, scale: 1 };
+
+/**
+ * Diferenciais em composição editorial: a fotografia fica fixa e sangra pela
+ * borda esquerda enquanto os compromissos passam ao lado dela.
+ * No desktop, a cada compromisso a câmera se aproxima de um detalhe da mesma foto.
  */
 export function Differentials({ differentials }: { differentials: Resolved<"differentials"> }) {
   const ref = useRef<HTMLElement>(null);
@@ -27,7 +36,8 @@ export function Differentials({ differentials }: { differentials: Resolved<"diff
   const y = useTransform(progress, [0, 1], ["-6%", "6%"]);
   const listRef = useRef<HTMLUListElement>(null);
   const active = useCenteredItem(listRef);
-  const count = differentials.items.length;
+  const isDesktop = useMediaQuery("(min-width: 1024px)", true);
+  const frame = isDesktop ? (FRAMES[active] ?? OVERVIEW) : OVERVIEW;
 
   return (
     <section
@@ -40,7 +50,12 @@ export function Differentials({ differentials }: { differentials: Resolved<"diff
         <div className="relative mb-14 lg:mb-0">
           <div className="relative mx-4 aspect-[4/3] overflow-hidden rounded-[1.5rem] sm:mx-8 lg:sticky lg:top-0 lg:mx-0 lg:aspect-auto lg:h-svh lg:rounded-none lg:rounded-r-[2rem]">
             <m.div style={{ scale, y }} className="absolute inset-0">
-              <IllustrationPanel active={active} count={count} />
+              <Photo
+                photo={differentials.image}
+                sizes="(min-width: 1024px) 44vw, 100vw"
+                className="transition-[object-position,transform] duration-[1600ms] ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none"
+                style={framingStyle(frame)}
+              />
             </m.div>
           </div>
         </div>
@@ -111,41 +126,4 @@ function useCenteredItem(listRef: React.RefObject<HTMLUListElement | null>) {
     };
   }, [listRef]);
   return active;
-}
-
-function IllustrationPanel({ active, count }: { active: number; count: number }) {
-  return (
-    <div className="absolute inset-0 bg-mist">
-      {/* Desktop: a ilustração troca junto com o compromisso ao lado. */}
-      <div className="absolute inset-0 hidden lg:block">
-        <Stage size={[2.4, 2]}>
-          <div className="relative size-[24em]">
-            {Array.from({ length: count }).map((_, i) => (
-              <m.div
-                key={i}
-                initial={false}
-                animate={{ opacity: i === active ? 1 : 0, scale: i === active ? 1 : 0.9, y: i === active ? "0em" : i < active ? "-3em" : "3em" }}
-                transition={transition.swap}
-                className="absolute inset-0 flex items-center justify-center"
-              >
-                <GlassIllustration name={glyphOf(i)} />
-              </m.div>
-            ))}
-          </div>
-        </Stage>
-      </div>
-      {/* Mobile: os compromissos juntos, antes da lista. */}
-      <div className="absolute inset-0 lg:hidden">
-        <Stage size={[2.4, 3.2]}>
-          <div className="flex w-[34em] flex-wrap justify-center gap-x-[1em] gap-y-[0.6em]">
-            {Array.from({ length: Math.min(count, GLYPHS.length) }).map((_, i) => (
-              <div key={i} className="text-[0.62em]">
-                <GlassIllustration name={glyphOf(i)} />
-              </div>
-            ))}
-          </div>
-        </Stage>
-      </div>
-    </div>
-  );
 }

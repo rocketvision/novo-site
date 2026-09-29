@@ -3,23 +3,42 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { m, useSpring, useTransform, type MotionValue } from "motion/react";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { StepVisual } from "@/components/visuals/step-visuals";
+import { Photo } from "@/components/ui/photo";
 import { Reveal } from "@/components/animations/reveal";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
-import { useRevealProgress } from "@/hooks/use-reveal-progress";
-import { segment } from "@/lib/scroll";
+import { framingStyle, type Framing } from "@/lib/framing";
 import { cn } from "@/lib/utils";
 
 type Workflow = Resolved<"workflow">;
 type Step = Workflow["steps"][number];
 
 /**
+ * Uma única fotografia para o caminho inteiro (uma escadaria que sobe em direção à luz),
+ * espelhada para subir no sentido da leitura. Cada etapa enquadra o trecho seguinte:
+ * a base na sombra, os degraus, a subida atravessando a luz e o topo iluminado.
+ */
+const PATH: Framing[] = [
+  { x: 22, y: 80, scale: 1.6 },
+  { x: 45, y: 66, scale: 1.6 },
+  { x: 58, y: 40, scale: 1.5 },
+  { x: 86, y: 18, scale: 1.6 },
+];
+
+/** Com outra quantidade de etapas, o percurso é distribuído entre o primeiro e o último enquadramento. */
+function frameOf(index: number, total: number): Framing {
+  if (total === PATH.length) return PATH[index];
+  const t = total > 1 ? index / (total - 1) : 0;
+  const [a, b] = [PATH[0], PATH[PATH.length - 1]];
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, scale: a.scale + (b.scale - a.scale) * t };
+}
+
+/**
  * Como trabalhamos.
  * Desktop: a rolagem vertical conduz uma faixa horizontal de quadros (sem sequestrar o scroll),
- * com parallax dentro de cada quadro. Cada etapa tem uma ilustração própria.
- * Mobile e reduced motion: linha do tempo vertical com os mesmos quadros.
+ * com parallax dentro de cada quadro. Os quadros mostram trechos sucessivos da mesma fotografia.
+ * Mobile e reduced motion: linha do tempo vertical com os mesmos enquadramentos.
  */
 export function Process({ workflow }: { workflow: Workflow }) {
   const reduceMotion = usePrefersReducedMotion();
@@ -104,7 +123,7 @@ function HorizontalProcess({ workflow }: { workflow: Workflow }) {
         <div ref={viewportRef} className="container-page mt-7">
           <m.ol ref={trackRef} style={{ x }} className="flex w-max gap-8 will-change-transform">
             {workflow.steps.map((step, i) => (
-              <StepFrame key={i} step={step} index={i} total={total} progress={progress} />
+              <StepFrame key={i} step={step} index={i} total={total} progress={progress} photo={workflow.image} />
             ))}
           </m.ol>
         </div>
@@ -113,15 +132,25 @@ function HorizontalProcess({ workflow }: { workflow: Workflow }) {
   );
 }
 
-function StepFrame({ step, index, total, progress }: { step: Step; index: number; total: number; progress: MotionValue<number> }) {
+function StepFrame({
+  step,
+  index,
+  total,
+  progress,
+  photo,
+}: {
+  step: Step;
+  index: number;
+  total: number;
+  progress: MotionValue<number>;
+  photo: Workflow["image"];
+}) {
   // A etapa ganha destaque quando o progresso chega à sua posição na faixa.
   const center = index / (total - 1);
   const focus = useTransform(progress, [center - 0.36, center - 0.08, center + 0.08, center + 0.36], [0, 1, 1, 0]);
   const opacity = useTransform(focus, [0, 1], [0.45, 1]);
   const frameScale = useTransform(focus, [0, 1], [0.94, 1]);
-  // O artefato da etapa se completa enquanto o quadro chega ao centro.
-  const t = useTransform(progress, (v) => segment(v, center - 0.36, center - 0.04));
-  // Parallax dentro do quadro: o visual anda mais devagar que a faixa.
+  // Parallax dentro do quadro: a foto anda mais devagar que a faixa.
   const photoX = useTransform(progress, [0, 1], ["7%", "-7%"]);
 
   return (
@@ -131,7 +160,7 @@ function StepFrame({ step, index, total, progress }: { step: Step; index: number
         className="relative h-[clamp(11rem,32svh,22rem)] origin-bottom-left overflow-hidden rounded-[1.5rem]"
       >
         <m.div style={{ x: photoX }} className="absolute -inset-x-[14%] inset-y-0">
-          <StepVisual index={index} t={t} />
+          <Photo photo={photo} sizes="40vw" decorative style={framingStyle(frameOf(index, total), true)} />
         </m.div>
         <span className="absolute top-5 left-6 font-mono text-xs text-white tabular-nums mix-blend-difference">
           {String(index + 1).padStart(2, "0")}
@@ -141,16 +170,6 @@ function StepFrame({ step, index, total, progress }: { step: Step; index: number
       <h3 className="mt-3 max-w-md text-[clamp(1.375rem,1rem+1vw,2rem)] leading-tight font-semibold tracking-[-0.03em] text-ink">{step.title}</h3>
       <p className="mt-3 max-w-md text-[0.9375rem] leading-relaxed text-muted">{step.body}</p>
     </m.li>
-  );
-}
-
-function VerticalStepVisual({ index }: { index: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const t = useRevealProgress(ref);
-  return (
-    <div ref={ref} className="absolute inset-0">
-      <StepVisual index={index} t={t} />
-    </div>
   );
 }
 
@@ -176,7 +195,7 @@ function VerticalProcess({ workflow, idSuffix = "" }: { workflow: Workflow; idSu
             <h3 className="text-title mt-3 text-ink">{step.title}</h3>
             <p className="text-body mt-3 max-w-xl text-muted">{step.body}</p>
             <Reveal className="relative mt-6 aspect-[16/10] overflow-hidden rounded-[1.25rem]">
-              <VerticalStepVisual index={i} />
+              <Photo photo={workflow.image} sizes="100vw" decorative style={framingStyle(frameOf(i, workflow.steps.length), true)} />
             </Reveal>
           </li>
         ))}

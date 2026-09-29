@@ -144,7 +144,7 @@ function AnimatedHero({ hero, problem }: Content) {
 
         <m.div style={{ clipPath }} className="animate-fade-in absolute inset-0">
           <m.div style={{ scale: photoScale }} className="absolute inset-0">
-            <Photo photo={hero.image} sizes="100vw" priority className="object-[68%_50%] lg:object-center" />
+            <Photo photo={hero.image} sizes="100vw" priority className="object-[28%_50%] lg:object-center" />
           </m.div>
           <m.div style={{ opacity: shade }} className="absolute inset-0 bg-ink" />
         </m.div>

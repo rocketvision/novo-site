@@ -62,13 +62,13 @@ export const optionalHttpsUrl = z
 export const uuid = z.string().uuid("Identificador inválido.");
 
 /**
- * Imagem de uma seção. Só o hero e o convite final usam fotografia; as demais seções
- * têm visuais desenhados em código a partir da própria copy.
+ * Imagem de uma seção. Só hero, diferenciais, processo e convite final usam fotografia;
+ * as demais seções têm composições desenhadas a partir da própria copy.
  * `mediaId` aponta para a biblioteca de mídia.
  * `fallback` (definido pelo sistema, não editável) aponta para a foto original embutida no site:
  * se nenhuma imagem for escolhida, a landing continua com a foto de direção de arte original.
  */
-export const FALLBACK_KEYS = ["hero", "cta"] as const;
+export const FALLBACK_KEYS = ["hero", "differentials", "workflow", "cta"] as const;
 export type FallbackKey = (typeof FALLBACK_KEYS)[number];
 
 export const image = z.object({
@@ -160,6 +160,7 @@ export const differentialsSchema = z.object({
     .array(z.object({ title: text(60, "O título"), body: text(220, "O texto") }))
     .min(1)
     .max(8, "Use até 8 diferenciais."),
+  image: imageRequired,
 });
 
 export const workflowSchema = z.object({
@@ -176,6 +177,9 @@ export const workflowSchema = z.object({
     )
     .min(2)
     .max(6, "Use até 6 etapas."),
+  // Uma única fotografia para o caminho inteiro; cada etapa mostra um enquadramento dela.
+  // Conteúdo salvo antes dela (com uma foto por etapa) recebe a foto original.
+  image: imageRequired.default({ mediaId: null, alt: "", fallback: "workflow" }),
 });
 
 export const turnSchema = z

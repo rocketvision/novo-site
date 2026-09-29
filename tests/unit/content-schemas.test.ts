@@ -33,17 +33,17 @@ describe("travessão", () => {
   });
 });
 
-describe("conteúdo salvo antes dos visuais desenhados", () => {
+describe("conteúdo salvo antes da direção de arte atual", () => {
   const oldImage = (fallback: string) => ({ mediaId: null, alt: "Foto antiga", fallback });
 
-  it("continua válido e descarta as imagens que as seções não usam mais", () => {
-    const legacy = {
+  it("continua válido e descarta as fotos que as seções não usam mais", () => {
+    const shift = {
       ...DEFAULT_CONTENT.shift,
       groups: DEFAULT_CONTENT.shift.groups.map((g, i) => ({ ...g, image: oldImage(`shift-${i}`) })),
     };
-    const result = SECTION_SCHEMAS.shift.safeParse(legacy);
-    expect(result.success, JSON.stringify(result.error?.issues)).toBe(true);
-    expect(result.data?.groups.every((g) => !("image" in g))).toBe(true);
+    const parsed = SECTION_SCHEMAS.shift.safeParse(shift);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
+    expect(parsed.data?.groups.every((g) => !("image" in g))).toBe(true);
 
     const services = {
       ...DEFAULT_CONTENT.services,
@@ -51,5 +51,16 @@ describe("conteúdo salvo antes dos visuais desenhados", () => {
     };
     expect(SECTION_SCHEMAS.services.safeParse(services).success).toBe(true);
     expect(SECTION_SCHEMAS.statement.safeParse({ ...DEFAULT_CONTENT.statement, image: oldImage("statement") }).success).toBe(true);
+  });
+
+  it("recebe a foto única do caminho quando as etapas tinham uma foto cada", () => {
+    const legacy: Record<string, unknown> = {
+      ...DEFAULT_CONTENT.workflow,
+      steps: DEFAULT_CONTENT.workflow.steps.map((s, i) => ({ ...s, image: oldImage(`workflow-${i}`) })),
+    };
+    delete legacy.image;
+    const parsed = SECTION_SCHEMAS.workflow.safeParse(legacy);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
+    expect(parsed.data?.image).toEqual({ mediaId: null, alt: "", fallback: "workflow" });
   });
 });

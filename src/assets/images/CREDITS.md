@@ -1,15 +1,23 @@
 # Créditos das imagens
 
-A landing usa fotografia em apenas dois lugares: o hero e o convite final (Próximo passo).
-As demais seções (O que muda, manifesto, serviços, Por que a Rocket e Como trabalhamos) têm visuais
-desenhados em código em `src/components/visuals`, a partir da própria copy. Não dependem de nenhum arquivo de imagem.
+Direção de arte "Ofício": quatro fotografias da mesma família de luz (baixa, quente, fundo escuro).
+As demais seções (O que muda, manifesto e serviços) têm composições desenhadas em código
+em `src/components/visuals`, a partir da própria copy, e não dependem de arquivos de imagem.
 
-| Arquivo | Seção | Situação |
-|---|---|---|
-| `cafe-counter-night.jpg` | Hero | Provisória (Unsplash, https://unsplash.com/photos/7dYSpTrDxhc). Será substituída pela fotografia premium escolhida e licenciada. |
-| `two-chairs-window.jpg` | Próximo passo | Provisória (Unsplash, https://unsplash.com/photos/al-o2zPeVNk). Será substituída pela fotografia premium escolhida e licenciada. |
+| Arquivo | Seção | Fonte e página original | Autor e coleção | Licença |
+|---|---|---|---|---|
+| `cafe-owner-paperwork.jpg` | Hero | iStock, ID 1285929089, https://www.istockphoto.com/photo/gm1285929089-383007738 | Charli Bandit, E+ | Royalty-free padrão, com autorização de modelo e propriedade |
+| `violin-maker-hands.jpg` | Por que a Rocket | Getty Images, ID 482564297, https://www.gettyimages.com/detail/photo/violin-maker-at-work-close-up-of-hands-royalty-free-image/482564297 | Kathrin Ziegler, Stone | Royalty-free criativa, com autorização de modelo e propriedade |
+| `concrete-stairs-light.jpg` | Como trabalhamos | Getty Images, ID 1897228123, https://www.gettyimages.com/detail/photo/light-effects-on-concrete-walls-and-staircases-royalty-free-image/1897228123 | zhihao, Moment | Royalty-free, sem necessidade de autorização |
+| `bistro-table-for-two.jpg` | Próximo passo | Getty Images, ID 1623569581, https://www.gettyimages.com/detail/photo/restaurant-interior-royalty-free-image/1623569581 | wilatlak villette, Moment | Royalty-free, sem necessidade de autorização |
 
-Ao trocar, registre aqui: fonte, URL da página original, autor, coleção, tipo de licença e número da licença.
+**Situação:** as quatro fotos ainda não foram licenciadas. Os arquivos atuais são os previews oficiais
+com marca d'água, usados só para revisão no preview da Vercel. **Não publicar em produção assim.**
+Antes do merge, substitua cada arquivo pelo original licenciado no mesmo caminho, registre aqui
+o número da licença e faça o merge com squash, para os previews não entrarem no histórico da main.
+
+Ajustes de enquadramento: a foto da escada é espelhada na horizontal para subir no sentido da leitura;
+Por que a Rocket e Como trabalhamos usam enquadramentos da mesma foto (ver `src/lib/framing.ts`).
 
 ## Projetos de exemplo (rota /projetos)
 

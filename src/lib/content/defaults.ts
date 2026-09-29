@@ -69,12 +69,14 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     eyebrow: differentials.eyebrow,
     title: differentials.title,
     items: differentials.items.map((i) => ({ title: i.title, body: i.body })),
+    image: img("differentials"),
   },
   workflow: {
     eyebrow: workflow.eyebrow,
     title: workflow.title,
     lead: workflow.lead,
     steps: workflow.steps.map((s) => ({ name: s.name, title: s.title, body: s.body })),
+    image: img("workflow"),
   },
   turn: { from: turn.from, strike: "complicar", to: turn.to },
   cta: {
