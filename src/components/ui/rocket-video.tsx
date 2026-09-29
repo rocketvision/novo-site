@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
  *   do início do vídeo, a troca não se nota.
  * - `play` pausa e retoma sem desmontar: o vídeo nunca volta ao começo fora do próprio loop.
  * - `still`: só a imagem, sem baixar o vídeo (movimento reduzido).
+ * - Tratamento de cor no próprio arquivo: pretos mais profundos, azul do motor mais vivo e nitidez leve.
  */
 
 const PORTRAIT = "(orientation: portrait) and (max-width: 1024px)";
@@ -58,43 +59,46 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
   const common = { alt: "", sizes: "100vw", loading: "eager", fetchPriority: "high" } as const;
   const {
     props: { srcSet: portraitSrcSet },
-  } = getImageProps({ ...common, src: "/video/hero-loop-rocket-poster-portrait.jpg", width: 540, height: 720 });
+  } = getImageProps({ ...common, src: "/video/hero-launch-poster-portrait.jpg", width: 540, height: 720 });
   const {
     props: { srcSet, ...image },
-  } = getImageProps({ ...common, src: "/video/hero-loop-rocket-poster.jpg", width: 1280, height: 720 });
+  } = getImageProps({ ...common, src: "/video/hero-launch-poster.jpg", width: 1280, height: 720 });
 
   return (
     <div className={cn("absolute inset-0 overflow-hidden bg-ink", className)} aria-hidden="true">
-      <picture>
-        <source media={PORTRAIT} srcSet={portraitSrcSet} />
-        <img {...image} srcSet={srcSet} alt="" className="absolute inset-0 size-full object-cover" />
-      </picture>
+      {/* Câmera: um push-in lento e contínuo, independente do loop, para a cena nunca ficar parada. */}
+      <div className="animate-push-in absolute inset-0">
+        <picture>
+          <source media={PORTRAIT} srcSet={portraitSrcSet} />
+          <img {...image} srcSet={srcSet} alt="" className="absolute inset-0 size-full object-cover" />
+        </picture>
 
-      {showVideo && (
-        <video
-          ref={ref}
-          className={cn(
-            "absolute inset-0 size-full object-cover transition-opacity duration-500 ease-out",
-            ready ? "opacity-100" : "opacity-0",
-          )}
-          autoPlay
-          muted
-          loop
-          playsInline
-          disablePictureInPicture
-          disableRemotePlayback
-          preload="auto"
-          tabIndex={-1}
-          onLoadedData={() => setReady(true)}
-          onError={() => setFailed(true)}
-        >
-          <source src="/video/hero-loop-rocket-portrait.webm" type="video/webm" media={PORTRAIT} />
-          <source src="/video/hero-loop-rocket-portrait.mp4" type="video/mp4" media={PORTRAIT} />
-          <source src="/video/hero-loop-rocket.webm" type="video/webm" />
-          {/* O erro de carregamento chega pela última fonte, não pelo <video>. */}
-          <source src="/video/hero-loop-rocket.mp4" type="video/mp4" onError={() => setFailed(true)} />
-        </video>
-      )}
+        {showVideo && (
+          <video
+            ref={ref}
+            className={cn(
+              "absolute inset-0 size-full object-cover transition-opacity duration-500 ease-out",
+              ready ? "opacity-100" : "opacity-0",
+            )}
+            autoPlay
+            muted
+            loop
+            playsInline
+            disablePictureInPicture
+            disableRemotePlayback
+            preload="auto"
+            tabIndex={-1}
+            onLoadedData={() => setReady(true)}
+            onError={() => setFailed(true)}
+          >
+            <source src="/video/hero-launch-portrait.webm" type="video/webm" media={PORTRAIT} />
+            <source src="/video/hero-launch-portrait.mp4" type="video/mp4" media={PORTRAIT} />
+            <source src="/video/hero-launch.webm" type="video/webm" />
+            {/* O erro de carregamento chega pela última fonte, não pelo <video>. */}
+            <source src="/video/hero-launch.mp4" type="video/mp4" onError={() => setFailed(true)} />
+          </video>
+        )}
+      </div>
     </div>
   );
 }

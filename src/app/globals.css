@@ -216,6 +216,22 @@
   animation-delay: var(--delay, 0ms);
 }
 
+/* Vídeo da abertura: aproximação lenta de câmera, vai e volta sem pressa. */
+@keyframes push-in {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.07);
+  }
+}
+
+@utility animate-push-in {
+  animation: push-in 18s ease-in-out infinite alternate;
+  transform-origin: 62% 45%;
+  will-change: transform;
+}
+
 @utility animate-headline {
   animation: headline-in 1.3s var(--ease-out) both;
   animation-delay: var(--delay, 0ms);

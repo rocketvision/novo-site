@@ -21,7 +21,7 @@ export default async function DashboardPage() {
 
   const pending = [
     ...(canLanding
-      ? pendingSections.map((s) => {
+      ? pendingSections.filter((s) => !SECTIONS.find((x) => x.key === s.key)?.retired).map((s) => {
           const meta = SECTIONS.find((x) => x.key === s.key);
           const href = meta?.area === "settings" ? "/cms/configuracoes" : `/cms/landing/${meta?.slug}`;
           return { key: `s-${s.key}`, label: meta?.label ?? s.key, kind: "Seção", href, date: s.draftUpdatedAt };

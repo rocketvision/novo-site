@@ -39,7 +39,6 @@ export const nav = [
   { label: "Projetos", href: "/projetos" },
   { label: "Blog", href: "/blog" },
   { label: "Como trabalhamos", href: "/#processo" },
-  { label: "Por que a Rocket", href: "/#diferenciais" },
 ] as const;
 
 export const primaryCta = { label: "Solicitar orçamento", href: "/#contato" } as const;
