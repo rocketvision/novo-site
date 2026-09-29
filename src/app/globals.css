@@ -403,6 +403,9 @@ html:not(.intro-done) .animate-fade-in {
 .blog-prose > * + * {
   margin-top: 1.25em;
 }
+.blog-prose > :first-child {
+  margin-top: 0;
+}
 .blog-prose h2,
 .blog-prose h3,
 .blog-prose h4 {
