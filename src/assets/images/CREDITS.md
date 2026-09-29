@@ -28,6 +28,10 @@ As fotografias que aparecem dentro das telas também são do Unsplash, sob a mes
 
 ## Vídeo de abertura
 
+`public/video/hero-rocket.*` é o lançamento do foguete (8 s), fornecido pela Rocket Vision. Recodificado sem áudio, quadro-chave a cada 2 s, em duas versões: 1280 × 720 (VP9 cerca de 550 KB, H.264 cerca de 1,1 MB) e um recorte vertical 540 × 720 centrado no foguete para celulares e tablets em pé (`hero-rocket-portrait.*`, VP9 cerca de 350 KB, H.264 cerca de 530 KB). Os quadros `hero-rocket-poster*.jpg` são o primeiro quadro de cada versão.
+
+## Vídeo do convite final
+
 `public/hero-loop.webm` e `public/hero-loop.mp4` (e o quadro `public/hero-poster.jpg`) vem do template de prompt "Fluxora", baixado uma vez e servido pelo próprio site. Foi recodificado sem áudio, 1280 × 720, quadro-chave a cada 2 s: VP9 (cerca de 450 KB, carregado primeiro) e H.264 (cerca de 1,6 MB, para os navegadores sem VP9).
 
 **Situação:** direito de uso confirmado pelo responsável da Rocket Vision.

@@ -22,6 +22,7 @@ export function Footer({ settings }: { settings: Resolved<"site"> }) {
             <Link href="/" className="text-white" aria-label="Rocket Vision, voltar ao início">
               <Logo />
             </Link>
+            <p className="text-eyebrow text-white/70">{brand.slogan}</p>
             <p className="text-sm leading-relaxed">
               {settings.footerTagline}
             </p>

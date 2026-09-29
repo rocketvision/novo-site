@@ -3,15 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { cubicBezier, m, useTransform, type MotionValue } from "motion/react";
-import { ArrowDown, ArrowRight, ArrowUpRight, Globe, LayoutDashboard, PenTool, ShoppingBag, Smartphone, Sparkle } from "lucide-react";
-import { LogoMark } from "@/components/ui/logo";
-import { EmberVideo } from "@/components/ui/ember-video";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { buttonClasses } from "@/components/ui/button";
+import { RocketVideo } from "@/components/ui/rocket-video";
 import type { Resolved } from "@/lib/content/resolved";
-import type { PublicProject } from "@/lib/projects/types";
 import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { ease } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { site } from "@/lib/site";
 
 const delay = (ms: number) => ({ "--delay": `${ms}ms` }) as React.CSSProperties;
 const easeInOut = cubicBezier(...ease.inOut);
@@ -19,14 +18,7 @@ const easeInOut = cubicBezier(...ease.inOut);
 type Content = {
   hero: Resolved<"hero">;
   problem: Resolved<"problem">;
-  services: Resolved<"services">;
-  workflow: Resolved<"workflow">;
-  /** Projetos reais publicados no CMS; os clientes aparecem como prova discreta no rodapé do hero. */
-  projects?: PublicProject[];
 };
-
-/** Clientes dos projetos recentes, sem repetir, na ordem do CMS. */
-const recentClients = (projects: PublicProject[] = []) => [...new Set(projects.map((p) => (p.client || p.name).trim()))].slice(0, 3);
 
 /** Momentos da cena, em progresso do scroll (0 a 1). */
 const T = {
@@ -38,26 +30,11 @@ const T = {
   fade: [0.92, 1],
 } as const;
 
-/** Ícone de traço para cada serviço, pelo identificador. */
-const SERVICE_ICONS: Record<string, typeof Globe> = {
-  sites: Globe,
-  lojas: ShoppingBag,
-  "lojas-virtuais": ShoppingBag,
-  sistemas: LayoutDashboard,
-  aplicativos: Smartphone,
-  apps: Smartphone,
-  identidade: PenTool,
-  "identidade-visual": PenTool,
-};
-
-/** Altura das barras do painel fantasma: uma por etapa, subindo como uma escada. */
-const stepHeight = (i: number, total: number) => 30 + (58 * (i + 1)) / total;
-
 /**
  * Abertura.
  *
- * 1. A promessa sobre o vídeo em brasa: o título com uma única palavra em serifa itálica,
- *    o convite, a garantia e os compromissos em cartões de vidro. Tudo entra em cascata.
+ * 1. O lançamento do foguete ocupa a tela inteira, em loop. Por cima, direto sobre o vídeo,
+ *    a assinatura da marca, a promessa e os dois caminhos. Entram uma única vez, em cascata.
  * 2. Com o scroll, o vídeo recua até virar uma janela com cantos arredondados e escurece,
  *    como numa página de produto da Apple.
  * 3. Por cima dele, o manifesto do problema acende palavra por palavra e termina em
@@ -81,152 +58,73 @@ function TitleLine({ line }: { line: string }) {
   );
 }
 
-/** Fundo da abertura: brasa, vídeo, a máscara que protege a leitura e as linhas finas. */
-function HeroMedia({ play }: { play: boolean }) {
+/** Fundo da abertura: o vídeo e a máscara que protege a leitura sem apagar a cena. */
+function HeroMedia({ play, still = false }: { play: boolean; still?: boolean }) {
   return (
-    // O primeiro quadro fica por baixo: aparece antes do vídeo carregar e onde ele não toca.
-    <div
-      className="absolute inset-0 bg-ember-deep bg-[url(/hero-poster.jpg)] bg-cover bg-[68%_center]"
-      aria-hidden="true"
-    >
-      <EmberVideo play={play} />
-      {/* O vídeo é laranja do horizonte para a direita e quase preto no alto à esquerda:
-          a máscara é assimétrica, pesada sob o texto e quase nula sobre o personagem. */}
-      <div className="absolute inset-0 bg-[linear-gradient(96deg,rgb(10_3_0/0.9)_0%,rgb(14_4_0/0.7)_34%,rgb(20_6_0/0.2)_56%,rgb(20_6_0/0)_72%),linear-gradient(0deg,rgb(9_2_0/0.78)_0%,rgb(9_2_0/0.12)_28%,transparent_46%),linear-gradient(180deg,rgb(8_2_0/0.5)_0%,transparent_22%)] max-md:bg-[linear-gradient(180deg,rgb(8_2_0/0.55)_0%,rgb(10_3_0/0.35)_30%,rgb(10_3_0/0.78)_62%,rgb(9_2_0/0.92)_100%)]" />
-      <div className="absolute inset-0 hidden justify-between px-[30%] md:flex">
-        <span className="w-px bg-white/[0.055]" />
-        <span className="ml-3.5 w-px bg-white/[0.055]" />
-        <span className="w-px bg-white/[0.055]" />
-      </div>
+    <div className="absolute inset-0" aria-hidden="true">
+      <RocketVideo play={play} still={still} />
+      {/* O foguete sobe no centro-direita e o fim do vídeo é um mar de nuvens claras: a máscara
+          pesa à esquerda e embaixo, onde está o texto, e some sobre o foguete. No celular o texto
+          fica embaixo, então a máscara sobe do rodapé. O topo escurece de leve para o menu. */}
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(5_7_11/0.86)_0%,rgb(5_7_11/0.62)_28%,rgb(5_7_11/0.18)_52%,rgb(5_7_11/0)_68%),linear-gradient(0deg,rgb(5_7_11/0.72)_0%,rgb(5_7_11/0.2)_30%,transparent_50%),linear-gradient(180deg,rgb(5_7_11/0.5)_0%,transparent_18%)] max-md:bg-[linear-gradient(180deg,rgb(5_7_11/0.55)_0%,rgb(5_7_11/0)_20%,rgb(5_7_11/0)_36%,rgb(5_7_11/0.62)_56%,rgb(5_7_11/0.9)_78%,rgb(5_7_11/0.96)_100%)]" />
     </div>
   );
 }
 
-function HeroContent({ hero, services, workflow, projects }: Omit<Content, "problem">) {
-  const clients = recentClients(projects);
+function HeroContent({ hero }: { hero: Resolved<"hero"> }) {
+  // Telas baixas (celular deitado): tudo mais compacto para os botões caberem na primeira dobra.
   return (
-    <div className="container-page relative flex min-h-svh flex-col pt-[calc(var(--header-height)+2rem)] pb-6 md:pt-[calc(var(--header-height)+0.75rem)]">
-      <div className="grid flex-1 content-center gap-10 min-[1120px]:grid-cols-[minmax(0,1fr)_minmax(0,0.5fr)] min-[1120px]:items-start">
-        <div className="max-w-[820px]">
-          <p
-            className="animate-fade-up flex w-fit max-w-[300px] items-center gap-2.5 border-t border-white/[0.08] pt-3 text-[11.5px] leading-[1.45] text-white/50"
-            style={delay(0)}
+    <div className="container-page relative flex min-h-svh flex-col justify-end pt-[calc(var(--header-height)+2rem)] pb-[max(2.5rem,8svh)] md:justify-center md:pb-[calc(var(--header-height)*0.5)] [@media(max-height:560px)]:pt-[calc(var(--header-height)+0.5rem)] [@media(max-height:560px)]:pb-5">
+      <div className="max-w-[48rem]">
+        <p className="animate-fade-in text-eyebrow text-white/70" style={delay(0)}>
+          {site.name} <span className="text-white/40">—</span> {site.slogan}
+        </p>
+
+        <h1 className="text-hero mt-5 max-w-[6.2em] text-white [text-shadow:0_4px_32px_rgb(0_0_0/0.35)] max-sm:text-[clamp(2.5rem,11.5vw,3.25rem)] md:mt-6 [@media(max-height:560px)]:mt-3">
+          {hero.titleLines.map((line, i) => (
+            <span key={i} className="animate-headline block" style={delay(140 + i * 90)}>
+              <TitleLine line={line} />
+            </span>
+          ))}
+        </h1>
+
+        <p className="animate-fade-up mt-6 max-w-[30rem] text-[1.0625rem] leading-[1.6] text-white/75 md:mt-7 md:text-lg [@media(max-height:560px)]:mt-3 [@media(max-height:560px)]:text-[0.9375rem] [@media(max-height:560px)]:leading-normal" style={delay(520)}>
+          {hero.lead}
+        </p>
+
+        <div className="animate-fade-up mt-8 flex flex-wrap items-center gap-3 md:mt-10 [@media(max-height:560px)]:mt-4" style={delay(720)}>
+          <Link
+            href={hero.primaryCta.href}
+            className="group inline-flex h-13 items-center gap-3 rounded-full bg-[linear-gradient(96deg,var(--color-accent)_0%,var(--color-accent-soft)_100%)] py-1.5 pr-1.5 pl-6 text-base font-semibold tracking-[-0.01em] whitespace-nowrap text-white shadow-[0_14px_40px_rgb(255_91_31/0.32)] transition-[translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_20px_52px_rgb(255_91_31/0.46)] active:translate-y-0 active:scale-[0.98] max-[400px]:w-full max-[400px]:justify-between"
           >
-            <LogoMark className="size-5 flex-none text-accent" />
-            <span>{hero.eyebrow}</span>
-          </p>
+            {hero.primaryCta.label}
+            <span className="grid size-10 place-items-center rounded-full bg-white text-ink" aria-hidden="true">
+              <ArrowRight className="size-[1.1rem] transition-transform duration-300 group-hover:translate-x-0.5" />
+            </span>
+          </Link>
 
-          <h1 className="mt-5 text-[clamp(2.6rem,min(5.2vw,10svh),5.5rem)] leading-[0.92] font-semibold tracking-[-0.035em] text-white [text-shadow:0_6px_40px_rgb(0_0_0/0.45)] max-sm:tracking-[-0.03em]">
-            {hero.titleLines.map((line, i) => (
-              <span key={i} className="block overflow-hidden pb-[0.08em]">
-                <span className="animate-rise block sm:whitespace-nowrap" style={delay(60 + i * 80)}>
-                  <TitleLine line={line} />
-                </span>
-              </span>
-            ))}
-          </h1>
-
-          <p className="animate-fade-up mt-5 max-w-[410px] text-[15px] leading-[1.58] text-white/72" style={delay(300)}>
-            {hero.lead}
-          </p>
-
-          <div className="animate-fade-up mt-7 flex flex-wrap items-center gap-5" style={delay(380)}>
-            <Link
-              href={hero.primaryCta.href}
-              className="group inline-flex items-center gap-2.5 rounded-full bg-[linear-gradient(96deg,var(--color-accent)_0%,var(--color-accent-soft)_100%)] py-1.5 pr-1.5 pl-6 text-[15px] font-semibold tracking-[-0.01em] whitespace-nowrap text-white shadow-[0_14px_40px_rgb(255_91_31/0.38)] transition-[translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_20px_52px_rgb(255_91_31/0.5)]"
-            >
-              {hero.primaryCta.label}
-              <span className="grid size-[2.55em] place-items-center rounded-full bg-white text-ink" aria-hidden="true">
-                <ArrowRight className="size-[1.15em] transition-transform duration-300 group-hover:translate-x-0.5" />
-              </span>
-            </Link>
-
-            <div className="flex items-center gap-2.5">
-              <span className="grid size-8 place-items-center rounded-full border-2 border-[rgb(22_7_0/0.85)] bg-[linear-gradient(140deg,var(--color-accent),var(--color-accent-soft))] text-white" aria-hidden="true">
-                <LogoMark className="size-5" />
-              </span>
-              <span className="grid text-[11px] leading-[1.4] text-white/50">
-                <strong className="text-[12.5px] font-medium text-white/90">{hero.proof.title}</strong>
-                {hero.proof.text}
-              </span>
-            </div>
-          </div>
-
-          <ul className="animate-fade-up mt-7 flex flex-wrap gap-3.5" style={delay(460)}>
-            {hero.highlights.map((item, i) => (
-              <li
-                key={i}
-                className={cn(
-                  "relative grid min-h-[118px] w-[220px] content-between gap-4 rounded-2xl border border-white/14 p-[18px] shadow-[inset_0_1px_0_rgb(255_255_255/0.09)] backdrop-blur-[16px] backdrop-saturate-[1.1] max-sm:w-auto max-sm:flex-[1_1_140px]",
-                  i === 1 ? "bg-[linear-gradient(150deg,rgb(120_30_4/0.5),rgb(48_14_2/0.5))]" : "bg-[rgb(56_20_6/0.42)]",
-                )}
-              >
-                <span className="absolute top-3.5 right-4 text-[15px] text-white/45" aria-hidden="true">
-                  *
-                </span>
-                <span className="pr-4 text-[clamp(1.5rem,1.9vw,1.85rem)] leading-none font-medium tracking-[-0.03em] text-white">{item.value}</span>
-                <span className="pr-6 text-[11.5px] leading-snug text-white/50">{item.label}</span>
-                <span className="absolute right-4 bottom-[22px] h-px w-3.5 bg-white/28" aria-hidden="true" />
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Painel fantasma: o caminho de trabalho como textura, quase ilegível de propósito. */}
-        <aside className="animate-fade-up mt-10 hidden max-w-[330px] self-start justify-self-end text-white/26 min-[1120px]:block" style={delay(540)} aria-hidden="true">
-          <div className="flex items-end gap-[18px]">
-            <div className="flex h-[74px] items-end gap-[5px]">
-              {workflow.steps.map((_, i) => (
-                <span key={i} className="w-[9px] rounded-t-[2px] bg-white/50" style={{ height: `${stepHeight(i, workflow.steps.length)}%` }} />
-              ))}
-            </div>
-            <p className="min-w-0 text-[11px] leading-[1.4]">
-              <strong className="block text-[22px] font-semibold tracking-[-0.03em] text-white/55">{String(workflow.steps.length).padStart(2, "0")} etapas</strong>
-              {workflow.steps.map((s) => s.name).join(" · ")}
-            </p>
-          </div>
-          <p className="mt-[30px] text-[22px] font-medium tracking-[-0.02em] text-white/40">{workflow.eyebrow}</p>
-          <p className="mt-2 text-[12.5px] leading-[1.6]">{workflow.lead}</p>
-        </aside>
-      </div>
-
-      <div className="animate-fade-up relative mt-6 flex items-end justify-between gap-6 max-[860px]:flex-col max-[860px]:items-start" style={delay(600)}>
-        <span className="text-[clamp(3rem,8vw,7rem)] leading-[0.8] font-bold tracking-[-0.05em] text-white/[0.055] select-none max-[860px]:text-[3.4rem] max-sm:hidden" aria-hidden="true">
-          ROCKET
-        </span>
-        <div className="text-right max-[860px]:text-left">
-          <div className="mb-3.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 min-[861px]:justify-end">
-            {clients.length > 0 && (
-              <Link href="/projetos" className="group inline-flex items-center gap-1.5 text-[11.5px] text-white/50 transition-colors hover:text-white">
-                <span>
-                  Projetos recentes: <span className="link-underline text-white/80">{clients.join(" · ")}</span>
-                </span>
-                <ArrowUpRight className="size-3 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
-            )}
-            <a href={hero.secondaryCta.href} className="group inline-flex items-center gap-1.5 text-[11.5px] text-white/50 transition-colors hover:text-white">
-              <span className="link-underline">{hero.secondaryCta.label}</span>
-              <ArrowDown className="size-3 transition-transform duration-300 group-hover:translate-y-0.5" />
-            </a>
-          </div>
-          <ul className="flex flex-wrap items-center gap-x-[clamp(16px,2.2vw,32px)] gap-y-2 min-[861px]:justify-end">
-            {services.items.map((service) => {
-              const Icon = SERVICE_ICONS[service.id] ?? Sparkle;
-              return (
-                <li key={service.id} className="inline-flex items-center gap-[7px] text-[15px] tracking-[-0.01em] text-white/86">
-                  <Icon className="size-[17px]" strokeWidth={1.5} aria-hidden="true" />
-                  {service.name}
-                </li>
-              );
+          <Link
+            href={hero.secondaryCta.href}
+            className={buttonClasses({
+              variant: "secondary",
+              size: "lg",
+              className:
+                "bg-white/[0.04] text-white ring-white/25 backdrop-blur-md hover:bg-white/[0.08] hover:text-white hover:ring-white/50 max-[400px]:w-full",
             })}
-          </ul>
+          >
+            <span>{hero.secondaryCta.label}</span>
+            <ArrowUpRight
+              className="-mr-1 size-4 transition-transform duration-300 ease-out group-hover/button:translate-x-0.5 group-hover/button:-translate-y-0.5"
+              aria-hidden="true"
+            />
+          </Link>
         </div>
       </div>
     </div>
   );
 }
 
-function AnimatedHero({ hero, problem, services, workflow, projects }: Content) {
+function AnimatedHero({ hero, problem }: Content) {
   const sectionRef = useRef<HTMLElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)", true);
   const progress = useScrollProgress(sectionRef, ["start start", "end end"]);
@@ -254,7 +152,7 @@ function AnimatedHero({ hero, problem, services, workflow, projects }: Content) 
           <HeroMedia play={playing} />
           <m.div style={{ opacity: dim }} className="absolute inset-0 bg-ink-soft" aria-hidden="true" />
           <m.div style={{ opacity: textOpacity, y: textY }} className="absolute inset-0">
-            <HeroContent hero={hero} services={services} workflow={workflow} projects={projects} />
+            <HeroContent hero={hero} />
           </m.div>
         </m.div>
 
@@ -311,12 +209,12 @@ function Word({ text, accent, progress, range }: { text: string; accent: boolean
 }
 
 /** Versão para prefers-reduced-motion: a mesma abertura e o manifesto, sem movimento. */
-function StaticHero({ hero, problem, services, workflow, projects }: Content) {
+function StaticHero({ hero, problem }: Content) {
   return (
     <section id="inicio" data-header="dark" className="bg-ink text-white">
       <div className="relative overflow-hidden">
-        <HeroMedia play={false} />
-        <HeroContent hero={hero} services={services} workflow={workflow} projects={projects} />
+        <HeroMedia play={false} still />
+        <HeroContent hero={hero} />
       </div>
       <div className="container-page py-28 text-center">
         <h2 className="text-eyebrow text-white/55">{problem.eyebrow}</h2>

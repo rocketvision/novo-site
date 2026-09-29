@@ -80,22 +80,12 @@ const link = z.object({ label: text(40, "O texto do botão"), href });
 /* -------------------------------------------------------------------------- */
 
 export const heroSchema = z.object({
-  eyebrow: text(80, "O rótulo"),
+  // O rótulo acima do título é a assinatura institucional (nome + slogan), fixa no código.
+  // A foto antiga, a garantia e os cartões de vidro salvos no banco são descartados: a abertura é só o vídeo e a promessa.
   titleLines: z.array(text(40, "Cada linha do título")).min(1).max(4, "Use até 4 linhas."),
   lead: text(260, "A descrição"),
   primaryCta: link,
   secondaryCta: link,
-  // A abertura é um vídeo embutido no site; a antiga foto do hero salva no banco é ignorada.
-  proof: z
-    .object({ title: text(40, "O destaque"), text: text(60, "O complemento") })
-    .default({ title: "Você fala com quem constrói", text: "Sem intermediários, do início ao fim" }),
-  highlights: z
-    .array(z.object({ value: text(16, "O destaque"), label: text(60, "O texto") }))
-    .length(2, "Use dois cartões.")
-    .default([
-      { value: "Sob medida", label: "Feito para o seu negócio, não um modelo pronto" },
-      { value: "1 só time", label: "Design e tecnologia trabalhando juntos" },
-    ]),
 });
 
 export const problemSchema = z.object({

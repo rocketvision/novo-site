@@ -24,13 +24,10 @@ import type { SectionContent, SectionKey } from "./schemas";
 
 export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
   hero: {
-    eyebrow: hero.eyebrow,
     titleLines: [...hero.title],
     lead: hero.lead,
     primaryCta: { label: hero.primaryCta, href: "#contato" },
     secondaryCta: { label: hero.secondaryCta, href: "#servicos" },
-    proof: { ...hero.proof },
-    highlights: hero.highlights.map((h) => ({ ...h })),
   },
   problem: {
     eyebrow: problem.eyebrow,

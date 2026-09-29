@@ -49,6 +49,7 @@ export default async function Home() {
         "@type": "Organization",
         "@id": `${site.url}/#organization`,
         name: site.name,
+        slogan: site.slogan,
         url: site.url,
         description: settings.seo.description,
         ...(settings.contact.email && { email: settings.contact.email }),
@@ -74,7 +75,7 @@ export default async function Home() {
       />
       <Header />
       <main id="conteudo">
-        <HeroScene hero={content.hero} problem={content.problem} services={content.services} workflow={content.workflow} projects={projects} />
+        <HeroScene hero={content.hero} problem={content.problem} />
         <ShiftScene shift={content.shift} problem={content.problem} />
         <Statement statement={content.statement} problem={content.problem} />
         <Services services={content.services} problem={content.problem} projects={projects} />
