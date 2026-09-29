@@ -28,7 +28,7 @@ As fotografias que aparecem dentro das telas também são do Unsplash, sob a mes
 
 ## Vídeo de abertura
 
-`public/video/hero-loop-rocket.*` é o lançamento do foguete, fornecido pela Rocket Vision. Para o loop não ter corte, o último 1,25 s (o mar de nuvens) se dissolve no primeiro 1,25 s (a plataforma): o arquivo tem 6,75 s e o último quadro encaixa no primeiro. Recodificado sem áudio, quadro-chave a cada 2 s, em duas versões: 1280 × 720 (VP9 cerca de 540 KB, H.264 cerca de 1,1 MB) e um recorte vertical 540 × 720 centrado no foguete para celulares e tablets em pé (`hero-loop-rocket-portrait.*`, VP9 cerca de 345 KB, H.264 cerca de 520 KB). Os quadros `hero-loop-rocket-poster*.jpg` são o primeiro quadro de cada versão.
+`public/video/hero-launch.*` é o lançamento do foguete, fornecido pela Rocket Vision. Para o loop não ter corte, o último 1,25 s (o mar de nuvens) se dissolve no primeiro 1,25 s (a plataforma): o arquivo tem 6,75 s e o último quadro encaixa no primeiro. Tratamento de cor (mais contraste e saturação, azul reforçado, nitidez leve). Recodificado sem áudio, quadro-chave a cada 2 s, em duas versões: 1280 × 720 (VP9 cerca de 560 KB, H.264 cerca de 1 MB) e um recorte vertical 540 × 720 centrado no foguete para celulares e tablets em pé (`hero-launch-portrait.*`, VP9 cerca de 365 KB, H.264 cerca de 560 KB). Os quadros `hero-launch-poster*.jpg` são o primeiro quadro de cada versão.
 
 ## Vídeo do convite final
 

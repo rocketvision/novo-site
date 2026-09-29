@@ -1,13 +1,9 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { HeroScene } from "@/components/sections/hero-scene";
-import { ShiftScene } from "@/components/sections/shift-scene";
-import { Statement } from "@/components/sections/statement";
 import { Services } from "@/components/sections/services";
-import { Differentials } from "@/components/sections/differentials";
 import { ProjectsShowcase } from "@/components/sections/projects-showcase";
 import { Process } from "@/components/sections/process";
-import { Turn } from "@/components/sections/turn";
 import { FinalCta } from "@/components/sections/final-cta";
 import type { Metadata } from "next";
 import { PreviewBar } from "@/components/layout/preview-bar";
@@ -33,9 +29,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Narrativa: promessa sobre o vídeo de abertura, problema, o que muda,
- * virada para a solução, serviços, diferenciais, projetos reais, processo,
- * momento tipográfico e conversa.
+ * Só o que importa: a promessa sobre o vídeo de abertura, o que a Rocket constrói,
+ * projetos reais, como trabalhamos e a conversa.
  */
 export default async function Home() {
   const [content, previewing, published] = await Promise.all([getLandingContent(), isPreviewing(), getPublishedProjects()]);
@@ -75,14 +70,10 @@ export default async function Home() {
       />
       <Header />
       <main id="conteudo">
-        <HeroScene hero={content.hero} problem={content.problem} />
-        <ShiftScene shift={content.shift} problem={content.problem} />
-        <Statement statement={content.statement} problem={content.problem} />
+        <HeroScene hero={content.hero} services={content.services} projects={projects} />
         <Services services={content.services} problem={content.problem} projects={projects} />
-        <Differentials differentials={content.differentials} />
         <ProjectsShowcase projects={projects} />
         <Process workflow={content.workflow} />
-        <Turn turn={content.turn} />
         <FinalCta cta={content.cta} contact={settings.contact} />
       </main>
       <Footer settings={settings} />
