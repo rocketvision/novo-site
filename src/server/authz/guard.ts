@@ -18,6 +18,18 @@ export function canAny(user: SessionUser, permissions: Permission[]) {
   return permissions.some((p) => user.permissions.has(p));
 }
 
+/** Áreas administrativas do Studio. Quem não tem nenhuma delas e tem o Blog (o Colunista) vive só no Blog. */
+const ADMIN_AREAS: Permission[] = ["landing.view", "projects.view", "media.view", "users.view", "audit.view", "settings.view"];
+
+export function isBlogOnly(permissions: ReadonlySet<Permission>) {
+  return permissions.has("blog.view") && !ADMIN_AREAS.some((p) => permissions.has(p));
+}
+
+/** Página inicial do Studio para a pessoa: o Colunista começa no Blog. */
+export function homePathFor(permissions: ReadonlySet<Permission>) {
+  return isBlogOnly(permissions) ? "/cms/blog" : "/cms";
+}
+
 /** Exige sessão válida. Sem ela, volta para o login lembrando a página pedida. */
 export async function requireSession(nextPath?: string): Promise<ValidSession> {
   const session = await getSession();

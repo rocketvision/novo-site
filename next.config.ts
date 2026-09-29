@@ -7,6 +7,7 @@ const isDev = process.env.NODE_ENV !== "production";
  * Scripts e estilos inline são permitidos porque o Next injeta os dados de hidratação inline
  * e a landing é estática (nonce exigiria renderização dinâmica em todas as páginas).
  * O resto é restrito à própria origem; imagens também do Vercel Blob.
+ * Frames: só os players de vídeo aceitos nos artigos do Blog (YouTube sem cookies, Vimeo e Loom).
  */
 const csp = [
   "default-src 'self'",
@@ -15,6 +16,7 @@ const csp = [
   "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
   "font-src 'self'",
   `connect-src 'self'${isDev ? " ws:" : ""}`,
+  "frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

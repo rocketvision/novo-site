@@ -1,5 +1,5 @@
 import { Sidebar, type NavKey } from "@/components/cms/shell/sidebar";
-import { requireUser } from "@/server/authz/guard";
+import { isBlogOnly, requireUser } from "@/server/authz/guard";
 import type { Permission } from "@/server/authz/permissions";
 
 /** Layout autenticado do CMS. Toda página abaixo exige sessão válida (verificada no servidor). */
@@ -7,7 +7,9 @@ export default async function CmsAppLayout({ children }: { children: React.React
   const user = await requireUser();
 
   const gates: [NavKey, Permission | null][] = [
-    ["dashboard", null],
+    // A visão geral é das áreas administrativas: o Colunista vê só o Blog e a própria conta.
+    ...(isBlogOnly(user.permissions) ? [] : [["dashboard", null] as [NavKey, null]]),
+    ["blog", "blog.view"],
     ["landing", "landing.view"],
     ["projects", "projects.view"],
     ["media", "media.view"],

@@ -10,6 +10,7 @@ import {
   Image as ImageIcon,
   LayoutDashboard,
   LogOut,
+  Newspaper,
   Menu,
   PanelsTopLeft,
   ScrollText,
@@ -22,11 +23,12 @@ import { StudioLogo } from "@/components/cms/brand";
 import { api } from "@/lib/cms/api";
 import { cn } from "@/lib/utils";
 
-export type NavKey = "dashboard" | "landing" | "projects" | "media" | "users" | "audit" | "settings";
+export type NavKey = "dashboard" | "blog" | "landing" | "projects" | "media" | "users" | "audit" | "settings";
 
 const ITEMS: { key: NavKey; label: string; href: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Visão geral", href: "/cms", icon: LayoutDashboard },
   { key: "landing", label: "Landing page", href: "/cms/landing", icon: PanelsTopLeft },
+  { key: "blog", label: "Blog", href: "/cms/blog", icon: Newspaper },
   { key: "projects", label: "Projetos", href: "/cms/projetos", icon: FolderKanban },
   { key: "media", label: "Mídia", href: "/cms/midia", icon: ImageIcon },
   { key: "users", label: "Usuários", href: "/cms/usuarios", icon: Users },

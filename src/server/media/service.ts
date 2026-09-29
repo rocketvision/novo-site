@@ -61,9 +61,11 @@ export const MEDIA_PAGE_SIZE = 40;
  * Lista paginada por cursor (data de criação + id), da mais recente para a mais antiga.
  * `q` busca no nome do arquivo e no texto alternativo.
  */
-export async function listMedia(input: { q?: string; filter?: "all" | "unused" | "no-alt"; cursor?: string | null; limit?: number }) {
+export async function listMedia(input: { q?: string; filter?: "all" | "unused" | "no-alt"; cursor?: string | null; limit?: number; uploadedBy?: string }) {
   const limit = Math.min(input.limit ?? MEDIA_PAGE_SIZE, 100);
   const where: SQL[] = [];
+  // Biblioteca pessoal (Colunista): só o que a própria pessoa enviou.
+  if (input.uploadedBy) where.push(eq(schema.media.uploadedBy, input.uploadedBy));
   const q = input.q?.trim();
   if (q) {
     const pattern = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;

@@ -21,6 +21,8 @@ const schema = z.object({
   /** Resend: envio de e-mails transacionais (convites e redefinição de senha). Opcional. */
   RESEND_API_KEY: optional(z.string().min(1)),
   MAIL_FROM: optional(z.string().min(3)),
+  /** Segredo das rotas de cron (a Vercel envia como "Authorization: Bearer ..."). Sem ele, as rotas de cron recusam tudo. */
+  CRON_SECRET: optional(z.string().min(16)),
 });
 
 const parsed = schema.safeParse(process.env);

@@ -5,13 +5,15 @@ import { EmptyState, PageHeader, Panel } from "@/components/cms/ui/layout";
 import { ButtonLink } from "@/components/cms/ui/button";
 import { SECTIONS } from "@/lib/content/sections";
 import { relativeTime } from "@/lib/cms/format";
-import { requireUser } from "@/server/authz/guard";
+import { redirect } from "next/navigation";
+import { isBlogOnly, requireUser } from "@/server/authz/guard";
 import { getDashboard } from "@/server/cms/dashboard";
 
 export const metadata: Metadata = { title: "Visão geral" };
 
 export default async function DashboardPage() {
   const user = await requireUser("/cms");
+  if (isBlogOnly(user.permissions)) redirect("/cms/blog");
   const canAudit = user.permissions.has("audit.view");
   const { counts, pendingSections, pendingProjects, activity } = await getDashboard({ onlyActorId: canAudit ? undefined : user.id });
   const canLanding = user.permissions.has("landing.view");
