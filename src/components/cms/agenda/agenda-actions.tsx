@@ -89,3 +89,30 @@ export function DisconnectGoogleButton({ email }: { email: string }) {
     />
   );
 }
+
+/** Mostra a URI de volta deste endereço, para cadastrar no cliente OAuth do Google Cloud. */
+export function RedirectUriHint({ uri }: { uri: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="mt-3 rounded-md bg-zinc-50 p-3 text-xs text-zinc-600 ring-1 ring-zinc-200">
+      <p>
+        No Google Cloud (Credenciais → seu ID do cliente OAuth → <strong>URIs de redirecionamento autorizados</strong>), cadastre exatamente:
+      </p>
+      <div className="mt-2 flex items-center gap-2">
+        <code className="min-w-0 flex-1 truncate rounded bg-white px-2 py-1.5 font-mono text-[11px] text-zinc-900 ring-1 ring-zinc-200">{uri}</code>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() =>
+            navigator.clipboard?.writeText(uri).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            })
+          }
+        >
+          {copied ? "Copiado" : "Copiar"}
+        </Button>
+      </div>
+    </div>
+  );
+}

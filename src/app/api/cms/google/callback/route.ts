@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { authedRoute } from "@/server/http/handler";
-import { exchangeCode, STATE_COOKIE } from "@/server/calendar/google";
+import { exchangeCode, publicOrigin, STATE_COOKIE } from "@/server/calendar/google";
 import { saveConnection } from "@/server/calendar/bookings";
 import { log } from "@/server/log";
 
@@ -9,7 +9,7 @@ import { log } from "@/server/log";
 export const GET = authedRoute({ permission: "settings.edit" }, async ({ request, user, ip, userAgent }) => {
   const url = new URL(request.url);
   const back = (result: string) => {
-    const response = NextResponse.redirect(new URL(`/cms/agenda?google=${result}`, request.url));
+    const response = NextResponse.redirect(new URL(`/cms/agenda?google=${result}`, publicOrigin(request.headers, request.url)));
     response.cookies.delete({ name: STATE_COOKIE, path: "/api/cms/google" });
     return response;
   };
@@ -21,7 +21,7 @@ export const GET = authedRoute({ permission: "settings.edit" }, async ({ request
   const code = url.searchParams.get("code");
   if (!code) return back("erro");
   try {
-    const { email, refreshToken } = await exchangeCode(code, url.origin);
+    const { email, refreshToken } = await exchangeCode(code, publicOrigin(request.headers, request.url));
     await saveConnection(user, { email, refreshToken }, { ip, userAgent });
     return back("conectado");
   } catch (error) {

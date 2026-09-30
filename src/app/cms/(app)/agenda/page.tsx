@@ -4,13 +4,14 @@ import { AlertTriangle, CalendarCheck2, CheckCircle2, Video } from "lucide-react
 import { buttonClass } from "@/components/cms/ui/button";
 import { EmptyState, PageHeader, Panel } from "@/components/cms/ui/layout";
 import { AgendaBoard } from "@/components/cms/agenda/agenda-board";
-import { CancelBookingButton, DisconnectGoogleButton } from "@/components/cms/agenda/agenda-actions";
+import { CancelBookingButton, DisconnectGoogleButton, RedirectUriHint } from "@/components/cms/agenda/agenda-actions";
+import { headers } from "next/headers";
 import { addDays, formatDay, HORIZON_DAYS, localDate, localTime, weekdayOf } from "@/lib/booking";
 import { maskPhone } from "@/lib/diagnostic";
 import { requirePermission } from "@/server/authz/guard";
 import { slotGrid } from "@/server/calendar/availability";
 import { upcomingBookings } from "@/server/calendar/bookings";
-import { getConnection, isCalendarConfigured } from "@/server/calendar/google";
+import { getConnection, isCalendarConfigured, publicOrigin, redirectUri, SUGGESTED_ACCOUNT } from "@/server/calendar/google";
 import { formatDateTime } from "@/lib/cms/format";
 
 export const metadata: Metadata = { title: "Agenda" };
@@ -21,7 +22,7 @@ const WEEKS = Math.ceil(HORIZON_DAYS / 7) + 1;
 const NOTICES: Record<string, { tone: "ok" | "error"; text: string }> = {
   conectado: { tone: "ok", text: "Google Calendar conectado. O site já oferece os horários livres." },
   cancelado: { tone: "error", text: "A conexão foi cancelada no Google." },
-  erro: { tone: "error", text: "Não foi possível conectar o Google Calendar. Tente de novo." },
+  erro: { tone: "error", text: "Não foi possível conectar o Google Calendar. Confira a URI de redirecionamento abaixo e tente de novo." },
 };
 
 /**
@@ -39,6 +40,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Searc
   const monday = addDays(today, -((weekdayOf(today) + 6) % 7) + week * 7);
   const [connection, bookings, grid] = await Promise.all([getConnection(), upcomingBookings(), slotGrid({ first: monday, last: addDays(monday, 4), requireGoogle: false })]);
   const configured = isCalendarConfigured();
+  const callback = redirectUri(publicOrigin(await headers(), "http://localhost:3000"));
   const canManage = user.permissions.has("diagnostics.manage");
   const canConnect = user.permissions.has("settings.edit");
 
@@ -63,15 +65,16 @@ export default async function AgendaPage({ searchParams }: { searchParams: Searc
       <section className="mb-6 flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           {connection ? <CheckCircle2 className="mt-0.5 size-5 text-emerald-600" /> : <AlertTriangle className="mt-0.5 size-5 text-amber-500" />}
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-medium text-zinc-900">{connection ? `Google Calendar conectado: ${connection.email}` : "Google Calendar não conectado"}</p>
             <p className="mt-0.5 text-xs text-zinc-500">
               {connection
                 ? `Desde ${formatDateTime(connection.connectedAt)}. Compromissos da agenda ficam indisponíveis no site, e cada call vira um evento com Google Meet.`
                 : configured
-                  ? "Conecte a agenda que recebe as calls. Enquanto isso, o site oferece só o WhatsApp no fim do diagnóstico."
+                  ? `Conecte a agenda que recebe as calls, entrando com ${SUGGESTED_ACCOUNT} (o Google mostra o seletor de contas). Enquanto isso, o site oferece só o WhatsApp no fim do diagnóstico.`
                   : "Falta configurar GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET na Vercel (credencial OAuth do Google Cloud)."}
             </p>
+            {configured && !connection && canConnect && <RedirectUriHint uri={callback} />}
           </div>
         </div>
         {canConnect && configured && (

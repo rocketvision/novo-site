@@ -26,6 +26,17 @@ export const isCalendarConfigured = () => Boolean(env.GOOGLE_CLIENT_ID && env.GO
  * local). Cada um precisa estar cadastrado nas "URIs de redirecionamento autorizados" do cliente OAuth.
  */
 export const redirectUri = (origin: string) => `${origin}/api/cms/google/callback`;
+
+/** Origem pública da requisição (atrás do proxy da Vercel): é ela que vai na URI de volta. */
+export function publicOrigin(headers: Headers, fallback: string) {
+  const host = headers.get("x-forwarded-host") ?? headers.get("host");
+  if (!host) return new URL(fallback).origin;
+  const proto = headers.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto.split(",")[0].trim()}://${host.split(",")[0].trim()}`;
+}
+
+/** Conta sugerida no consentimento (a agenda que recebe as calls). A pessoa ainda pode escolher outra. */
+export const SUGGESTED_ACCOUNT = "contato@rocketvision.dev";
 /** Cookie com o "state" do OAuth (proteção contra CSRF na volta do Google). */
 export const STATE_COOKIE = "rv_google_state";
 
@@ -57,8 +68,10 @@ export function consentUrl(state: string, origin: string) {
     response_type: "code",
     scope: SCOPES.join(" "),
     access_type: "offline",
-    // Sempre pede o consentimento: garante um refresh token novo a cada conexão.
-    prompt: "consent",
+    // Sempre mostra o seletor de contas (não usa direto a conta logada no navegador) e pede o
+    // consentimento, o que garante um refresh token novo a cada conexão.
+    prompt: "select_account consent",
+    login_hint: SUGGESTED_ACCOUNT,
     include_granted_scopes: "true",
     state,
   });
