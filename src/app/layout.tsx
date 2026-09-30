@@ -48,9 +48,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable}`}>
       <head>
-        {/* Sem JavaScript, os elementos com reveal ficam visíveis desde o início. */}
+        {/* Sem JavaScript, os elementos com reveal e o vídeo da abertura (autoplay do HTML) ficam visíveis. */}
         <noscript>
-          <style>{`[style*="opacity:0"]{opacity:1!important;transform:none!important}`}</style>
+          <style>{`[style*="opacity:0"]{opacity:1!important;transform:none!important}#inicio video{opacity:1!important}`}</style>
         </noscript>
       </head>
       <body>{children}</body>
