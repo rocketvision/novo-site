@@ -127,7 +127,6 @@ export const serviceItemSchema = z.object({
   id: z.string().regex(/^[a-z0-9-]{2,40}$/, "Identificador inválido."),
   name: text(40, "O nome"),
   title: text(80, "O título"),
-  problem: text(220, "O problema"),
   what: text(240, "O que fazemos"),
   outcomes: z.array(text(80, "Cada resultado")).min(1).max(4, "Use até 4 resultados."),
   signal: text(50, "O sinal de resultado"),

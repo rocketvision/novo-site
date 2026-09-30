@@ -7,7 +7,6 @@ import { buttonClasses } from "@/components/ui/button";
 import { LogoMark } from "@/components/ui/logo";
 import { RocketVideo } from "@/components/ui/rocket-video";
 import type { Resolved } from "@/lib/content/resolved";
-import type { PublicProject } from "@/lib/projects/types";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { site } from "@/lib/site";
 
@@ -16,12 +15,7 @@ const delay = (ms: number) => ({ "--delay": `${ms}ms` }) as React.CSSProperties;
 type Content = {
   hero: Resolved<"hero">;
   services: Resolved<"services">;
-  /** Projetos reais publicados no CMS; os clientes aparecem como prova discreta no rodapé da abertura. */
-  projects?: PublicProject[];
 };
-
-/** Clientes dos projetos recentes, sem repetir, na ordem do CMS. */
-const recentClients = (projects: PublicProject[] = []) => [...new Set(projects.map((p) => (p.client || p.name).trim()))].slice(0, 3);
 
 /** Ícone de traço para cada serviço, pelo identificador. */
 const SERVICE_ICONS: Record<string, typeof Globe> = {
@@ -38,11 +32,11 @@ const SERVICE_ICONS: Record<string, typeof Globe> = {
 /**
  * Abertura: uma tela só. O lançamento do foguete ocupa a tela inteira, em loop, e por cima,
  * direto sobre o vídeo, a assinatura da marca, a promessa e os dois caminhos. No rodapé, discretos,
- * o que a Rocket constrói e os projetos recentes. A palavra ROCKET quase apagada dá textura
+ * o que a Rocket constrói. A palavra ROCKET quase apagada dá textura
  * sem competir com o foguete. Tudo entra uma única vez, em cascata.
  * O vídeo pausa quando a abertura sai da tela.
  */
-export function HeroScene({ hero, services, projects }: Content) {
+export function HeroScene({ hero, services }: Content) {
   const reduceMotion = usePrefersReducedMotion();
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(true);
@@ -58,7 +52,7 @@ export function HeroScene({ hero, services, projects }: Content) {
   return (
     <section ref={ref} id="inicio" data-header="dark" className="relative overflow-hidden bg-ink">
       <HeroMedia play={visible && !reduceMotion} still={reduceMotion} />
-      <HeroContent hero={hero} services={services} projects={projects} />
+      <HeroContent hero={hero} services={services} />
     </section>
   );
 }
@@ -91,8 +85,7 @@ function HeroMedia({ play, still = false }: { play: boolean; still?: boolean }) 
   );
 }
 
-function HeroContent({ hero, services, projects }: Content) {
-  const clients = recentClients(projects);
+function HeroContent({ hero, services }: Content) {
   // Telas baixas (celular deitado): tudo mais compacto para os botões caberem na primeira dobra.
   return (
     <div className="container-page relative flex min-h-svh flex-col pt-[calc(var(--header-height)+2rem)] pb-6 md:pb-8 [@media(max-height:560px)]:pt-[calc(var(--header-height)+0.5rem)] [@media(max-height:560px)]:pb-4">
@@ -147,23 +140,12 @@ function HeroContent({ hero, services, projects }: Content) {
         </div>
       </div>
 
-      {/* Rodapé da abertura: a palavra da marca quase apagada, os projetos recentes e o que a Rocket constrói. */}
+      {/* Rodapé da abertura: a palavra da marca quase apagada e o que a Rocket constrói. */}
       <div className="animate-fade-up relative mt-10 flex items-end justify-between gap-6 max-md:mt-7 [@media(max-height:560px)]:hidden" style={delay(900)}>
         <span className="text-[clamp(3rem,8vw,7rem)] leading-[0.8] font-bold tracking-[-0.05em] text-white/[0.05] select-none max-lg:hidden" aria-hidden="true">
           ROCKET
         </span>
-        <div className="flex min-w-0 flex-col gap-3 border-t border-white/[0.12] pt-4 lg:items-end">
-          {clients.length > 0 && (
-            <Link
-              href="/projetos"
-              className="group inline-flex w-fit items-center gap-1.5 text-[11.5px] text-white/55 transition-colors hover:text-white"
-            >
-              <span>
-                Projetos recentes: <span className="link-underline text-white/85">{clients.join(" · ")}</span>
-              </span>
-              <ArrowUpRight className="size-3 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
-            </Link>
-          )}
+        <div className="min-w-0 border-t border-white/[0.12] pt-4">
           <ul className="flex flex-wrap items-center gap-x-[clamp(14px,2.2vw,32px)] gap-y-2 lg:justify-end" aria-label="O que a Rocket constrói">
             {services.items.map((service) => {
               const Icon = SERVICE_ICONS[service.id] ?? Sparkle;

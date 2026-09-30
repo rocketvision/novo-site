@@ -53,7 +53,6 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
       id: s.id,
       name: s.name,
       title: s.title,
-      problem: s.problem,
       what: s.what,
       outcomes: [...s.outcomes],
       signal: s.signal,
