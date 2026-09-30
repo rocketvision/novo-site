@@ -9,10 +9,13 @@ import { availabilityBlocks, bookings, diagnostics, googleCalendarConnection } f
 import { badRequest, conflict, notFound } from "@/server/http/errors";
 import { log } from "@/server/log";
 import { createMeetEvent, deleteEvent, encrypt, getConnection, revoke } from "./google";
-import { isSlotFree } from "./availability";
+import { bookingRange, clearSlotsCache, isSlotFree } from "./availability";
 
 type Actor = { id: string; email: string };
 type Meta = { ip?: string | null; userAgent?: string | null };
+
+/** Validade do token de agendamento, a partir do envio do diagnóstico. */
+const TOKEN_DAYS = 7;
 
 export const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
@@ -23,6 +26,8 @@ async function diagnosticFor(diagnosticId: string, token: string) {
   const a = Buffer.from(d.bookingTokenHash, "hex");
   const b = Buffer.from(hashToken(token), "hex");
   if (a.length !== b.length || !timingSafeEqual(a, b)) throw notFound("Diagnóstico não encontrado.");
+  // O token vale por TOKEN_DAYS: um link vazado não serve para agendar para sempre.
+  if (Date.now() - d.createdAt.getTime() > TOKEN_DAYS * 24 * 3600_000) throw notFound("Diagnóstico não encontrado.");
   return d;
 }
 
@@ -37,6 +42,7 @@ export async function bookCall(input: { diagnosticId: string; token: string; sta
   if (!SLOT_TIMES.includes(localTime(input.start)) || slotStart(localDate(input.start), localTime(input.start)).getTime() !== input.start.getTime()) {
     throw badRequest("Horário inválido.");
   }
+  if (localDate(input.start) > bookingRange().last) throw badRequest("Essa data ainda não está aberta para agendamento.");
   const existing = await db
     .select()
     .from(bookings)
@@ -82,6 +88,7 @@ export async function bookCall(input: { diagnosticId: string; token: string; sta
       .where(eq(bookings.id, reserved.id))
       .returning();
     await db.update(diagnostics).set({ contactPreference: "agendou", status: d.status === "novo" ? "call_agendada" : d.status, updatedAt: new Date() }).where(eq(diagnostics.id, d.id));
+    clearSlotsCache();
     return confirmed;
   } catch (error) {
     await db.delete(bookings).where(eq(bookings.id, reserved.id));
@@ -118,6 +125,7 @@ export async function cancelBooking(actor: Actor, id: string, meta: Meta = {}) {
   if (booking.googleEventId) await deleteEvent(booking.googleEventId);
   await db.transaction(async (tx) => {
     await tx.update(bookings).set({ status: "cancelado", cancelledAt: new Date(), cancelledBy: actor.id }).where(eq(bookings.id, id));
+    clearSlotsCache();
     await audit(
       {
         actor,
@@ -151,10 +159,12 @@ export async function createBlock(actor: Actor, input: { date: string; from?: st
     );
     return rows;
   });
+  clearSlotsCache();
   return block;
 }
 
 export async function deleteBlock(actor: Actor, id: string, meta: Meta = {}) {
+  clearSlotsCache();
   await getDb().transaction(async (tx) => {
     const [removed] = await tx.delete(availabilityBlocks).where(eq(availabilityBlocks.id, id)).returning();
     if (!removed) throw notFound("Bloqueio não encontrado.");

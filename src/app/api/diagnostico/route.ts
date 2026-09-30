@@ -1,44 +1,33 @@
-import { NextResponse } from "next/server";
 import { diagnosticSchema } from "@/lib/diagnostic";
-import { clientIpFrom } from "@/server/auth/session";
+import { json, publicRoute, readJson } from "@/server/http/handler";
+import { HttpError } from "@/server/http/errors";
 import { receiveDiagnostic } from "@/server/diagnostics/service";
+import { enforce, POLICIES } from "@/server/security/rate-limit";
 import { log } from "@/server/log";
-import { consume, POLICIES } from "@/server/security/rate-limit";
+
+/** Honeypot: o campo invisível do quiz. Pessoas não o preenchem; bots, sim. */
+const withHoneypot = diagnosticSchema.extend({ website: diagnosticSchema.shape.source });
 
 /**
- * Recebe o diagnóstico (o quiz de 7 perguntas do site) e guarda no banco, avisando a equipe.
- * Respostas: 200 { ok }, 400 JSON inválido, 422 validação, 429 limite por IP, 503 nenhum destino.
+ * Recebe o diagnóstico (o quiz de 7 perguntas do site), guarda no banco e avisa a equipe.
+ *
+ * Proteções: só aceita a mesma origem (CSRF), JSON de até 8 KB, limite por IP e teto geral por hora,
+ * validação estrita das respostas (só opções conhecidas) e campo invisível contra robôs.
+ * Devolve `id` e `token` (só para quem enviou), que permitem agendar a call por este diagnóstico.
  */
-export async function POST(request: Request) {
-  const limit = await consume(POLICIES.diagnosticByIp, clientIpFrom(request.headers) ?? "unknown");
-  if (!limit.allowed) {
-    return NextResponse.json({ error: "too_many_requests" }, { status: 429, headers: { "Retry-After": String(limit.retryAfter) } });
-  }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
-  }
-
-  // Campo invisível para bots. Pessoas não o preenchem.
-  if (typeof body === "object" && body !== null && (body as Record<string, unknown>).website) {
-    return NextResponse.json({ ok: true });
-  }
-
-  const parsed = diagnosticSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "validation", fields: [...new Set(parsed.error.issues.map((i) => String(i.path[0])))] }, { status: 422 });
-  }
+export const POST = publicRoute({ rateLimit: { policy: POLICIES.diagnosticByIp, by: "ip" } }, async ({ request }) => {
+  await enforce(POLICIES.diagnosticGlobal, "all");
+  const { website, ...data } = await readJson(request, withHoneypot, 8 * 1024);
+  // Bot: finge que deu certo e não grava nada.
+  if (website) return json({ ok: true });
 
   try {
-    const { stored, notified, id, token } = await receiveDiagnostic(parsed.data);
-    if (!stored && !notified) return NextResponse.json({ error: "not_configured" }, { status: 503 });
-    // id e token permitem agendar a call (e registrar a preferência de contato) por este diagnóstico.
-    return NextResponse.json({ ok: true, id, token });
+    const { stored, notified, id, token } = await receiveDiagnostic(data);
+    if (!stored && !notified) throw new HttpError(503, "not_configured", "Não foi possível enviar agora.");
+    return json({ ok: true, id, token });
   } catch (error) {
+    if (error instanceof HttpError) throw error;
     log.error("diagnostic.failed", { error });
-    return NextResponse.json({ error: "delivery_failed" }, { status: 502 });
+    throw new HttpError(502, "delivery_failed", "Não foi possível enviar agora. Tente de novo em instantes.");
   }
-}
+});

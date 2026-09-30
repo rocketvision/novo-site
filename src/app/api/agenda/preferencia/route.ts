@@ -4,8 +4,8 @@ import { POLICIES } from "@/server/security/rate-limit";
 import { setContactPreference } from "@/server/calendar/bookings";
 
 /** POST /api/agenda/preferencia: "vou chamar no WhatsApp" ou "aguardo vocês me chamarem". */
-export const POST = publicRoute({ rateLimit: { policy: POLICIES.bookingByIp, by: "ip" } }, async ({ request }) => {
-  const input = await readJson(request, preferenceSchema);
+export const POST = publicRoute({ rateLimit: { policy: POLICIES.preferenceByIp, by: "ip" } }, async ({ request }) => {
+  const input = await readJson(request, preferenceSchema, 2 * 1024);
   await setContactPreference(input.diagnosticId, input.token, input.preference);
   return json({ ok: true });
 });

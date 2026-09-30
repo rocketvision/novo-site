@@ -1,6 +1,6 @@
 import "server-only";
 import { and, asc, gt, gte, lt, ne } from "drizzle-orm";
-import { addDays, HORIZON_DAYS, localDate, localTime, MIN_NOTICE_MINUTES, SLOT_TIMES, slotEnd, slotStart, WEEKDAYS, weekdayOf, type DaySlots, type SlotState } from "@/lib/booking";
+import { addDays, HORIZON_DAYS, localDate, localTime, MIN_NOTICE_MINUTES, monthOf, monthRange, SLOT_TIMES, slotEnd, slotStart, WEEKDAYS, weekdayOf, type DaySlots, type SlotState } from "@/lib/booking";
 import { getDb } from "@/server/db";
 import { availabilityBlocks, bookings } from "@/server/db/schema";
 import { busyIntervals, CalendarNotConfiguredError, holidays } from "./google";
@@ -89,12 +89,36 @@ export async function slotGrid({
 }
 
 /** O que o site mostra: só dias com algum horário livre, e só os horários livres. */
-export async function publicSlots(now = new Date()) {
-  const { first, last } = bookingRange(now);
-  const grid = await slotGrid({ first, last, now });
-  return grid
+/**
+ * Cache curto (por instância) dos horários públicos de cada mês: rajadas de acesso não viram rajadas
+ * de chamadas ao Google. O agendamento em si sempre confere o horário direto no Google (isSlotFree),
+ * então o cache nunca permite marcar um horário ocupado; e ele é limpo a cada agendamento ou bloqueio.
+ */
+const CACHE_MS = 60_000;
+const slotsCache = new Map<string, { at: number; value: Awaited<ReturnType<typeof computePublicSlots>> }>();
+export const clearSlotsCache = () => slotsCache.clear();
+
+export async function publicSlots(month?: string, now = new Date()) {
+  const key = `${month ?? ""}|${localDate(now)}`;
+  const hit = slotsCache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
+  const value = await computePublicSlots(month, now);
+  slotsCache.set(key, { at: Date.now(), value });
+  return value;
+}
+
+async function computePublicSlots(month?: string, now = new Date()) {
+  const range = bookingRange(now);
+  const minMonth = monthOf(range.first);
+  const maxMonth = monthOf(range.last);
+  const wanted = month && month >= minMonth && month <= maxMonth ? month : minMonth;
+  // O mês pedido, recortado pela janela de agendamento (de hoje até HORIZON_DAYS).
+  const { first, last } = monthRange(wanted);
+  const grid = await slotGrid({ first: first < range.first ? range.first : first, last: last > range.last ? range.last : last, now });
+  const days = grid
     .map((d) => ({ date: d.date, times: d.slots.filter((s) => s.state === "free").map((s) => ({ time: s.time, start: s.start })) }))
     .filter((d) => d.times.length > 0);
+  return { month: wanted, minMonth, maxMonth, days };
 }
 
 /** Confere se um horário específico está livre agora (na hora de confirmar o agendamento). */

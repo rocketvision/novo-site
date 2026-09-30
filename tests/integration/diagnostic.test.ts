@@ -47,8 +47,15 @@ const body = {
 };
 
 let ip = 0;
-const post = (data: unknown) =>
-  POST(new Request("http://localhost:3000/api/diagnostico", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": `10.0.0.${++ip}` }, body: JSON.stringify(data) }));
+const post = (data: unknown, headers: Record<string, string> = {}) =>
+  POST(
+    new NextRequest("http://localhost:3000/api/diagnostico", {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: ORIGIN, "x-forwarded-for": `10.0.0.${++ip}`, ...headers },
+      body: typeof data === "string" ? data : JSON.stringify(data),
+    }),
+    params({}),
+  );
 
 beforeAll(async () => {
   await resetTestDatabase();
@@ -66,7 +73,7 @@ describe("POST /api/diagnostico", () => {
   it("recusa respostas inválidas com 422 e aponta os campos", async () => {
     const response = await post({ ...body, whatsapp: "123", segment: "x" });
     expect(response.status).toBe(422);
-    expect((await response.json()).fields).toEqual(expect.arrayContaining(["whatsapp", "segment"]));
+    expect(Object.keys((await response.json()).error.fields)).toEqual(expect.arrayContaining(["whatsapp", "segment"]));
   });
 
   it("ignora bots (campo invisível preenchido) sem gravar", async () => {
@@ -75,9 +82,10 @@ describe("POST /api/diagnostico", () => {
     expect(await getDb().select().from(diagnostics)).toHaveLength(before);
   });
 
-  it("JSON inválido: 400", async () => {
-    const response = await POST(new Request("http://localhost:3000/api/diagnostico", { method: "POST", body: "{" }));
-    expect(response.status).toBe(400);
+  it("JSON inválido: 400; sem JSON: 415; outra origem: 403", async () => {
+    expect((await post("{")).status).toBe(400);
+    expect((await post(body, { "content-type": "text/plain" })).status).toBe(415);
+    expect((await post(body, { origin: "https://site-malicioso.com" })).status).toBe(403);
   });
 });
 

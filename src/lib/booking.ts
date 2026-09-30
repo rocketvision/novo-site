@@ -18,8 +18,8 @@ export const WINDOWS: [string, string][] = [
 export const SLOT_MINUTES = 30;
 /** Dias da semana com atendimento (0 = domingo). */
 export const WEEKDAYS = [1, 2, 3, 4, 5];
-/** Até quantos dias à frente dá pra agendar. */
-export const HORIZON_DAYS = 21;
+/** Até quantos dias à frente dá pra agendar (o calendário navega mês a mês até aqui). */
+export const HORIZON_DAYS = 90;
 /** Antecedência mínima para marcar (em minutos). */
 export const MIN_NOTICE_MINUTES = 120;
 
@@ -53,6 +53,31 @@ export function addDays(date: string, days: number) {
   const d = new Date(`${date}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+/** Mês de uma data AAAA-MM-DD ("2026-10") e soma de meses a um mês. */
+export const monthOf = (date: string) => date.slice(0, 7);
+export function addMonths(month: string, n: number) {
+  const [y, m] = month.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + n, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+/** Primeiro e último dia de um mês. */
+export function monthRange(month: string) {
+  const first = `${month}-01`;
+  return { first, last: addDays(`${addMonths(month, 1)}-01`, -1) };
+}
+/** Semanas do mês para a grade do calendário (domingo primeiro); null nos dias de fora. */
+export function monthWeeks(month: string): (string | null)[][] {
+  const { first, last } = monthRange(month);
+  const cells: (string | null)[] = Array.from({ length: weekdayOf(first) }, () => null);
+  for (let d = first; d <= last; d = addDays(d, 1)) cells.push(d);
+  while (cells.length % 7) cells.push(null);
+  return Array.from({ length: cells.length / 7 }, (_, i) => cells.slice(i * 7, i * 7 + 7));
+}
+/** "outubro de 2026" */
+export function formatMonth(month: string) {
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: TIME_ZONE, month: "long", year: "numeric" }).format(new Date(`${month}-15T12:00:00${OFFSET}`));
 }
 
 /** "segunda, 6 de outubro" / "seg." e "6" para o seletor. */

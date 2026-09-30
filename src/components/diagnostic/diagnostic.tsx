@@ -461,7 +461,7 @@ function Result({
   const [mode, setMode] = useState<"reading" | "schedule" | "waiting">("reading");
   // Horários livres: só com a agenda conectada o botão de agendar aparece.
   const { slots, reload } = useSlots(Boolean(diagnostic));
-  const canSchedule = Boolean(diagnostic && slots?.connected && slots.days.length > 0);
+  const canSchedule = Boolean(diagnostic && slots?.connected);
 
   const prefer = (preference: "whatsapp" | "aguardar") => {
     if (!diagnostic) return;
@@ -469,7 +469,7 @@ function Result({
   };
 
   if (mode === "schedule" && diagnostic && slots) {
-    return <Scheduler first={first} days={slots.days} diagnostic={diagnostic} onBack={() => setMode("reading")} onTaken={reload} onClose={onClose} />;
+    return <Scheduler first={first} initial={slots} diagnostic={diagnostic} onBack={() => setMode("reading")} onTaken={reload} onClose={onClose} />;
   }
   if (mode === "waiting") {
     return (

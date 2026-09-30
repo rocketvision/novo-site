@@ -1,26 +1,34 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarPlus, Check, Copy, Video } from "lucide-react";
-import { formatDay, localTime } from "@/lib/booking";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, Video } from "lucide-react";
+import { addMonths, formatDay, formatMonth, localTime, monthWeeks } from "@/lib/booking";
 import { cn } from "@/lib/utils";
 
 type Day = { date: string; times: { time: string; start: string }[] };
 type Booked = { start: string; end: string; meetUrl: string | null; calendarUrl: string };
+type MonthSlots = { connected: boolean; month?: string; minMonth?: string; maxMonth?: string; days: Day[] };
 
 const BLUE = "#2c9df5";
+const WEEK = ["D", "S", "T", "Q", "Q", "S", "S"];
 
-/** Carrega os dias com horários livres. `null` enquanto carrega; `connected: false` sem agenda conectada. */
+async function fetchMonth(month?: string): Promise<MonthSlots> {
+  try {
+    const r = await fetch(`/api/agenda/horarios${month ? `?mes=${month}` : ""}`, { cache: "no-store" });
+    return r.ok ? r.json() : { connected: false, days: [] };
+  } catch {
+    return { connected: false, days: [] };
+  }
+}
+
+/** Horários do mês atual: diz se a agenda está conectada (e se o botão de agendar aparece). */
 export function useSlots(enabled: boolean) {
-  const [state, setState] = useState<{ connected: boolean; days: Day[] } | null>(null);
+  const [state, setState] = useState<MonthSlots | null>(null);
   const [version, setVersion] = useState(0);
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    fetch("/api/agenda/horarios", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : { connected: false, days: [] }))
-      .then((data) => alive && setState(data))
-      .catch(() => alive && setState({ connected: false, days: [] }));
+    void fetchMonth().then((data) => alive && setState(data));
     return () => {
       alive = false;
     };
@@ -29,25 +37,29 @@ export function useSlots(enabled: boolean) {
 }
 
 /**
- * Agendamento da call dentro do quiz: faixa de dias, horários de manhã e de tarde, e-mail opcional
+ * Agendamento da call dentro do quiz: calendário do mês (navega até a janela de agendamento), horários
+ * do dia de manhã e de tarde, e-mail opcional
  * para receber o convite, e a confirmação com o Google Meet e o "adicionar à minha agenda".
  */
 export function Scheduler({
   first,
-  days,
+  initial,
   diagnostic,
   onBack,
   onTaken,
   onClose,
 }: {
   first: string;
-  days: Day[];
+  initial: MonthSlots;
   diagnostic: { id: string; token: string };
   onBack: () => void;
   onTaken: () => void;
   onClose: () => void;
 }) {
-  const [date, setDate] = useState(days[0]?.date ?? "");
+  // Mês em exibição e os horários já carregados de cada mês (navegar de volta não busca de novo).
+  const [month, setMonth] = useState(initial.month ?? "");
+  const [cache, setCache] = useState<Record<string, Day[]>>(initial.month ? { [initial.month]: initial.days } : {});
+  const [date, setDate] = useState(initial.days[0]?.date ?? "");
   const [start, setStart] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
@@ -55,7 +67,34 @@ export function Scheduler({
   const [booked, setBooked] = useState<Booked | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const day = days.find((d) => d.date === date) ?? days[0];
+  const days = cache[month];
+  const loading = days === undefined;
+  const load = async (m: string, force = false) => {
+    if (!force && cache[m]) return;
+    const data = await fetchMonth(m);
+    setCache((c) => ({ ...c, [m]: data.days }));
+  };
+  const go = (delta: number) => {
+    const m = addMonths(month, delta);
+    setMonth(m);
+    void load(m);
+  };
+  // Fim de mês sem horário livre: abre direto o mês seguinte.
+  const skipped = useRef(false);
+  useEffect(() => {
+    if (skipped.current || initial.days.length > 0 || !initial.month || !initial.maxMonth || initial.month >= initial.maxMonth) return;
+    skipped.current = true;
+    const m = addMonths(initial.month, 1);
+    void fetchMonth(m).then((data) => {
+      setCache((c) => ({ ...c, [m]: data.days }));
+      setMonth(m);
+      setDate(data.days[0]?.date ?? "");
+    });
+  }, [initial]);
+  const canPrev = Boolean(initial.minMonth && month > initial.minMonth);
+  const canNext = Boolean(initial.maxMonth && month < initial.maxMonth);
+
+  const day = days?.find((d) => d.date === date);
   const groups = useMemo(() => {
     const times = day?.times ?? [];
     return [
@@ -82,6 +121,7 @@ export function Scheduler({
       else if (response.status === 409 && data?.error?.code === "slot_taken") {
         setError("Esse horário acabou de ser ocupado. Escolha outro.");
         setStart(null);
+        void load(month, true);
         onTaken();
       } else setError(data?.error?.message ?? "Não foi possível agendar agora. Tente de novo ou chame no WhatsApp.");
     } catch {
@@ -149,62 +189,102 @@ export function Scheduler({
       <h2 className="text-[clamp(1.9rem,4vw,2.6rem)] leading-[1.08] font-semibold tracking-[-0.04em]">Escolha o melhor horário, {first}.</h2>
       <p className="mt-2 text-[0.9375rem] text-white/55">Call de 30 minutos pelo Google Meet · horário de Brasília</p>
 
-      {/* Dias: uma faixa que rola no celular. */}
-      <div className="-mx-6 mt-8 overflow-x-auto px-6 pb-2 [scrollbar-width:none]" role="radiogroup" aria-label="Dia">
-        <div className="flex gap-2">
-          {days.map((d) => {
-            const on = d.date === date;
-            return (
-              <button
-                key={d.date}
-                type="button"
-                role="radio"
-                aria-checked={on}
-                onClick={() => {
-                  setDate(d.date);
-                  setStart(null);
-                }}
-                className={cn(
-                  "flex w-[4.25rem] shrink-0 flex-col items-center rounded-xl border px-2 py-3 transition-[border-color,background-color] duration-200",
-                  on ? "border-[#2c9df5] bg-[#2c9df5]/[0.12]" : "border-white/10 bg-white/[0.02] hover:border-white/25",
-                )}
-              >
-                <span className="text-[0.6875rem] tracking-wide text-white/50 uppercase">{formatDay(d.date, "weekday")}</span>
-                <span className="mt-1 text-[1.375rem] leading-none font-semibold tabular-nums">{formatDay(d.date, "day")}</span>
-                <span className="mt-1 text-[0.6875rem] text-white/45">{formatDay(d.date, "month")}</span>
+      <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,1fr)_14rem] md:gap-10">
+        {/* Calendário do mês: só os dias com horário livre podem ser escolhidos. */}
+        <div>
+          <div className="flex items-center justify-between">
+            <p className="text-[1rem] font-medium first-letter:uppercase">{month ? formatMonth(month) : ""}</p>
+            <div className="flex gap-1.5">
+              <button type="button" onClick={() => go(-1)} disabled={!canPrev} aria-label="Mês anterior" className={NAV}>
+                <ChevronLeft className="size-4" aria-hidden="true" />
               </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Horários do dia escolhido. */}
-      <div className="mt-6 space-y-5">
-        {groups.map((g) => (
-          <div key={g.label}>
-            <p className="font-mono text-[0.6875rem] tracking-[0.12em] text-white/40 uppercase">{g.label}</p>
-            <div className="mt-2.5 grid grid-cols-3 gap-2 sm:grid-cols-4" role="radiogroup" aria-label={`Horários da ${g.label.toLowerCase()}`}>
-              {g.times.map((t) => {
-                const on = t.start === start;
-                return (
-                  <button
-                    key={t.start}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => setStart(t.start)}
-                    className={cn(
-                      "h-11 rounded-lg border text-[0.9375rem] tabular-nums transition-[border-color,background-color,color] duration-200",
-                      on ? "border-[#2c9df5] bg-[#2c9df5] text-white" : "border-white/12 bg-white/[0.02] text-white/85 hover:border-white/35",
-                    )}
-                  >
-                    {t.time}
-                  </button>
-                );
-              })}
+              <button type="button" onClick={() => go(1)} disabled={!canNext} aria-label="Próximo mês" className={NAV}>
+                <ChevronRight className="size-4" aria-hidden="true" />
+              </button>
             </div>
           </div>
-        ))}
+          <table className="mt-4 w-full table-fixed border-separate border-spacing-1" role="grid" aria-label="Dias disponíveis">
+            <thead>
+              <tr>
+                {WEEK.map((w, i) => (
+                  <th key={i} className="pb-1 text-center font-mono text-[0.6875rem] font-normal text-white/35">
+                    {w}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(month ? monthWeeks(month) : []).map((week, wi) => (
+                <tr key={wi}>
+                  {week.map((d, di) => {
+                    if (!d) return <td key={di} />;
+                    const open = Boolean(days?.some((x) => x.date === d));
+                    const on = d === date;
+                    return (
+                      <td key={di} className="p-0">
+                        <button
+                          type="button"
+                          disabled={!open}
+                          aria-pressed={on}
+                          aria-label={formatDay(d)}
+                          onClick={() => {
+                            setDate(d);
+                            setStart(null);
+                          }}
+                          className={cn(
+                            "relative mx-auto grid aspect-square w-full max-w-[3rem] place-items-center rounded-full text-[0.9375rem] tabular-nums transition-[background-color,color,box-shadow] duration-200",
+                            on
+                              ? "bg-[#2c9df5] font-semibold text-white"
+                              : open
+                                ? "bg-[#2c9df5]/[0.12] font-medium text-white hover:bg-[#2c9df5]/25"
+                                : "text-white/20",
+                          )}
+                        >
+                          {Number(d.slice(8))}
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {loading && <p className="mt-3 font-mono text-[0.6875rem] text-white/40">( buscando horários )</p>}
+          {!loading && days && days.length === 0 && <p className="mt-3 text-[0.8125rem] text-white/50">Nenhum horário livre neste mês. Veja o próximo.</p>}
+        </div>
+
+        {/* Horários do dia escolhido. */}
+        <div>
+          <p className="text-[1rem] font-medium first-letter:uppercase">{day ? formatDay(day.date) : "Escolha um dia"}</p>
+          <div className="mt-4 space-y-5">
+            {groups.map((g) => (
+              <div key={g.label}>
+                <p className="font-mono text-[0.6875rem] tracking-[0.12em] text-white/40 uppercase">{g.label}</p>
+                <div className="mt-2.5 grid grid-cols-3 gap-2 md:grid-cols-2" role="radiogroup" aria-label={`Horários da ${g.label.toLowerCase()}`}>
+                  {g.times.map((t) => {
+                    const on = t.start === start;
+                    return (
+                      <button
+                        key={t.start}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => setStart(t.start)}
+                        className={cn(
+                          "h-11 rounded-lg border text-[0.9375rem] tabular-nums transition-[border-color,background-color,color] duration-200",
+                          on ? "border-[#2c9df5] bg-[#2c9df5] text-white" : "border-white/12 bg-white/[0.02] text-white/85 hover:border-white/35",
+                        )}
+                      >
+                        {t.time}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            {!day && <p className="text-[0.875rem] text-white/45">Os dias em azul têm horários livres.</p>}
+          </div>
+        </div>
       </div>
 
       <label className="mt-7 block">
@@ -227,7 +307,19 @@ export function Scheduler({
 
       <div className="mt-8 flex flex-wrap items-center gap-4">
         <button type="button" onClick={confirm} disabled={!start || !emailOk || sending} className={cn(SILVER, (!start || !emailOk) && "pointer-events-none opacity-40")}>
-          {sending ? "Agendando…" : chosen ? <span className="first-letter:uppercase">Confirmar {chosen}</span> : "Escolha um horário"}
+          {sending ? (
+            "Agendando…"
+          ) : chosen && start ? (
+            <>
+              {/* No celular, a data curta cabe numa linha só. */}
+              <span className="sm:hidden">
+                Confirmar {date.slice(8)}/{date.slice(5, 7)} às {localTime(new Date(start))}
+              </span>
+              <span className="hidden first-letter:uppercase sm:inline">Confirmar {chosen}</span>
+            </>
+          ) : (
+            "Escolha um horário"
+          )}
           {!sending && <ArrowRight className="size-4" aria-hidden="true" />}
         </button>
       </div>
@@ -243,3 +335,5 @@ const SILVER =
   "inline-flex h-12 items-center gap-2 rounded-full bg-[linear-gradient(180deg,#f6f7f9_0%,#d3d7de_55%,#b9bec7_100%)] px-6 text-[0.95rem] font-medium text-[#0b0b0e] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(0,0,0,0.18),0_10px_30px_-12px_rgba(0,0,0,0.8)] transition-[transform,box-shadow] duration-300 hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(0,0,0,0.18),0_14px_40px_-10px_rgb(44_157_245/0.55)]";
 const OUTLINE =
   "inline-flex h-12 items-center gap-2 rounded-full border border-white/[0.18] bg-white/[0.03] px-6 text-[0.95rem] font-medium text-white/85 transition-colors hover:border-white/40 hover:bg-white/[0.07] hover:text-white";
+
+const NAV = "grid size-9 place-items-center rounded-full border border-white/12 text-white/75 transition-colors hover:border-white/35 hover:text-white disabled:pointer-events-none disabled:opacity-25";
