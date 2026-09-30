@@ -31,6 +31,10 @@ export const PERMISSIONS = {
 
   "audit.view": "Ver a auditoria",
 
+  "diagnostics.view": "Ver os diagnósticos enviados pelo site",
+  "diagnostics.manage": "Mudar a etapa e anotar os diagnósticos",
+  "diagnostics.delete": "Excluir diagnósticos",
+
   "settings.view": "Ver as configurações do site",
   "settings.edit": "Editar as configurações do site",
   "settings.publish": "Publicar as configurações do site",
@@ -61,6 +65,7 @@ export const PERMISSION_GROUPS: { label: string; prefix: string }[] = [
   { label: "Mídia", prefix: "media." },
   { label: "Usuários", prefix: "users." },
   { label: "Auditoria", prefix: "audit." },
+  { label: "Diagnósticos", prefix: "diagnostics." },
   { label: "Configurações", prefix: "settings." },
   { label: "Blog", prefix: "blog." },
 ];

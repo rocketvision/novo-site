@@ -11,6 +11,7 @@ export const AUDIT_CATEGORIES = {
   user: { label: "Usuários", prefix: "user." },
   role: { label: "Funções", prefix: "role." },
   blog: { label: "Blog", prefix: "blog." },
+  diagnostic: { label: "Diagnósticos", prefix: "diagnostic." },
 } as const;
 
 export type AuditCategory = keyof typeof AUDIT_CATEGORIES;

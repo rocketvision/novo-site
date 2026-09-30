@@ -1,13 +1,22 @@
 import { z } from "zod";
+import { diagnosticUpdateSchema } from "@/lib/diagnostic";
 import { authedRoute, json, readJson } from "@/server/http/handler";
-import { setDiagnosticHandled } from "@/server/diagnostics/service";
+import { notFound } from "@/server/http/errors";
+import { deleteDiagnostic, updateDiagnostic } from "@/server/diagnostics/service";
 
-const bodySchema = z.object({ handled: z.boolean() });
+const isId = (id: string) => z.string().uuid().safeParse(id).success;
 
-/** PATCH /api/cms/diagnostics/:id: marca (ou desmarca) o diagnóstico como respondido. */
-export const PATCH = authedRoute<{ id: string }>({ permission: "audit.view" }, async ({ params, request }) => {
-  const { handled } = await readJson(request, bodySchema);
-  if (!z.string().uuid().safeParse(params.id).success) return json({ error: { code: "not_found", message: "Diagnóstico não encontrado." } }, 404);
-  await setDiagnosticHandled(params.id, handled);
+/** PATCH /api/cms/diagnostics/:id: muda a etapa e/ou as anotações. */
+export const PATCH = authedRoute<{ id: string }>({ permission: "diagnostics.manage" }, async ({ params, request, user, ip, userAgent }) => {
+  if (!isId(params.id)) throw notFound("Diagnóstico não encontrado.");
+  const input = await readJson(request, diagnosticUpdateSchema);
+  const updated = await updateDiagnostic(user, params.id, input, { ip, userAgent });
+  return json({ status: updated.status, notes: updated.notes, updatedAt: updated.updatedAt });
+});
+
+/** DELETE /api/cms/diagnostics/:id: exclui o diagnóstico (fica o registro na auditoria). */
+export const DELETE = authedRoute<{ id: string }>({ permission: "diagnostics.delete" }, async ({ params, user, ip, userAgent }) => {
+  if (!isId(params.id)) throw notFound("Diagnóstico não encontrado.");
+  await deleteDiagnostic(user, params.id, { ip, userAgent });
   return json({ ok: true });
 });

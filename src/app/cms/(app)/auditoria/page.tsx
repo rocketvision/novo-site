@@ -28,6 +28,7 @@ const FIELD_LABELS: Record<string, string> = {
   description: "Descrição",
   slug: "Endereço",
   summary: "Resumo",
+  notes: "Anotações",
 };
 
 function resourceHref(type: string, id: string | null) {
@@ -38,6 +39,7 @@ function resourceHref(type: string, id: string | null) {
     return section.area === "settings" ? "/cms/configuracoes" : `/cms/landing/${section.slug}`;
   }
   if (type === "project") return `/cms/projetos/${id}`;
+  if (type === "diagnostic") return `/cms/diagnosticos/${id}`;
   if (type === "media") return "/cms/midia";
   if (type === "user" || type === "role") return "/cms/usuarios";
   return null;

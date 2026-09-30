@@ -504,7 +504,8 @@ export const rateLimits = pgTable(
 
 /**
  * Diagnósticos enviados pelo quiz do site (substitui o formulário de contato). Cada linha é um lead:
- * quem é, o negócio, as respostas e o WhatsApp. `handledAt` marca quando a equipe já retornou.
+ * quem é, o negócio, as respostas e o WhatsApp. A equipe acompanha pela etapa (`status`, ver
+ * DIAGNOSTIC_STATUSES em src/lib/diagnostic.ts) e pelas anotações.
  */
 export const diagnostics = pgTable(
   "diagnostics",
@@ -518,8 +519,15 @@ export const diagnostics = pgTable(
     timing: text("timing").notNull(),
     whatsapp: text("whatsapp").notNull(),
     source: text("source"),
+    status: text("status").notNull().default("novo"),
+    notes: text("notes").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    handledAt: timestamp("handled_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedBy: uuid("updated_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
   },
-  (t) => [index("diagnostics_created_idx").on(t.createdAt)],
+  (t) => [
+    index("diagnostics_created_idx").on(t.createdAt),
+    index("diagnostics_status_idx").on(t.status, t.createdAt),
+    check("diagnostics_status_check", sql`${t.status} in ('novo', 'em_contato', 'call_agendada', 'proposta', 'fechado', 'descartado')`),
+  ],
 );

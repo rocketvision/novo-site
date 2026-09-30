@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, m } from "motion/react";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo";
-import { isValidPhone, maskPhone, phoneDigits, PRESENCE, PROBLEMS, SEGMENTS, summarize, TIMING } from "@/lib/diagnostic";
+import Link from "next/link";
+import { isValidPhone, maskPhone, phoneDigits, PRESENCE, PROBLEMS, readingFor, SEGMENTS, summarize, TIMING } from "@/lib/diagnostic";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,8 +32,12 @@ export const useDiagnostic = () => useContext(Ctx);
 export const DIAGNOSTIC_HREF = "#diagnostico";
 
 export function DiagnosticProvider({ whatsapp, children }: { whatsapp?: string; children: React.ReactNode }) {
-  const [openState, setOpen] = useState(false);
-  const open = useCallback(() => setOpen(true), []);
+  const pathname = usePathname();
+  // Guarda a página em que o quiz abriu: navegar (ex.: pelos links de serviço da tela final) fecha.
+  const [openAt, setOpenAt] = useState<string | null>(null);
+  const openState = openAt === pathname;
+  const setOpen = useCallback((value: boolean) => setOpenAt(value ? window.location.pathname : null), []);
+  const open = useCallback(() => setOpen(true), [setOpen]);
 
   // Todos os caminhos para o antigo formulário passam a abrir o diagnóstico.
   useEffect(() => {
@@ -53,7 +58,7 @@ export function DiagnosticProvider({ whatsapp, children }: { whatsapp?: string; 
       window.clearTimeout(direct);
       window.removeEventListener("click", onClick, true);
     };
-  }, []);
+  }, [setOpen]);
 
   const value = useMemo(() => ({ open }), [open]);
   return (
@@ -262,29 +267,7 @@ function Quiz({ whatsapp, onClose }: { whatsapp?: string; onClose: () => void })
               )}
 
               {step === 8 && status === "sending" && <p className="text-center font-mono text-[0.75rem] text-white/50">( enviando o seu diagnóstico )</p>}
-              {step === 8 && status === "done" && (
-                <div className="text-center">
-                  <h2 className="text-[clamp(2.4rem,5.4vw,3.6rem)] leading-[1.02] font-semibold tracking-[-0.045em]">Recebido, {first}!</h2>
-                  <p className="mx-auto mt-6 max-w-[46ch] text-[1rem] leading-relaxed text-pretty text-white/60">
-                    Já temos o cenário da {business} aqui. O melhor jeito de te entregar o diagnóstico é numa call de 15 minutos: a gente entende seu negócio de perto e te mostra o plano.
-                  </p>
-                  <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-                    {talk ? (
-                      <a href={talk} target="_blank" rel="noreferrer" className={SILVER_BUTTON}>
-                        Agendar minha call
-                        <ArrowRight className="size-4" aria-hidden="true" />
-                      </a>
-                    ) : (
-                      <p className="w-full text-[0.9375rem] text-white/75">
-                        A Rocket vai te chamar no WhatsApp <span className="text-white tabular-nums">{maskPhone(phoneDigits(answers.whatsapp))}</span> pra marcar a call.
-                      </p>
-                    )}
-                    <button type="button" onClick={onClose} className="inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-[0.9375rem] text-white/85 transition-colors hover:border-white/35 hover:text-white">
-                      Voltar pro site
-                    </button>
-                  </div>
-                </div>
-              )}
+              {step === 8 && status === "done" && <Result first={first} business={business} answers={answers} talk={talk} onClose={onClose} />}
               {step === 8 && status === "error" && (
                 <div className="text-center">
                   <h2 className="text-[clamp(2rem,4.6vw,3rem)] leading-[1.05] font-semibold tracking-[-0.04em]">Não conseguimos enviar agora.</h2>
@@ -446,6 +429,81 @@ function ChoiceStep({
         })}
       </div>
       <OkRow canGo={canGo} onOk={multiple ? onOk : undefined} onBack={onBack} />
+    </div>
+  );
+}
+
+/**
+ * Tela final: o recebido, uma leitura inicial feita com as próprias respostas, por onde começar
+ * (com as páginas dos serviços) e os próximos passos até a call.
+ */
+function Result({ first, business, answers, talk, onClose }: { first: string; business: string; answers: Answers; talk: string | null; onClose: () => void }) {
+  const { points, services } = readingFor({ business, presence: answers.presence, problems: answers.problems, timing: answers.timing });
+  const steps = ["A Rocket lê as suas respostas com calma.", "Uma call de 15 minutos pelo WhatsApp pra entender o negócio de perto.", "Você recebe o plano: o que fazer primeiro, prazos e investimento."];
+  return (
+    <div className="pt-10 pb-6">
+      <div className="text-center">
+        <h2 className="text-[clamp(2.4rem,5.4vw,3.6rem)] leading-[1.02] font-semibold tracking-[-0.045em]">Recebido, {first}!</h2>
+        <p className="mx-auto mt-5 max-w-[46ch] text-[1rem] leading-relaxed text-pretty text-white/60">
+          Já temos o cenário da {business} aqui. O melhor jeito de te entregar o diagnóstico é numa call de 15 minutos: a gente entende seu negócio de perto e te mostra o plano.
+        </p>
+      </div>
+
+      <section aria-labelledby="leitura" className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-left sm:p-7">
+        <h3 id="leitura" className="font-mono text-[0.6875rem] tracking-[0.14em] text-white/45 uppercase">
+          A leitura inicial
+        </h3>
+        <ul className="mt-4 space-y-3">
+          {points.map((point) => (
+            <li key={point} className="flex gap-3 text-[0.9688rem] leading-relaxed text-white/80">
+              <span className="mt-[0.7em] h-px w-4 shrink-0" style={{ background: BLUE }} aria-hidden="true" />
+              {point}
+            </li>
+          ))}
+        </ul>
+        {services.length > 0 && (
+          <div className="mt-6 border-t border-white/10 pt-5">
+            <p className="text-[0.8125rem] text-white/50">Por onde começar</p>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {services.map((s) => (
+                <li key={s.href}>
+                  <Link href={s.href} className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3.5 py-1.5 text-[0.8125rem] text-white/85 transition-colors hover:border-white/40 hover:text-white">
+                    {s.label}
+                    <ArrowRight className="size-3.5" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className="mt-6 border-t border-white/10 pt-5">
+          <p className="text-[0.8125rem] text-white/50">Próximos passos</p>
+          <ol className="mt-3 space-y-2">
+            {steps.map((step, i) => (
+              <li key={step} className="flex gap-3 text-[0.9063rem] text-white/75">
+                <span className="font-mono text-[0.75rem] text-white/40 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <div className="mt-9 flex flex-col items-center gap-4">
+        {talk ? (
+          <a href={talk} target="_blank" rel="noreferrer" className={SILVER_BUTTON}>
+            Agendar minha call
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </a>
+        ) : (
+          <p className="text-center text-[0.9375rem] text-white/75">
+            A Rocket vai te chamar no WhatsApp <span className="text-white tabular-nums">{maskPhone(phoneDigits(answers.whatsapp))}</span> pra marcar a call.
+          </p>
+        )}
+        <button type="button" onClick={onClose} className="inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-[0.9375rem] text-white/85 transition-colors hover:border-white/35 hover:text-white">
+          Voltar pro site
+        </button>
+      </div>
     </div>
   );
 }

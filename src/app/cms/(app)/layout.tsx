@@ -12,8 +12,7 @@ export default async function CmsAppLayout({ children }: { children: React.React
     ["blog", "blog.view"],
     ["landing", "landing.view"],
     ["projects", "projects.view"],
-    // Os leads do quiz do site: mesma permissão da auditoria (quem administra o CMS).
-    ["diagnostics", "audit.view"],
+    ["diagnostics", "diagnostics.view"],
     ["media", "media.view"],
     ["users", "users.view"],
     ["audit", "audit.view"],

@@ -1,5 +1,5 @@
 {
-  "id": "9e55ec5f-da54-483c-a317-8d4436b9408a",
+  "id": "894b4e42-7a54-4f1e-8d10-88750972cb76",
   "prevId": "8dcae5bd-fe50-4eef-9254-8dcfdf067a79",
   "version": "7",
   "dialect": "postgresql",
@@ -1287,6 +1287,20 @@
           "primaryKey": false,
           "notNull": false
         },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'novo'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1294,9 +1308,16 @@
           "notNull": true,
           "default": "now()"
         },
-        "handled_at": {
-          "name": "handled_at",
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         }
@@ -1316,13 +1337,53 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "diagnostics_status_idx": {
+          "name": "diagnostics_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "diagnostics_updated_by_users_id_fk": {
+          "name": "diagnostics_updated_by_users_id_fk",
+          "tableFrom": "diagnostics",
+          "tableTo": "users",
+          "columnsFrom": [
+            "updated_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "diagnostics_status_check": {
+          "name": "diagnostics_status_check",
+          "value": "\"diagnostics\".\"status\" in ('novo', 'em_contato', 'call_agendada', 'proposta', 'fechado', 'descartado')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.media": {

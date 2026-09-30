@@ -1,12 +1,39 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/headers", () => ({ headers: async () => new Headers(), cookies: async () => ({ get: () => undefined }) }));
+// Sessão controlada pelo teste: o cookie devolve o token da pessoa "logada" no momento.
+let token: string | undefined;
+vi.mock("next/cache", () => ({ unstable_cache: (fn: () => unknown) => fn, revalidateTag: () => {} }));
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers(),
+  draftMode: async () => ({ isEnabled: false }),
+  cookies: async () => ({ get: () => (token ? { value: token } : undefined) }),
+}));
+vi.mock("react", async (orig) => ({ ...(await orig<typeof import("react")>()), cache: <T,>(fn: T) => fn }));
 
 import { getDb } from "@/server/db";
 import { diagnostics } from "@/server/db/schema";
 import { POST } from "@/app/api/diagnostico/route";
 import { PROBLEMS, PRESENCE, SEGMENTS, TIMING } from "@/lib/diagnostic";
-import { resetTestDatabase } from "../support/db";
+import { NextRequest } from "next/server";
+import { eq } from "drizzle-orm";
+import { createSession } from "@/server/auth/session";
+import { auditLogs } from "@/server/db/schema";
+import * as item from "@/app/api/cms/diagnostics/[id]/route";
+import * as exporter from "@/app/api/cms/diagnostics/export/route";
+import { createUser, resetTestDatabase } from "../support/db";
+
+const ORIGIN = "http://localhost:3000";
+async function tokenFor(email: string, roleKey: string) {
+  const user = await createUser(getDb(), { email, roleKey, name: email.split("@")[0], password: "senha-de-teste-longa-1" });
+  return (await createSession(user.id, { ip: null, userAgent: null })).token;
+}
+const cms = (method: string, path: string, body?: unknown) =>
+  new NextRequest(`${ORIGIN}${path}`, {
+    method,
+    headers: { ...(body !== undefined && { "content-type": "application/json" }), ...(method !== "GET" && { origin: ORIGIN }) },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+const params = <P,>(p: P) => ({ params: Promise.resolve(p) });
 
 const body = {
   name: "Ana",
@@ -33,7 +60,7 @@ describe("POST /api/diagnostico", () => {
     expect(response.status).toBe(200);
     const rows = await getDb().select().from(diagnostics);
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ name: "Ana", business: "Studio Ana", whatsapp: "11987654321", problems: [PROBLEMS[0]], handledAt: null });
+    expect(rows[0]).toMatchObject({ name: "Ana", business: "Studio Ana", whatsapp: "11987654321", problems: [PROBLEMS[0]], status: "novo", notes: "" });
   });
 
   it("recusa respostas inválidas com 422 e aponta os campos", async () => {
@@ -51,5 +78,57 @@ describe("POST /api/diagnostico", () => {
   it("JSON inválido: 400", async () => {
     const response = await POST(new Request("http://localhost:3000/api/diagnostico", { method: "POST", body: "{" }));
     expect(response.status).toBe(400);
+  });
+});
+
+describe("Diagnósticos no CMS", () => {
+  let adminToken: string;
+  let editorToken: string;
+  let id: string;
+
+  beforeAll(async () => {
+    adminToken = await tokenFor("admin-diag@rocketvision.dev", "admin");
+    editorToken = await tokenFor("editor-diag@rocketvision.dev", "editor");
+    id = (await getDb().select().from(diagnostics).limit(1))[0].id;
+  });
+
+  it("sem sessão: 401; sem permissão: 403", async () => {
+    token = undefined;
+    expect((await item.PATCH(cms("PATCH", `/api/cms/diagnostics/${id}`, { status: "em_contato" }), params({ id }))).status).toBe(401);
+    token = editorToken;
+    expect((await item.PATCH(cms("PATCH", `/api/cms/diagnostics/${id}`, { status: "em_contato" }), params({ id }))).status).toBe(403);
+    expect((await exporter.GET(cms("GET", "/api/cms/diagnostics/export"), params({}))).status).toBe(403);
+  });
+
+  it("muda a etapa e as anotações, e registra na auditoria", async () => {
+    token = adminToken;
+    const response = await item.PATCH(cms("PATCH", `/api/cms/diagnostics/${id}`, { status: "call_agendada", notes: "Call na terça às 10h." }), params({ id }));
+    expect(response.status).toBe(200);
+    const [row] = await getDb().select().from(diagnostics).where(eq(diagnostics.id, id));
+    expect(row).toMatchObject({ status: "call_agendada", notes: "Call na terça às 10h." });
+    expect(row.updatedBy).not.toBeNull();
+    const logs = await getDb().select().from(auditLogs).where(eq(auditLogs.resourceId, id));
+    expect(logs.some((l) => l.action === "diagnostic.update")).toBe(true);
+  });
+
+  it("recusa etapa inexistente", async () => {
+    token = adminToken;
+    expect((await item.PATCH(cms("PATCH", `/api/cms/diagnostics/${id}`, { status: "ganho" }), params({ id }))).status).toBe(422);
+  });
+
+  it("exporta a planilha com acentos e a etapa", async () => {
+    token = adminToken;
+    const response = await exporter.GET(cms("GET", "/api/cms/diagnostics/export"), params({}));
+    expect(response.headers.get("content-type")).toContain("text/csv");
+    const text = await response.text();
+    expect(text).toContain("Negócio");
+    expect(text).toContain("Call agendada");
+  });
+
+  it("exclui e deixa registro", async () => {
+    token = adminToken;
+    expect((await item.DELETE(cms("DELETE", `/api/cms/diagnostics/${id}`), params({ id }))).status).toBe(200);
+    expect(await getDb().select().from(diagnostics).where(eq(diagnostics.id, id))).toHaveLength(0);
+    expect((await item.DELETE(cms("DELETE", `/api/cms/diagnostics/${id}`), params({ id }))).status).toBe(404);
   });
 });

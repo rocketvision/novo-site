@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diagnosticSchema, isValidPhone, maskPhone, phoneDigits, PROBLEMS, SEGMENTS, PRESENCE, TIMING, summarize } from "@/lib/diagnostic";
+import { diagnosticSchema, diagnosticUpdateSchema, isValidPhone, maskPhone, phoneDigits, PROBLEMS, SEGMENTS, PRESENCE, TIMING, readingFor, summarize } from "@/lib/diagnostic";
 
 const valid = {
   name: "Ana",
@@ -40,5 +40,19 @@ describe("diagnóstico", () => {
 
   it("resume as respostas para a equipe", () => {
     expect(summarize(valid)).toContain("• Problemas que enxerga: Um site que vende, não só uma vitrine, Aparecer no Google pra quem já procura");
+  });
+
+  it("monta a leitura inicial com as respostas", () => {
+    const reading = readingFor({ business: "Studio Ana", presence: PRESENCE[2], problems: [PROBLEMS[0], PROBLEMS[4], PROBLEMS[5]], timing: TIMING[0] });
+    expect(reading.points[0]).toContain("Studio Ana depende só das redes sociais");
+    expect(reading.points).toHaveLength(3);
+    expect(reading.services.map((s) => s.href)).toEqual(["/servicos/criacao-de-sites", "/servicos/anuncios"]);
+  });
+
+  it("valida a atualização do CMS", () => {
+    expect(diagnosticUpdateSchema.safeParse({ status: "fechado" }).success).toBe(true);
+    expect(diagnosticUpdateSchema.safeParse({ notes: "ok" }).success).toBe(true);
+    expect(diagnosticUpdateSchema.safeParse({}).success).toBe(false);
+    expect(diagnosticUpdateSchema.safeParse({ status: "ganho" }).success).toBe(false);
   });
 });
