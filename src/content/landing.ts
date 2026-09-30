@@ -80,7 +80,6 @@ export type Service = {
   id: string;
   name: string;
   title: string;
-  problem: string;
   what: string;
   outcomes: string[];
   /** Sinal de resultado exibido sobre o visual do serviço. */
@@ -100,8 +99,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
       id: "sites",
       name: "Sites",
       title: "Um site que trabalha pela sua empresa.",
-      problem:
-        "Seu site existe, mas não aparece no Google, demora para abrir e ninguém entra em contato por ele.",
       what: "Criamos sites institucionais e landing pages rápidos, bem escritos e pensados para transformar visitas em conversas.",
       outcomes: [
         "Mais pessoas encontram sua empresa",
@@ -114,8 +111,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
       id: "lojas",
       name: "Lojas virtuais",
       title: "Sua loja aberta o dia inteiro, em qualquer lugar.",
-      problem:
-        "Suas vendas dependem do balcão, do horário comercial ou de mensagens trocadas uma a uma.",
       what: "Desenvolvemos lojas virtuais e catálogos digitais com pagamento integrado a plataformas como PagSeguro e Mercado Pago.",
       outcomes: [
         "Venda enquanto a loja física está fechada",
@@ -128,8 +123,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
       id: "sistemas",
       name: "Sistemas sob medida",
       title: "Sua operação organizada em um só lugar.",
-      problem:
-        "Informações espalhadas em planilhas, cadernos e conversas. Retrabalho, erros e decisões no escuro.",
       what: "Construímos sistemas web feitos para o jeito que sua empresa trabalha, com automações que eliminam tarefas manuais.",
       outcomes: [
         "Menos retrabalho e menos erros",
@@ -142,8 +135,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
       id: "aplicativos",
       name: "Aplicativos",
       title: "Sua ideia no bolso dos seus clientes.",
-      problem:
-        "Você tem a ideia de um aplicativo, mas não sabe por onde começar nem quanto custa tirá-la do papel.",
       what: "Planejamos e desenvolvemos aplicativos para celular com foco no que o usuário precisa fazer, sem funcionalidades desnecessárias.",
       outcomes: [
         "Uma primeira versão clara e viável",
@@ -156,8 +147,6 @@ export const services: { eyebrow: string; title: string; lead: string; items: Se
       id: "identidade",
       name: "Identidade visual",
       title: "Uma marca que parece tão séria quanto o seu trabalho.",
-      problem:
-        "Sua empresa entrega qualidade, mas a marca não transmite isso. Cada material sai de um jeito diferente.",
       what: "Criamos identidades visuais consistentes: logotipo, cores, tipografia e aplicações para o digital e o impresso.",
       outcomes: [
         "Uma marca reconhecível em qualquer lugar",

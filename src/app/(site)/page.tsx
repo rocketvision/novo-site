@@ -70,8 +70,8 @@ export default async function Home() {
       />
       <Header />
       <main id="conteudo">
-        <HeroScene hero={content.hero} services={content.services} projects={projects} />
-        <Services services={content.services} problem={content.problem} projects={projects} />
+        <HeroScene hero={content.hero} services={content.services} />
+        <Services services={content.services} problem={content.problem} />
         <ProjectsShowcase projects={projects} />
         <Process workflow={content.workflow} />
         <FinalCta cta={content.cta} contact={settings.contact} />

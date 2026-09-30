@@ -155,7 +155,6 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
         id: `servico-${Math.random().toString(36).slice(2, 8)}`,
         name: "",
         title: "",
-        problem: "",
         what: "",
         outcomes: [""],
         signal: "",
@@ -163,7 +162,6 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
       fields: [
         { type: "text", key: "name", label: "Nome", max: 40, hint: "Aparece na navegação entre serviços." },
         { type: "text", key: "title", label: "Título", max: 80 },
-        { type: "text", key: "problem", label: "Problema", max: 220, multiline: true },
         { type: "text", key: "what", label: "O que fazemos", max: 240, multiline: true },
         { type: "lines", key: "outcomes", label: "Resultados", itemLabel: "Resultado", max: 80, min: 1, maxItems: 4 },
         { type: "text", key: "signal", label: "Sinal de resultado", max: 50, hint: "Notificação exibida sobre o visual do serviço." },
