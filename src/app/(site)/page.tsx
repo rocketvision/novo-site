@@ -84,8 +84,9 @@ export default async function Home() {
       <Header />
       <main id="conteudo">
         <HeroScene hero={content.hero} services={content.services} />
-        {/* Depois da abertura, o conteúdo abre espaço à esquerda para o trilho lateral. */}
-        <div className="lg:pl-[var(--rail)]">
+        {/* Depois da abertura, o conteúdo abre espaço à esquerda para o trilho lateral; a margem tem a
+            cor do trilho, então enquanto ele desliza para dentro não aparece nenhum vão. */}
+        <div className="bg-[#050507] lg:pl-[var(--rail)]">
           <ProjectsTrack projects={projects} />
           <ServiceScenes services={content.services} tiles={siteTiles(projects)} />
           <Promises />
@@ -94,7 +95,7 @@ export default async function Home() {
         </div>
       </main>
       <SideRail whatsapp={settings.contact.whatsapp} />
-      <div className="lg:pl-[var(--rail)]">
+      <div className="bg-[#050507] lg:pl-[var(--rail)]">
         <Footer settings={settings} />
       </div>
       {previewing && <PreviewBar />}

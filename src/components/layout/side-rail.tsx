@@ -28,7 +28,9 @@ export function SideRail({ whatsapp }: { whatsapp?: string }) {
       frame = 0;
       const vh = window.innerHeight;
       const hero = document.getElementById("inicio")?.getBoundingClientRect();
-      const on = !hero || hero.bottom < vh * 0.35;
+      // Entra quando a primeira seção depois da abertura começa a subir. Até lá, a margem reservada tem a
+      // cor do próprio trilho (ver page.tsx), então nunca aparece um vão claro.
+      const on = !hero || hero.bottom < vh * 0.8;
       setShown(on);
       document.documentElement.classList.toggle("rail-on", on);
 
