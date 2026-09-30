@@ -3,7 +3,7 @@ import { Footer } from "@/components/layout/footer";
 import { HeroScene } from "@/components/sections/hero-scene";
 import { SideRail } from "@/components/layout/side-rail";
 import { ProjectsTrack } from "@/components/sections/projects-track";
-import { ServiceScenes, type SiteTile } from "@/components/sections/service-scenes";
+import { ServiceScenes } from "@/components/sections/service-scenes";
 import { Promises } from "@/components/sections/promises";
 import { Plans } from "@/components/sections/plans";
 import { FinalCta } from "@/components/sections/final-cta";
@@ -13,7 +13,8 @@ import { site } from "@/lib/site";
 import { getLandingContent, getSectionContent, isPreviewing } from "@/server/content/public";
 import { getPublishedProjects } from "@/server/projects/public";
 import { realProjects } from "@/lib/projects/service-match";
-import { stripsOf } from "@/lib/projects/strips";
+import { siteTiles } from "@/lib/projects/strips";
+import { withExtraServices } from "@/content/landing-scenes";
 
 /**
  * Página estática, reconstruída só quando uma seção é publicada (cache por tag).
@@ -31,16 +32,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** Recortes de páginas reais para o mosaico da cena de sites: vários trechos de cada página inteira. */
-function siteTiles(projects: ReturnType<typeof realProjects>): SiteTile[] {
-  const strips = projects.flatMap((p) => {
-    const s = stripsOf(p.slug);
-    return s ? [s.desktop.src] : [];
-  });
-  const positions = ["50% 0%", "50% 35%", "50% 70%", "50% 100%"];
-  return positions.flatMap((position) => strips.map((src) => ({ src, position })));
-}
-
 /**
  * A promessa sobre o vídeo de abertura; depois, em cenas presas ao scroll: projetos reais rodando
  * dentro de notebook e celular, cada serviço funcionando, as duas letras da marca, os planos e a conversa.
@@ -49,6 +40,8 @@ export default async function Home() {
   const [content, previewing, published] = await Promise.all([getLandingContent(), isPreviewing(), getPublishedProjects()]);
   // Só projetos reais (os de exemplo nunca vão para a landing), na ordem do CMS: destacados primeiro.
   const projects = realProjects(published);
+  // Serviços do CMS mais os que a Rocket oferece e ainda não estão cadastrados lá (ex.: Anúncios).
+  const services = { ...content.services, items: withExtraServices(content.services.items) };
   const settings = content.site;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -83,12 +76,12 @@ export default async function Home() {
       />
       <Header />
       <main id="conteudo">
-        <HeroScene hero={content.hero} services={content.services} />
+        <HeroScene hero={content.hero} services={services} />
         {/* Depois da abertura, o conteúdo abre espaço à esquerda para o trilho lateral; a margem tem a
             cor do trilho, então enquanto ele desliza para dentro não aparece nenhum vão. */}
         <div className="bg-[#050507] lg:pl-[var(--rail)]">
           <ProjectsTrack projects={projects} />
-          <ServiceScenes services={content.services} tiles={siteTiles(projects)} />
+          <ServiceScenes services={services} tiles={siteTiles(projects.map((p) => p.slug))} />
           <Promises />
           <Plans />
           <FinalCta cta={content.cta} contact={settings.contact} />

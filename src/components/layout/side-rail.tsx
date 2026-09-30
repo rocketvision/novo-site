@@ -64,7 +64,7 @@ export function SideRail({ whatsapp }: { whatsapp?: string }) {
 
   const talk = whatsapp
     ? { href: `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent("Olá! Vim pelo site da Rocket Vision e quero conversar sobre um projeto.")}`, label: "Chamar no WhatsApp", external: true }
-    : { href: "#contato", label: "Falar com a Rocket", external: false };
+    : { href: "/#contato", label: "Falar com a Rocket", external: false };
 
   return (
     <aside
@@ -81,7 +81,7 @@ export function SideRail({ whatsapp }: { whatsapp?: string }) {
         {rail.map((chapter, i) => {
           const on = i === active;
           return (
-            <a key={chapter.id} href={`#${chapter.id}`} aria-label={`${chapter.label} (${chapter.meaning})`} className="group flex flex-col items-center gap-3">
+            <a key={chapter.id} href={`/#${chapter.id}`} aria-label={`${chapter.label} (${chapter.meaning})`} className="group flex flex-col items-center gap-3">
               <span className="relative block size-7">
                 <Glyph glyph={chapter.glyph} className="text-white/20" />
                 <span
@@ -104,7 +104,7 @@ export function SideRail({ whatsapp }: { whatsapp?: string }) {
       </nav>
 
       <div className="flex flex-col items-center gap-4">
-        <Link href="#contato" className="rotate-180 text-[0.68rem] tracking-[0.08em] text-white/60 uppercase transition-colors [writing-mode:vertical-rl] hover:text-white">
+        <Link href="/#contato" className="rotate-180 text-[0.68rem] tracking-[0.08em] text-white/60 uppercase transition-colors [writing-mode:vertical-rl] hover:text-white">
           Orçamento
         </Link>
         <a

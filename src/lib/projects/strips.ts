@@ -22,3 +22,13 @@ export function stripsOf(slug: string): { desktop: Strip; mobile: Strip } | null
   });
   return { desktop: strip("desktop"), mobile: strip("mobile") };
 }
+
+/** Recortes de páginas reais para o mosaico da cena de sites: vários trechos de cada página inteira. */
+export function siteTiles(slugs: string[]): { src: string; position: string }[] {
+  const strips = slugs.flatMap((slug) => {
+    const s = stripsOf(slug);
+    return s ? [s.desktop.src] : [];
+  });
+  const positions = ["50% 0%", "50% 35%", "50% 70%", "50% 100%"];
+  return positions.flatMap((position) => strips.map((src) => ({ src, position })));
+}

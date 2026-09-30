@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Globe, LayoutDashboard, PenTool, ShoppingBag, Smartphone, Sparkle } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Globe, LayoutDashboard, Megaphone, PenTool, ShoppingBag, Smartphone, Sparkle } from "lucide-react";
 import { buttonClasses } from "@/components/ui/button";
 import { RocketVideo } from "@/components/ui/rocket-video";
 import type { Resolved } from "@/lib/content/resolved";
@@ -26,6 +26,7 @@ const SERVICE_ICONS: Record<string, typeof Globe> = {
   apps: Smartphone,
   identidade: PenTool,
   "identidade-visual": PenTool,
+  anuncios: Megaphone,
 };
 
 /**

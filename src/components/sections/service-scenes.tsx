@@ -2,9 +2,10 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { ArrowRight, Bell, Check, Search, ShoppingBag } from "lucide-react";
+import { ArrowRight, Bell, Check, MapPin, MessageCircle, Search, ShoppingBag, Star } from "lucide-react";
 import { Reveal } from "@/components/animations/reveal";
-import { scenes, servicesIntro as intro } from "@/content/landing-scenes";
+import { scenes, servicesIntro as intro, toneOf } from "@/content/landing-scenes";
+import { servicePageFor } from "@/content/service-pages";
 import type { Resolved } from "@/lib/content/resolved";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
 type Service = Resolved<"services">["items"][number];
 export type SiteTile = { src: string; position: string };
 
-const SCENE_IDS = { sites: "sites", lojas: "lojas", "lojas-virtuais": "lojas", sistemas: "sistemas", aplicativos: "aplicativos", apps: "aplicativos" } as const;
+const SCENE_IDS = { sites: "sites", lojas: "lojas", "lojas-virtuais": "lojas", sistemas: "sistemas", aplicativos: "aplicativos", apps: "aplicativos", anuncios: "anuncios" } as const;
 type SceneId = (typeof SCENE_IDS)[keyof typeof SCENE_IDS];
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -22,7 +23,7 @@ const LIGHT = "#fbfbfd";
 
 type Tone = "light" | "dark";
 /** O tom de cada cena: alternam entre claro e escuro, como capítulos. */
-const TONES: Record<SceneId, Tone> = { sites: "light", lojas: "dark", sistemas: "light", aplicativos: "dark" };
+const TONES: Record<SceneId, Tone> = { sites: toneOf("sites"), lojas: toneOf("lojas"), sistemas: toneOf("sistemas"), aplicativos: toneOf("aplicativos"), anuncios: toneOf("anuncios") };
 
 /**
  * Serviços: uma abertura e uma cena presa ao scroll para cada serviço, com o texto vindo do CMS.
@@ -77,13 +78,34 @@ export function ServiceScenes({ services, tiles }: { services: Resolved<"service
   );
 }
 
-type SceneProps = { service: Service; index: number; tiles: SiteTile[]; tone: Tone; from: Tone };
+type SceneProps = {
+  service: Service;
+  index: number;
+  tiles: SiteTile[];
+  tone: Tone;
+  from: Tone;
+  /** "home": cena na landing, com "Saiba mais". "page": abertura da página do serviço, com o título em h1. */
+  variant?: "home" | "page";
+  heading?: string;
+};
+
+/**
+ * Abertura da página de um serviço: a mesma cena da home, presa ao scroll, com o nome do serviço
+ * como título. Serviço sem cena não tem página.
+ */
+export function ServiceHero({ service, heading, tiles }: { service: Service; heading: string; tiles: SiteTile[] }) {
+  const scene = SCENE_IDS[service.id as keyof typeof SCENE_IDS];
+  if (!scene) return null;
+  const Scene = SCENES[scene];
+  return <Scene service={service} index={0} tiles={tiles} tone={TONES[scene]} from={TONES[scene]} variant="page" heading={heading} />;
+}
 
 const SCENES: Record<SceneId, (props: SceneProps) => React.ReactNode> = {
   sites: SitesScene,
   lojas: StoreScene,
   sistemas: SystemsScene,
   aplicativos: AppScene,
+  anuncios: AdsScene,
 };
 
 /** Cena presa ao scroll: o invólucro alto dá a distância, o palco fica parado na tela. */
@@ -131,8 +153,29 @@ function Stage({
   );
 }
 
-/** O texto de cada serviço, do CMS: número, nome, título, descrição, resultados e o convite. */
-function SceneText({ service, index, className }: { service: Service; index: number; className?: string }) {
+/**
+ * O texto de cada serviço, do CMS. Na home: número, nome, título, descrição, resultados e o "Saiba
+ * mais" que abre a página do serviço. Na página do serviço: o nome como título, o resumo e os resultados.
+ */
+function SceneText({ service, index, className, variant = "home", heading }: { service: Service; index: number; className?: string; variant?: "home" | "page"; heading?: string }) {
+  const scene = SCENE_IDS[service.id as keyof typeof SCENE_IDS];
+  const page = scene ? servicePageFor(scene) : undefined;
+  if (variant === "page") {
+    return (
+      <div data-text className={cn("max-w-[28rem]", className)}>
+        <h1 className="text-[clamp(2.1rem,4.6vw,4.2rem)] leading-[0.96] font-semibold tracking-[-0.045em] text-balance">{heading ?? service.name}</h1>
+        <p className="mt-5 text-[1.02rem] leading-relaxed text-pretty text-fg/70">{service.what}</p>
+        <ul className="mt-6 hidden flex-col gap-2 text-[0.9rem] text-fg/80 sm:flex">
+          {service.outcomes.slice(0, 3).map((outcome, j) => (
+            <li key={j} className="flex items-center gap-2.5">
+              <span className="h-px w-4 shrink-0" style={{ background: BLUE }} aria-hidden="true" />
+              {outcome}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
   return (
     <div data-text className={cn("max-w-[24rem]", className)}>
       <p className="font-mono text-[0.6875rem] tracking-[0.12em] text-fg/45 uppercase">
@@ -151,8 +194,8 @@ function SceneText({ service, index, className }: { service: Service; index: num
         ))}
       </ul>
       <Link
-        href="#contato"
-        className="group mt-7 inline-flex h-10 max-lg:mt-5 items-center gap-2 rounded-full bg-fg/[0.06] px-4 text-[0.8125rem] font-medium text-fg ring-1 ring-fg/15 backdrop-blur transition-colors hover:bg-fg/[0.12]"
+        href={page ? `/servicos/${page.slug}` : "#contato"}
+        className="group mt-7 inline-flex h-10 items-center gap-2 rounded-full bg-fg/[0.06] px-4 text-[0.8125rem] font-medium text-fg ring-1 ring-fg/15 backdrop-blur transition-colors hover:bg-fg/[0.12] max-lg:mt-5"
       >
         {intro.more}
         <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
@@ -169,7 +212,7 @@ function SampleNote({ children, className }: { children: React.ReactNode; classN
 /* Sites: SITES recortado sobre páginas reais, que se abre num mosaico.         */
 /* -------------------------------------------------------------------------- */
 
-function SitesScene({ service, index, tiles, tone, from }: SceneProps) {
+function SitesScene({ service, index, tiles, tone, from, variant, heading }: SceneProps) {
   const ref = useScene((tl, q) => {
     tl.fromTo(q("[data-word]"), { scale: 1 }, { scale: 1.08, duration: 0.3, ease: "none" }, 0)
       .fromTo(q("[data-grid]"), { scale: 1.9, yPercent: 6 }, { scale: 1.55, yPercent: 0, duration: 0.3, ease: "none" }, 0)
@@ -208,7 +251,7 @@ function SitesScene({ service, index, tiles, tone, from }: SceneProps) {
         )}
       />
       <div className="absolute inset-0 grid place-items-center px-4">
-        <SceneText service={service} index={index} className="max-w-[28rem] text-center [&_li]:justify-center [&_ul]:inline-block [&_ul]:text-left" />
+        <SceneText service={service} index={index} variant={variant} heading={heading} className="max-w-[28rem] text-center [&_li]:justify-center [&_ul]:inline-block [&_ul]:text-left" />
       </div>
     </Stage>
   );
@@ -229,7 +272,7 @@ const NOTE_SPOTS = [
   { x: 36, y: 32, r: -5 },
 ];
 
-function SystemsScene({ service, index, tone, from }: SceneProps) {
+function SystemsScene({ service, index, tone, from, variant, heading }: SceneProps) {
   const copy = scenes.sistemas;
   const ref = useScene((tl, q) => {
     const notes = q("[data-note]");
@@ -261,7 +304,7 @@ function SystemsScene({ service, index, tone, from }: SceneProps) {
       </div>
 
       <div className="container-page relative grid h-full content-center gap-10 pt-[var(--header-height)] lg:grid-cols-12 lg:items-center">
-        <SceneText service={service} index={index} className="lg:col-span-4" />
+        <SceneText service={service} index={index} variant={variant} heading={heading} className="lg:col-span-4" />
         <div className="lg:col-span-7 lg:col-start-6" aria-hidden="true">
           <div className="grid grid-cols-3 gap-2.5 text-[0.75rem] sm:gap-3">
             <div data-card className="col-span-1 rounded-xl bg-fg/[0.035] p-3 ring-1 ring-fg/10 sm:p-4">
@@ -322,7 +365,7 @@ function SystemsScene({ service, index, tone, from }: SceneProps) {
 /* Lojas virtuais: a loja vendendo enquanto o dono dorme.                       */
 /* -------------------------------------------------------------------------- */
 
-function StoreScene({ service, index, tone, from }: SceneProps) {
+function StoreScene({ service, index, tone, from, variant, heading }: SceneProps) {
   const copy = scenes.lojas;
   const ref = useScene((tl, q) => {
     const orders = q("[data-order]");
@@ -361,7 +404,7 @@ function StoreScene({ service, index, tone, from }: SceneProps) {
       </div>
 
       <div className="container-page relative grid h-full content-center gap-10 pt-[var(--header-height)] lg:grid-cols-12 lg:items-center">
-        <SceneText service={service} index={index} className="lg:col-span-5" />
+        <SceneText service={service} index={index} variant={variant} heading={heading} className="lg:col-span-5" />
         <div data-phone className="mx-auto w-[min(19rem,64vw,34svh)] lg:col-span-4 lg:col-start-8 lg:w-[min(19rem,72vw)]" aria-hidden="true">
           <div className="rounded-[2.4rem] bg-[#0c0d0f] p-2 shadow-[0_40px_80px_-30px_rgb(0_0_0/0.95)] ring-1 ring-white/15">
             <div className="relative flex aspect-[9/16] flex-col overflow-hidden rounded-[1.9rem] bg-[#101114] p-3.5 max-lg:aspect-[9/12]">
@@ -406,7 +449,7 @@ function StoreScene({ service, index, tone, from }: SceneProps) {
 /* Aplicativos: o app chega na tela do celular, notifica e abre.                */
 /* -------------------------------------------------------------------------- */
 
-function AppScene({ service, index, tone, from }: SceneProps) {
+function AppScene({ service, index, tone, from, variant, heading }: SceneProps) {
   const copy = scenes.aplicativos;
   const ref = useScene((tl, q) => {
     tl.fromTo(q("[data-text]"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.12, ease: "power3.out" }, 0.05)
@@ -427,7 +470,7 @@ function AppScene({ service, index, tone, from }: SceneProps) {
     <Stage stageRef={ref} height={300} tone={tone} from={from}>
       <div aria-hidden="true" className="absolute top-1/2 right-[18%] size-[42vw] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(44_157_245/0.12),transparent_65%)] blur-2xl" />
       <div className="container-page relative grid h-full content-center gap-10 pt-[var(--header-height)] lg:grid-cols-12 lg:items-center">
-        <SceneText service={service} index={index} className="lg:col-span-5" />
+        <SceneText service={service} index={index} variant={variant} heading={heading} className="lg:col-span-5" />
         <div data-phone className="mx-auto w-[min(18rem,56vw,26svh)] lg:col-span-4 lg:col-start-8 lg:w-[min(18rem,66vw)]" aria-hidden="true">
           <div className="rounded-[2.4rem] bg-[#0c0d0f] p-2 shadow-[0_40px_80px_-30px_rgb(0_0_0/0.95)] ring-1 ring-white/15">
             <div className="relative aspect-[9/19] overflow-hidden rounded-[1.9rem] bg-[linear-gradient(160deg,#16263a,#0d0f14_60%)] max-lg:aspect-[9/14]">
@@ -477,4 +520,125 @@ function AppScene({ service, index, tone, from }: SceneProps) {
       </div>
     </Stage>
   );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Anúncios: a busca é digitada e o seu negócio sobe para o topo, patrocinado;  */
+/* depois o anúncio aparece também nas redes.                                   */
+/* -------------------------------------------------------------------------- */
+
+const ROW = 76;
+
+function AdsScene({ service, index, tone, from, variant, heading }: SceneProps) {
+  const copy = scenes.anuncios;
+  const ref = useScene((tl, q) => {
+    const typed = q("[data-query]")[0];
+    const rows = q("[data-rival]");
+    const you = q("[data-you]")[0];
+    const typing = { n: 0 };
+    tl.fromTo(q("[data-text]"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.12, ease: "power3.out" }, 0.02)
+      .fromTo(q("[data-panel]"), { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.12, ease: "power3.out" }, 0.04)
+      // A busca é digitada letra a letra, no ritmo do scroll.
+      .to(
+        typing,
+        {
+          n: copy.query.length,
+          duration: 0.3,
+          ease: "none",
+          onUpdate: () => {
+            if (typed) typed.textContent = copy.query.slice(0, Math.round(typing.n));
+          },
+        },
+        0.16,
+      )
+      // O seu negócio sobe para o primeiro lugar, patrocinado; os concorrentes descem uma posição.
+      .fromTo(you, { y: ROW * copy.competitors.length }, { y: 0, duration: 0.2, ease: "power3.inOut" }, 0.5)
+      .fromTo(rows, { y: (i: number) => ROW * i }, { y: (i: number) => ROW * (i + 1), duration: 0.2, ease: "power3.inOut" }, 0.5)
+      .fromTo(you, { boxShadow: "0 18px 50px -18px rgb(44 157 245 / 0)", borderColor: "rgb(44 157 245 / 0.2)" }, { boxShadow: "0 18px 50px -18px rgb(44 157 245 / 0.55)", borderColor: "rgb(44 157 245 / 0.7)", duration: 0.12 }, 0.64)
+      // E aparece também nas redes.
+      .fromTo(q("[data-social]"), { opacity: 0, xPercent: 120 }, { opacity: 1, xPercent: 0, duration: 0.16, ease: "power3.out" }, 0.76)
+      .to({}, { duration: 0.1 });
+  });
+
+  return (
+    <Stage stageRef={ref} height={280} tone={tone} from={from}>
+      <div className="relative mx-auto grid h-full w-full max-w-[1320px] content-center items-center gap-8 px-[6%] pt-[var(--header-height)] lg:grid-cols-[0.85fr_1.15fr] lg:gap-16 lg:px-12">
+        <SceneText service={service} index={index} variant={variant} heading={heading} />
+        <div data-panel className="relative" aria-hidden="true">
+          <div className="rounded-[1.4rem] border border-fg/10 bg-fg/[0.03] p-4 sm:p-5">
+            <div className="flex h-12 items-center gap-3 rounded-full border border-fg/12 bg-tone px-4">
+              <Search className="size-4 text-fg/50" />
+              <span className="text-[0.92rem] text-fg">
+                <span data-query />
+                <span className="ml-px inline-block h-4 w-px translate-y-0.5 animate-pulse bg-fg/70" />
+              </span>
+            </div>
+            <div className="relative mt-4 h-[380px] max-sm:h-[300px] max-sm:overflow-hidden">
+              {copy.competitors.map((c, i) => (
+                <div
+                  key={c.name}
+                  data-rival
+                  className="absolute inset-x-0 top-0 flex h-[68px] items-center gap-3 rounded-xl border border-fg/[0.06] bg-fg/[0.02] px-4"
+                  style={{ transform: `translateY(${ROW * i}px)` }}
+                >
+                  <span className="flex size-9 items-center justify-center rounded-lg bg-fg/[0.06] text-fg/40">
+                    <MapPin className="size-4" />
+                  </span>
+                  <div className="min-w-0 leading-tight">
+                    <p className="truncate text-[0.88rem] text-fg/60">{c.name}</p>
+                    <p className="mt-1 flex items-center gap-1 text-[0.72rem] text-fg/35">
+                      <Star className="size-3" />
+                      {c.meta}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <div
+                data-you
+                className="absolute inset-x-0 top-0 z-10 flex h-[68px] items-center gap-3 rounded-xl border bg-tone px-4"
+                style={{ transform: `translateY(${ROW * copy.competitors.length}px)`, borderColor: "rgb(44 157 245 / 0.2)" }}
+              >
+                <span className="flex size-9 items-center justify-center rounded-lg bg-[linear-gradient(180deg,#eef0f3,#bcc1ca)] text-[0.8rem] font-semibold text-[#0b0b0e]">{copy.you.initials}</span>
+                <div className="min-w-0 flex-1 leading-tight">
+                  <p className="flex items-center gap-2 truncate text-[0.92rem] font-medium text-fg">
+                    {copy.you.name}
+                    <span className="rounded bg-fg/10 px-1.5 py-0.5 text-[0.6rem] font-normal text-fg/70">{copy.you.badge}</span>
+                  </p>
+                  <p className="mt-1 flex items-center gap-1 text-[0.72rem] text-fg/55">
+                    <Star className="size-3 fill-current" />
+                    {copy.you.meta}
+                  </p>
+                </div>
+                <span className="hidden h-8 items-center gap-1.5 rounded-full bg-fg/[0.08] px-3 text-[0.72rem] text-fg sm:inline-flex">
+                  <MessageCircle className="size-3.5" />
+                  {copy.you.action}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div data-social className="absolute -right-2 -bottom-10 w-[46%] max-w-[15rem] rounded-2xl border border-fg/12 bg-tone p-2.5 shadow-[0_30px_60px_-20px_rgb(0_0_0/0.5)] sm:-right-6" style={{ opacity: 0 }}>
+            <div className="flex items-center gap-2 px-1 pb-2">
+              <span className="size-6 rounded-full bg-[linear-gradient(135deg,#eef0f3,#8a9099)]" />
+              <div className="leading-tight">
+                <p className="text-[0.7rem] font-medium text-fg">{copy.social.handle}</p>
+                <p className="text-[0.6rem] text-fg/45">{copy.social.badge}</p>
+              </div>
+            </div>
+            <div className="grid aspect-square w-full place-items-center rounded-lg bg-[radial-gradient(80%_80%_at_30%_20%,#5cb8ff,#1a6fc0_60%,#0b2745)]">
+              <LogoGlyph />
+            </div>
+            <span className="mt-2 flex h-8 items-center justify-center rounded-lg text-[0.7rem] font-medium text-white" style={{ background: BLUE }}>
+              {copy.social.action}
+            </span>
+          </div>
+          <SampleNote className="mt-4">{copy.sample}</SampleNote>
+        </div>
+      </div>
+    </Stage>
+  );
+}
+
+/** Marca genérica do "seu negócio" no anúncio das redes. */
+function LogoGlyph() {
+  return <span className="text-[2.5rem] font-bold tracking-[-0.06em] text-white/90">SN</span>;
 }

@@ -19,9 +19,45 @@ export const projectsTrack = {
 export const servicesIntro = {
   label: "Serviços",
   title: ["O que a Rocket faz", "pra tirar o seu", "negócio do chão."],
-  lead: "Quatro frentes, cada uma resolve um problema diferente. Role pra ver cada uma funcionando.",
-  more: "Quero isso",
+  lead: "Cinco frentes, cada uma resolve um problema diferente. Role pra ver cada uma funcionando.",
+  more: "Saiba mais",
 };
+
+/**
+ * Serviços que a Rocket oferece e ainda não estão cadastrados no CMS. Entram na landing (cena e lista
+ * da abertura) e ganham página própria; se um dia forem cadastrados no CMS com o mesmo id, o CMS vale.
+ * Texto e animação de Anúncios vêm da UKP Digital, parceira da Rocket, com autorização.
+ */
+export const extraServices = [
+  {
+    id: "anuncios",
+    name: "Anúncios",
+    title: "Anúncios no Google e nas redes",
+    what: "Aparecer pra quem está procurando o seu serviço agora, e também pra quem ainda nem sabe que precisa.",
+    outcomes: ["Aparece na hora certa", "Alcança quem ainda não procura"],
+    signal: "Novo contato pelo anúncio",
+  },
+];
+
+/** Soma os serviços extras aos do CMS, sem duplicar os que o CMS já tiver. */
+export function withExtraServices<T extends { id: string }>(items: T[]): (T | (typeof extraServices)[number])[] {
+  return [...items, ...extraServices.filter((extra) => !items.some((item) => item.id === extra.id))];
+}
+
+/**
+ * Tom de cada cena de serviço, pelo id do CMS: alternam entre claro e escuro, como capítulos.
+ * É o mesmo na home e na abertura da página do serviço.
+ */
+const SERVICE_TONES: Record<string, "light" | "dark"> = {
+  sites: "light",
+  lojas: "dark",
+  "lojas-virtuais": "dark",
+  sistemas: "light",
+  aplicativos: "dark",
+  apps: "dark",
+  anuncios: "light",
+};
+export const toneOf = (serviceId: string): "light" | "dark" => SERVICE_TONES[serviceId] ?? "dark";
 
 /** Cenas por serviço, pelo identificador do CMS. Os números são ilustrativos. */
 export const scenes = {
@@ -54,6 +90,18 @@ export const scenes = {
     ],
     store: "Sua loja",
     sample: "pedidos de exemplo",
+  },
+  anuncios: {
+    query: "barbearia perto de mim",
+    competitors: [
+      { name: "Barbearia Centro", meta: "4,3 · 1,8 km" },
+      { name: "Studio do Corte", meta: "4,1 · 2,4 km" },
+      { name: "Barber Prime", meta: "4,4 · 3,1 km" },
+      { name: "Navalha & Cia", meta: "3,9 · 3,6 km" },
+    ],
+    you: { initials: "SN", name: "Seu negócio", badge: "Patrocinado", meta: "4,9 · 0,6 km · aberto agora", action: "Chamar" },
+    social: { handle: "seunegocio", badge: "Patrocinado", action: "Enviar mensagem" },
+    sample: "busca de exemplo",
   },
   aplicativos: {
     app: "Seu app",
