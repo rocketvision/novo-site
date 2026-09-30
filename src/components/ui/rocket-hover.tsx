@@ -12,6 +12,10 @@ import { cn } from "@/lib/utils";
  * - algumas estrelas piscam devagar no céu;
  * - o slogan surge à direita, abaixo do foguete, como se estivesse na cena (só em telas a partir de 1200 px).
  *
+ * Com mouse, a cena responde ao cursor, sempre de leve: uma luz azul suave o acompanha, as estrelas
+ * perto dele brilham e o céu ganha profundidade, as partículas do rastro se afastam quando ele passa
+ * e o motor "acelera" (mais brilho e mais partículas) quando ele chega perto.
+ *
  * Só desenha enquanto a abertura está na tela e a aba está visível. Com movimento reduzido,
  * o componente nem é montado (a abertura mostra a imagem parada).
  */
@@ -34,6 +38,9 @@ const TRAIL = [
   { x: 1462, y: 1080 },
 ];
 
+/** Alcance das interações com o cursor, em px de tela. */
+const REACH = { light: 280, stars: 170, trail: 120, engine: 240 };
+
 /** Estrelas fixas no céu (pixels do quadro 16:9), longe do texto e do foguete. */
 const STARS = Array.from({ length: 34 }, (_, i) => {
   // Distribuição determinística: o mesmo céu em todo carregamento.
@@ -41,7 +48,7 @@ const STARS = Array.from({ length: 34 }, (_, i) => {
     const s = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453;
     return s - Math.floor(s);
   };
-  return { x: 900 + r(1) * 1640, y: 30 + r(2) * 780, size: 0.6 + r(3) * 1.1, phase: r(4) * Math.PI * 2, speed: 0.35 + r(5) * 0.9 };
+  return { x: 900 + r(1) * 1640, y: 30 + r(2) * 780, size: 0.6 + r(3) * 1.1, phase: r(4) * Math.PI * 2, speed: 0.35 + r(5) * 0.9, depth: 0.3 + r(6) * 0.7 };
 }).filter((s) => Math.hypot(s.x - ENGINE.x, s.y - ENGINE.y) > 220);
 
 /** Canto superior esquerdo do slogan no quadro 16:9: à direita do rastro, abaixo do corpo do foguete. */
@@ -84,7 +91,9 @@ export function RocketHover({ active, className }: { active: boolean; className?
     const resize = () => {
       // Meia resolução: são brilhos suaves, e o custo por quadro cai para um quarto.
       dpr = Math.min(window.devicePixelRatio || 1, 2) * 0.5;
-      const { width, height } = canvas.getBoundingClientRect();
+      // Tamanho de layout (sem o push-in): o canvas desenha no mesmo espaço do vídeo.
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       frame = portraitQuery.matches ? FRAMES.portrait : FRAMES.landscape;
@@ -114,6 +123,27 @@ export function RocketHover({ active, className }: { active: boolean; className?
     sctx.fillStyle = sg;
     sctx.fillRect(0, 0, 64, 64);
 
+    // Cursor em px do canvas; `presence` e a posição suavizada evitam saltos quando ele entra ou sai.
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const pointer = { x: 0, y: 0, inside: false, sx: 0, sy: 0, presence: 0, engine: 0 };
+    const onMove = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+      const inside = x >= 0 && y >= 0 && x <= canvas.width && y <= canvas.height;
+      if (inside && pointer.presence < 0.01) {
+        pointer.sx = x;
+        pointer.sy = y;
+      }
+      Object.assign(pointer, { x, y, inside });
+    };
+    const onLeave = () => (pointer.inside = false);
+    if (finePointer) {
+      window.addEventListener("pointermove", onMove, { passive: true });
+      document.documentElement.addEventListener("pointerleave", onLeave);
+    }
+    const approach = (from: number, to: number, rate: number, dt: number) => from + (to - from) * (1 - Math.exp(-rate * dt));
+
     const particles: Particle[] = [];
     let raf = 0;
     let running = false;
@@ -131,18 +161,41 @@ export function RocketHover({ active, className }: { active: boolean; className?
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.globalCompositeOperation = "lighter";
 
-      // Estrelas piscando.
+      // Cursor: presença e posição suavizadas; perto do motor, ele "acelera".
+      pointer.presence = approach(pointer.presence, pointer.inside ? 1 : 0, 3.5, dt);
+      pointer.sx = approach(pointer.sx, pointer.x, 9, dt);
+      pointer.sy = approach(pointer.sy, pointer.y, 9, dt);
+      const engine = toCanvas(ENGINE.x, ENGINE.y);
+      const near = (x: number, y: number, reach: number) => pointer.presence * Math.exp(-(((x - pointer.sx) ** 2 + (y - pointer.sy) ** 2) / (reach * dpr) ** 2));
+      pointer.engine = approach(pointer.engine, near(engine.x, engine.y, REACH.engine), 4, dt);
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      // Luz do cursor: um brilho azul muito suave, como se iluminasse o espaço.
+      if (pointer.presence > 0.01) {
+        const lr = REACH.light * dpr;
+        const light = ctx.createRadialGradient(pointer.sx, pointer.sy, 0, pointer.sx, pointer.sy, lr);
+        light.addColorStop(0, `rgba(90, 160, 255, ${0.09 * pointer.presence})`);
+        light.addColorStop(1, "rgba(90, 160, 255, 0)");
+        ctx.fillStyle = light;
+        ctx.fillRect(pointer.sx - lr, pointer.sy - lr, lr * 2, lr * 2);
+      }
+
+      // Estrelas piscando; perto do cursor brilham mais, e o céu se desloca de leve (profundidade).
       for (const s of STARS) {
-        const p = toCanvas(s.x, s.y);
+        const base = toCanvas(s.x, s.y);
+        const px = base.x - ((pointer.sx - cx) / cx) * 14 * dpr * s.depth * pointer.presence;
+        const py = base.y - ((pointer.sy - cy) / cy) * 10 * dpr * s.depth * pointer.presence;
+        const boost = near(px, py, REACH.stars);
         const twinkle = 0.5 + 0.5 * Math.sin(t * s.speed * 2 + s.phase);
-        ctx.fillStyle = `rgba(200, 225, 255, ${0.08 + 0.5 * twinkle ** 3})`;
+        ctx.fillStyle = `rgba(200, 225, 255, ${Math.min(1, 0.08 + 0.5 * twinkle ** 3 + 0.65 * boost)})`;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, Math.max(0.6 * dpr, s.size * unit * 1.6), 0, Math.PI * 2);
+        ctx.arc(px, py, Math.max(0.6 * dpr, s.size * unit * 1.6) * (1 + 1.4 * boost), 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Partículas saindo do motor e descendo pelo rastro.
-      spawn += dt * 34;
+      // Partículas saindo do motor e descendo pelo rastro (mais quando o motor acelera).
+      spawn += dt * 34 * (1 + 2.2 * pointer.engine);
       while (spawn >= 1) {
         spawn -= 1;
         particles.push({ born: t, life: 1.8 + Math.random() * 1.6, offset: (Math.random() - 0.5) * 26, wobble: Math.random() * Math.PI * 2, size: 1.2 + Math.random() * 2.4 });
@@ -159,6 +212,18 @@ export function RocketHover({ active, className }: { active: boolean; className?
         const at = trailAt(along);
         const side = p.offset * (0.4 + age) + Math.sin(t * 2.2 + p.wobble) * 6 * age;
         const pos = toCanvas(at.x + at.nx * side, at.y + at.ny * side);
+        // O cursor abre o rastro: as partículas se afastam dele.
+        if (pointer.presence > 0.01) {
+          const dx = pos.x - pointer.sx;
+          const dy = pos.y - pointer.sy;
+          const dist = Math.hypot(dx, dy) || 1;
+          const reach = REACH.trail * dpr;
+          if (dist < reach) {
+            const push = (1 - dist / reach) ** 2 * 30 * dpr * pointer.presence;
+            pos.x += (dx / dist) * push;
+            pos.y += (dy / dist) * push;
+          }
+        }
         const alpha = Math.min(1, age * 8) * (1 - age) ** 1.6;
         const radius = p.size * unit * (1 + age * 1.8);
         ctx.globalAlpha = alpha;
@@ -167,9 +232,10 @@ export function RocketHover({ active, className }: { active: boolean; className?
       ctx.globalAlpha = 1;
 
       // Motor aceso: respira devagar e cintila rápido, sem ritmo repetitivo.
-      const flicker = 0.78 + 0.1 * Math.sin(t * 1.3) + 0.06 * Math.sin(t * 9.7) + 0.04 * Math.sin(t * 17.3 + 1.1) + 0.04 * Math.sin(t * 23.9 + 2.3);
-      const engine = toCanvas(ENGINE.x, ENGINE.y);
-      const r = 95 * unit * (0.92 + 0.12 * flicker);
+      const flicker =
+        (0.78 + 0.1 * Math.sin(t * 1.3) + 0.06 * Math.sin(t * 9.7) + 0.04 * Math.sin(t * 17.3 + 1.1) + 0.04 * Math.sin(t * 23.9 + 2.3)) *
+        (1 + 0.55 * pointer.engine);
+      const r = 95 * unit * (0.92 + 0.12 * flicker) * (1 + 0.3 * pointer.engine);
       const core = ctx.createRadialGradient(engine.x, engine.y, 0, engine.x, engine.y, r);
       core.addColorStop(0, `rgba(225, 242, 255, ${0.55 * flicker})`);
       core.addColorStop(0.18, `rgba(120, 195, 255, ${0.38 * flicker})`);
@@ -209,6 +275,8 @@ export function RocketHover({ active, className }: { active: boolean; className?
       observer.disconnect();
       portraitQuery.removeEventListener("change", resize);
       document.removeEventListener("visibilitychange", sync);
+      window.removeEventListener("pointermove", onMove);
+      document.documentElement.removeEventListener("pointerleave", onLeave);
     };
   }, [active]);
 
@@ -223,7 +291,7 @@ export function RocketHover({ active, className }: { active: boolean; className?
           className,
         )}
       />
-      {/* O slogan na cena. Decorativo: o mesmo texto já está no rótulo acima do título. */}
+      {/* O slogan na cena. Decorativo: também está no rodapé e nos metadados. */}
       <div
         ref={sloganRef}
         aria-hidden="true"

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Globe, LayoutDashboard, PenTool, ShoppingBag, Smartphone, Sparkle } from "lucide-react";
 import { buttonClasses } from "@/components/ui/button";
-import { LogoMark } from "@/components/ui/logo";
 import { RocketVideo } from "@/components/ui/rocket-video";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
@@ -91,11 +90,9 @@ function HeroContent({ hero, services }: Content) {
     <div className="container-page relative flex min-h-svh flex-col pt-[calc(var(--header-height)+2rem)] pb-6 md:pb-8 [@media(max-height:560px)]:pt-[calc(var(--header-height)+0.5rem)] [@media(max-height:560px)]:pb-4">
       <div className="flex flex-1 flex-col justify-end md:justify-center">
         <div className="max-w-[48rem]">
-          <p className="animate-fade-in flex w-fit items-center gap-2.5 border-t border-white/[0.12] pt-3 text-eyebrow text-white/70" style={delay(0)}>
-            <LogoMark className="size-5 flex-none text-accent" />
-            <span>
-              {site.name} <span className="text-white/40">—</span> {site.slogan}
-            </span>
+          {/* A marca, discreta: o slogan agora vive na cena, ao lado do foguete. */}
+          <p className="animate-fade-in w-fit border-t border-white/[0.14] pt-3 text-eyebrow tracking-[0.32em] text-white/75" style={delay(0)}>
+            {site.name}
           </p>
 
           <h1 className="text-hero mt-5 max-w-[6.2em] text-white [text-shadow:0_4px_32px_rgb(0_0_0/0.35)] max-sm:text-[clamp(2.5rem,11.5vw,3.25rem)] md:mt-6 [@media(max-height:560px)]:mt-3">
