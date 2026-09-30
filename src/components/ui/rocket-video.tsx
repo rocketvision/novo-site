@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getImageProps } from "next/image";
+import { RocketHover } from "@/components/ui/rocket-hover";
 import { cn } from "@/lib/utils";
 
 /**
@@ -9,7 +10,8 @@ import { cn } from "@/lib/utils";
  *
  * - Toca uma única vez, sem loop. Os últimos segundos estão em câmera lenta com desaceleração
  *   no próprio arquivo, então o foguete chega ao quadro final sem freada. Depois o vídeo fica
- *   parado no último quadro e o push-in lento de câmera (CSS) mantém a cena viva.
+ *   parado no último quadro: o motor continua aceso, partículas descem pelo rastro e estrelas
+ *   piscam (RocketHover), com o push-in lento de câmera (CSS) por baixo.
  * - A decolagem espera a abertura da página (preloader) terminar, para não acontecer escondida.
  *   Na navegação interna, sem abertura, começa na hora.
  * - Nunca recomeça: pausar fora da tela e voltar retoma de onde parou; depois do fim, fica no fim.
@@ -73,6 +75,7 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const [introDone, setIntroDone] = useState(false);
+  const [ended, setEnded] = useState(false);
 
   useEffect(() => {
     // Detectado depois da hidratação: desmontar o <video> interrompe o download já iniciado.
@@ -89,6 +92,7 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
     // O primeiro quadro pode ter chegado antes da hidratação, sem evento para ouvir.
     // (Uma falha antes da hidratação também passa sem aviso, mas o vídeo segue invisível sobre a imagem.)
     if (video.readyState >= 2) setReady(true);
+    if (video.ended) setEnded(true);
     if (!play || !introDone) {
       video.pause();
       return;
@@ -123,6 +127,7 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
             preload="auto"
             tabIndex={-1}
             onLoadedData={() => setReady(true)}
+            onEnded={() => setEnded(true)}
             onError={() => setFailed(true)}
           >
             <source src="/video/hero-liftoff-portrait.webm" type="video/webm" media={PORTRAIT} />
@@ -134,6 +139,9 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
             <source src="/video/hero-liftoff.mp4" type="video/mp4" onError={() => setFailed(true)} />
           </video>
         )}
+
+        {/* Depois da decolagem (ou direto, quando não há vídeo), a cena parada continua viva. */}
+        {!still && <RocketHover active={ended || !showVideo} />}
       </div>
     </div>
   );
