@@ -230,6 +230,10 @@
   animation: push-in 18s ease-in-out infinite alternate;
   transform-origin: 62% 45%;
   will-change: transform;
+  /* No recorte vertical o foguete termina no alto, à direita: a câmera se aproxima dele. */
+  @media (orientation: portrait) and (max-width: 1024px) {
+    transform-origin: 70% 22%;
+  }
 }
 
 @utility animate-headline {
