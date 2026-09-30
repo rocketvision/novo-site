@@ -1,13 +1,12 @@
 "use client";
 
 import { useRef } from "react";
-import { Reveal } from "@/components/animations/reveal";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { LaunchpadVideo } from "@/components/ui/launchpad-video";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { gsap, SplitText, useGSAP } from "@/lib/gsap";
-import { ArrowRight } from "lucide-react";
+import { LetsGo } from "./lets-go";
 
 /**
  * Convite final: o foguete na plataforma, motores acesos, pronto para decolar. A abertura mostra
@@ -105,38 +104,8 @@ export function FinalCta({ cta, contact }: { cta: Resolved<"cta">; contact: Reso
         </div>
       </div>
 
-      {/* Convite final: no lugar do formulário, o diagnóstico (quiz em tela cheia). */}
-      <div className="relative overflow-hidden">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(55%_60%_at_50%_0%,rgb(44_157_245/0.12),transparent_70%)]" />
-        <div className="container-page relative flex flex-col items-center pt-24 pb-28 text-center md:pt-32 md:pb-36">
-          <Reveal as="p" className="text-[clamp(4.5rem,17vw,13rem)] leading-[0.85] font-black tracking-[-0.06em]">
-            Vamos?
-          </Reveal>
-          <Reveal as="p" delay={0.08} className="mt-7 max-w-[34rem] text-[1.0625rem] leading-relaxed text-pretty text-white/60">
-            Responda 7 perguntas rápidas e a gente lê o cenário do seu negócio. Leva 1 minuto, sem compromisso.
-          </Reveal>
-          <Reveal delay={0.14} className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              data-diagnostico
-              className="group inline-flex h-12 items-center gap-2 rounded-full bg-[linear-gradient(180deg,#f6f7f9,#bcc1ca)] px-6 text-[0.9375rem] font-semibold text-[#0b0b0e] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition-shadow hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_32px_-8px_rgb(44_157_245/0.7)]"
-            >
-              Fazer meu diagnóstico
-              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
-            </button>
-            {contact.whatsapp && (
-              <a
-                href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent("Olá! Vim pelo site da Rocket Vision e quero conversar sobre um projeto.")}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-[0.9375rem] text-white/85 transition-colors hover:border-white/35 hover:text-white"
-              >
-                Chamar no WhatsApp
-              </a>
-            )}
-          </Reveal>
-        </div>
-      </div>
+      {/* Convite final: no lugar do formulário, o "Vamos?" que abre o diagnóstico. */}
+      <LetsGo whatsapp={contact.whatsapp} />
     </section>
   );
 }
