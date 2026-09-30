@@ -69,7 +69,8 @@ export function FinalCta({ cta, contact }: { cta: Resolved<"cta">; contact: Reso
         <div className="sticky top-0 h-svh overflow-hidden">
           <div data-window className="absolute inset-0 overflow-hidden">
             <div data-video className="absolute inset-0">
-              <LaunchpadVideo play={!reduceMotion} />
+              {/* Toca mesmo com "reduzir movimento" (escolha da Rocket); a coreografia de scroll fica desligada. */}
+              <LaunchpadVideo />
             </div>
             <div data-shade className="absolute inset-0 bg-[linear-gradient(0deg,var(--color-ink)_0%,rgb(10_10_11/0.55)_45%,rgb(10_10_11/0.15)_100%)]" />
           </div>

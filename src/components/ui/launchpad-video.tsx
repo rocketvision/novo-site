@@ -14,8 +14,9 @@ import { cn } from "@/lib/utils";
  *   em câmera lenta a 25% da velocidade. O loop é um dissolve da fumaça sobre ela mesma, sem emenda.
  * - Três versões, como na abertura: 2560 × 1440 (telas grandes ou retina), 1920 × 1080 e o
  *   recorte vertical 810 × 1080 centrado no foguete para celulares e tablets em pé.
- * - Só baixa e toca quando chega perto da tela; fora dela, pausa. Com `play` falso (movimento
- *   reduzido), fica a imagem do primeiro quadro.
+ * - Só baixa e toca quando chega perto da tela; fora dela, pausa. Toca também com "reduzir
+ *   movimento" (escolha da Rocket). Se o navegador bloquear o autoplay (ex.: modo de pouca energia
+ *   do iPhone), fica a imagem e o vídeo começa no primeiro toque ou clique.
  */
 
 const PORTRAIT = "(orientation: portrait) and (max-width: 1024px)";
@@ -43,7 +44,19 @@ export function LaunchpadVideo({ play = true, className }: { play?: boolean; cla
     }
     // Com preload="none", o play() é o que dispara o download, só quando chega perto da tela.
     video.muted = true;
-    video.play().catch(() => {});
+    let cancel = () => {};
+    video.play().catch((error: unknown) => {
+      if (!(error instanceof DOMException && error.name === "NotAllowedError")) return;
+      // Autoplay bloqueado: tenta de novo no primeiro gesto do visitante.
+      const events = ["pointerdown", "touchend", "keydown", "click"] as const;
+      const retry = () => {
+        cancel();
+        video.play().catch(() => {});
+      };
+      events.forEach((e) => window.addEventListener(e, retry, { passive: true }));
+      cancel = () => events.forEach((e) => window.removeEventListener(e, retry));
+    });
+    return () => cancel();
   }, [play, near]);
 
   const common = { alt: "", sizes: "100vw" } as const;

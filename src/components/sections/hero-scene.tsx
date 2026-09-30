@@ -50,7 +50,8 @@ export function HeroScene({ hero, services }: Content) {
 
   return (
     <section ref={ref} id="inicio" data-header="dark" className="relative overflow-hidden bg-ink">
-      <HeroMedia play={visible && !reduceMotion} still={reduceMotion} />
+      {/* O vídeo toca mesmo com "reduzir movimento" (escolha da Rocket); só a interação fica calma. */}
+      <HeroMedia play={visible} calm={reduceMotion} />
       <HeroContent hero={hero} services={services} />
     </section>
   );
@@ -70,10 +71,10 @@ function TitleLine({ line }: { line: string }) {
 }
 
 /** Fundo da abertura: o vídeo e a máscara que protege a leitura sem apagar a cena. */
-function HeroMedia({ play, still = false }: { play: boolean; still?: boolean }) {
+function HeroMedia({ play, calm = false }: { play: boolean; calm?: boolean }) {
   return (
     <div className="absolute inset-0" aria-hidden="true">
-      <RocketVideo play={play} still={still} />
+      <RocketVideo play={play} calm={calm} />
       {/* O foguete sobe no centro-direita e o fim do vídeo é um mar de nuvens claras: a máscara
           pesa à esquerda e embaixo, onde está o texto, e some sobre o foguete. No celular o texto
           fica embaixo, então a máscara sobe do rodapé. O topo escurece de leve para o menu. */}

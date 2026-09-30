@@ -21,8 +21,10 @@ import { cn } from "@/lib/utils";
  *   1920 × 1080 para a maioria dos desktops e 2560 × 1440 para telas grandes ou de alta densidade.
  *   Cada uma em VP9 (menor, preferido) e H.264 (para quem não tem VP9).
  * - Por baixo, uma imagem otimizada: o primeiro quadro enquanto o vídeo carrega (a troca não se nota)
- *   ou o quadro final, com o foguete planando, quando não há vídeo (movimento reduzido, economia
- *   de dados, falha ou autoplay bloqueado).
+ *   ou o quadro final, com o foguete planando, quando não há vídeo (economia de dados ou falha).
+ * - Toca também com "reduzir movimento" ativo (escolha da Rocket); nesse caso, `calm` desliga a
+ *   paralaxe e a interação com o mouse. Se o navegador bloquear o autoplay (ex.: modo de pouca
+ *   energia do iPhone), fica o foguete planando e o vídeo decola no primeiro toque ou clique.
  * - Com mouse, a cena inteira tem uma paralaxe discreta, de poucos pixels, seguindo o cursor.
  * - Tratamento de cor no próprio arquivo: pretos mais profundos, azul do motor mais vivo e nitidez leve.
  */
@@ -70,7 +72,18 @@ function Frame({ name }: { name: "poster" | "still" }) {
   );
 }
 
-export function RocketVideo({ play = true, still = false, className }: { play?: boolean; still?: boolean; className?: string }) {
+/** Tenta de novo no primeiro gesto do visitante: é o que libera o vídeo quando o autoplay foi bloqueado. */
+function onFirstGesture(run: () => void) {
+  const events = ["pointerdown", "touchend", "keydown", "click"] as const;
+  const handler = () => {
+    events.forEach((e) => window.removeEventListener(e, handler));
+    run();
+  };
+  events.forEach((e) => window.addEventListener(e, handler, { passive: true }));
+  return () => events.forEach((e) => window.removeEventListener(e, handler));
+}
+
+export function RocketVideo({ play = true, calm = false, className }: { play?: boolean; calm?: boolean; className?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   const [lite, setLite] = useState(false);
@@ -78,6 +91,7 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
   const [ready, setReady] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   const [ended, setEnded] = useState(false);
+  const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
     // Detectado depois da hidratação: desmontar o <video> interrompe o download já iniciado.
@@ -86,7 +100,7 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
     return afterIntro(() => setIntroDone(true));
   }, []);
 
-  const showVideo = !still && !lite && !failed;
+  const showVideo = !lite && !failed;
 
   useEffect(() => {
     const video = ref.current;
@@ -103,16 +117,25 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
     if (video.ended) return;
     // Sem som é o que libera o autoplay; o React nem sempre aplica `muted` ao hidratar.
     video.muted = true;
+    let cancelGesture = () => {};
     video.play().catch((error: unknown) => {
-      // Autoplay bloqueado (ex.: modo de economia de energia): fica a imagem do foguete planando.
-      if (error instanceof DOMException && error.name === "NotAllowedError") setFailed(true);
+      if (!(error instanceof DOMException && error.name === "NotAllowedError")) return;
+      // Autoplay bloqueado: mostra o foguete planando e decola no primeiro toque ou clique.
+      setBlocked(true);
+      cancelGesture = onFirstGesture(() => {
+        video
+          .play()
+          .then(() => setBlocked(false))
+          .catch(() => {});
+      });
     });
+    return () => cancelGesture();
   }, [play, introDone, showVideo]);
 
   // Paralaxe: a cena desliza alguns pixels na direção oposta ao cursor, com inércia.
   useEffect(() => {
     const scene = sceneRef.current;
-    if (!scene || still || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (!scene || calm || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     const target = { x: 0, y: 0 };
     const current = { x: 0, y: 0 };
     let raf = 0;
@@ -144,21 +167,21 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
     };
-  }, [still]);
+  }, [calm]);
 
   return (
     <div className={cn("absolute inset-0 overflow-hidden bg-ink", className)} aria-hidden="true">
       <div ref={sceneRef} className="absolute inset-0 will-change-transform">
         {/* Câmera: um push-in lento e contínuo; depois da decolagem, é o que faz o foguete parecer planar. */}
         <div className="animate-push-in absolute inset-0">
-          <Frame name={showVideo ? "poster" : "still"} />
+          <Frame name={showVideo && !blocked ? "poster" : "still"} />
 
           {showVideo && (
             <video
               ref={ref}
               className={cn(
                 "absolute inset-0 size-full object-cover transition-opacity duration-500 ease-out",
-                ready ? "opacity-100" : "opacity-0",
+                ready && !blocked ? "opacity-100" : "opacity-0",
               )}
               muted
               playsInline
@@ -181,7 +204,7 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
           )}
 
           {/* Depois da decolagem (ou direto, quando não há vídeo), a cena parada continua viva. */}
-          {!still && <RocketHover active={ended || !showVideo} />}
+          <RocketHover active={ended || blocked || !showVideo} interactive={!calm} />
         </div>
       </div>
     </div>

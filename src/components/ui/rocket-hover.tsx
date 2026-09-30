@@ -16,8 +16,8 @@ import { cn } from "@/lib/utils";
  * perto dele brilham e o céu ganha profundidade, as partículas do rastro se afastam quando ele passa
  * e o motor "acelera" (mais brilho e mais partículas) quando ele chega perto.
  *
- * Só desenha enquanto a abertura está na tela e a aba está visível. Com movimento reduzido,
- * o componente nem é montado (a abertura mostra a imagem parada).
+ * Só desenha enquanto a abertura está na tela e a aba está visível. Com "reduzir movimento",
+ * a cena continua (como o vídeo), mas sem reagir ao cursor.
  */
 
 /** Quadro 16:9 (2560 × 1440) e recorte vertical 3:4 (1080 × 1440, a partir de x = 1360). */
@@ -70,7 +70,7 @@ function trailAt(t: number) {
   return { x: a.x + tx * k, y: a.y + ty * k, nx: -ty / len, ny: tx / len };
 }
 
-export function RocketHover({ active, className }: { active: boolean; className?: string }) {
+export function RocketHover({ active, interactive = true, className }: { active: boolean; interactive?: boolean; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sloganRef = useRef<HTMLDivElement>(null);
 
@@ -124,7 +124,8 @@ export function RocketHover({ active, className }: { active: boolean; className?
     sctx.fillRect(0, 0, 64, 64);
 
     // Cursor em px do canvas; `presence` e a posição suavizada evitam saltos quando ele entra ou sai.
-    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    // Só com mouse e sem "reduzir movimento": o brilho, as partículas e as estrelas seguem sem o cursor.
+    const finePointer = interactive && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     const pointer = { x: 0, y: 0, inside: false, sx: 0, sy: 0, presence: 0, engine: 0 };
     const onMove = (event: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
@@ -278,7 +279,7 @@ export function RocketHover({ active, className }: { active: boolean; className?
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
     };
-  }, [active]);
+  }, [active, interactive]);
 
   return (
     <>
