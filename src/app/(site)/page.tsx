@@ -1,9 +1,11 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { HeroScene } from "@/components/sections/hero-scene";
-import { Services } from "@/components/sections/services";
-import { ProjectsShowcase } from "@/components/sections/projects-showcase";
-import { Process } from "@/components/sections/process";
+import { SideRail } from "@/components/layout/side-rail";
+import { ProjectsTrack } from "@/components/sections/projects-track";
+import { ServiceScenes, type SiteTile } from "@/components/sections/service-scenes";
+import { Promises } from "@/components/sections/promises";
+import { Plans } from "@/components/sections/plans";
 import { FinalCta } from "@/components/sections/final-cta";
 import type { Metadata } from "next";
 import { PreviewBar } from "@/components/layout/preview-bar";
@@ -11,6 +13,7 @@ import { site } from "@/lib/site";
 import { getLandingContent, getSectionContent, isPreviewing } from "@/server/content/public";
 import { getPublishedProjects } from "@/server/projects/public";
 import { realProjects } from "@/lib/projects/service-match";
+import { stripsOf } from "@/lib/projects/strips";
 
 /**
  * Página estática, reconstruída só quando uma seção é publicada (cache por tag).
@@ -28,9 +31,19 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+/** Recortes de páginas reais para o mosaico da cena de sites: vários trechos de cada página inteira. */
+function siteTiles(projects: ReturnType<typeof realProjects>): SiteTile[] {
+  const strips = projects.flatMap((p) => {
+    const s = stripsOf(p.slug);
+    return s ? [s.desktop.src] : [];
+  });
+  const positions = ["50% 0%", "50% 35%", "50% 70%", "50% 100%"];
+  return positions.flatMap((position) => strips.map((src) => ({ src, position })));
+}
+
 /**
- * Só o que importa: a promessa sobre o vídeo de abertura, o que a Rocket constrói,
- * projetos reais, como trabalhamos e a conversa.
+ * A promessa sobre o vídeo de abertura; depois, em cenas presas ao scroll: projetos reais rodando
+ * dentro de notebook e celular, cada serviço funcionando, as duas letras da marca, os planos e a conversa.
  */
 export default async function Home() {
   const [content, previewing, published] = await Promise.all([getLandingContent(), isPreviewing(), getPublishedProjects()]);
@@ -71,11 +84,13 @@ export default async function Home() {
       <Header />
       <main id="conteudo">
         <HeroScene hero={content.hero} services={content.services} />
-        <Services services={content.services} />
-        <ProjectsShowcase projects={projects} />
-        <Process workflow={content.workflow} />
+        <ProjectsTrack projects={projects} />
+        <ServiceScenes services={content.services} tiles={siteTiles(projects)} />
+        <Promises />
+        <Plans />
         <FinalCta cta={content.cta} contact={settings.contact} />
       </main>
+      <SideRail />
       <Footer settings={settings} />
       {previewing && <PreviewBar />}
     </>
