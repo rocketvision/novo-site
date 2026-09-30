@@ -35,3 +35,7 @@ As fotografias que aparecem dentro das telas também são do Unsplash, sob a mes
 `public/video/launchpad*` vem do mesmo vídeo da abertura: os primeiros 1,75 s, com o foguete ainda na plataforma e os motores acesos. Cada quadro foi ampliado 4× com IA (Real-ESRGAN, `realesr-general-x4v3`) e reduzido para 2560 × 1440; depois, câmera lenta a 25% (interpolação a 96 quadros por segundo) e loop de 5,5 s em que o último 1,5 s se dissolve no primeiro. Mesmo tratamento de cor da abertura. Três versões, cada uma em VP9 e H.264: 2560 × 1440 (`launchpad-1440.*`, cerca de 420 KB / 670 KB), 1920 × 1080 (`launchpad.*`, cerca de 290 KB / 420 KB) e recorte vertical 810 × 1080 centrado no foguete (`launchpad-portrait.*`, cerca de 210 KB / 280 KB). `launchpad-poster*.jpg` é o primeiro quadro.
 
 **Situação:** vídeo fornecido pela própria Rocket Vision (o mesmo da abertura).
+
+## Ilustrações dos serviços
+
+`public/illustrations/*.svg` vêm do [unDraw](https://undraw.co) (licença unDraw: uso livre, inclusive comercial, sem atribuição obrigatória): "Building websites" (Sites), "Add to cart" (Lojas virtuais), "Dashboard" (Sistemas), "Mobile application" (Aplicativos) e "Logo design" (Identidade visual). Recoloridas na identidade da Rocket: a cor principal `#6c63ff` vira o azul do motor do foguete na abertura (`#2c9df5`), o cinza-azulado `#3f3d56` vira o grafite da marca (`#1d1d1f`) e o rosa `#ff6584` vira um azul claro (`#8cc9fa`).
