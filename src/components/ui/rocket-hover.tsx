@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
  * Um canvas por cima do vídeo parado, alinhado ao quadro (mesmo `object-fit: cover` do vídeo):
  * - o motor continua aceso: um brilho azul que respira e cintila como chama;
  * - partículas de luz saem do motor e descem pelo rastro, apagando aos poucos;
- * - algumas estrelas piscam devagar no céu.
+ * - algumas estrelas piscam devagar no céu;
+ * - o slogan surge à direita, abaixo do foguete, como se estivesse na cena (só em telas a partir de 1200 px).
  *
  * Só desenha enquanto a abertura está na tela e a aba está visível. Com movimento reduzido,
  * o componente nem é montado (a abertura mostra a imagem parada).
@@ -43,6 +44,9 @@ const STARS = Array.from({ length: 34 }, (_, i) => {
   return { x: 900 + r(1) * 1640, y: 30 + r(2) * 780, size: 0.6 + r(3) * 1.1, phase: r(4) * Math.PI * 2, speed: 0.35 + r(5) * 0.9 };
 }).filter((s) => Math.hypot(s.x - ENGINE.x, s.y - ENGINE.y) > 220);
 
+/** Canto superior esquerdo do slogan no quadro 16:9: à direita do rastro, abaixo do corpo do foguete. */
+const SLOGAN = { x: 2000, y: 560 };
+
 type Particle = { born: number; life: number; offset: number; wobble: number; size: number };
 
 /** Ponto ao longo do rastro (0 = motor, 1 = fim do rastro), com a tangente para o desvio lateral. */
@@ -61,6 +65,7 @@ function trailAt(t: number) {
 
 export function RocketHover({ active, className }: { active: boolean; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sloganRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -86,6 +91,10 @@ export function RocketHover({ active, className }: { active: boolean; className?
       scale = Math.max(width / frame.w, height / frame.h);
       ox = (width - frame.w * scale) / 2;
       oy = (height - frame.h * scale) / 2;
+      if (sloganRef.current) {
+        sloganRef.current.style.left = `${(SLOGAN.x - frame.dx) * scale + ox}px`;
+        sloganRef.current.style.top = `${SLOGAN.y * scale + oy}px`;
+      }
     };
     const toCanvas = (x: number, y: number) => ({ x: ((x - frame.dx) * scale + ox) * dpr, y: (y * scale + oy) * dpr });
 
@@ -204,14 +213,31 @@ export function RocketHover({ active, className }: { active: boolean; className?
   }, [active]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden="true"
-      className={cn(
-        "pointer-events-none absolute inset-0 size-full transition-opacity duration-[1600ms] ease-out",
-        active ? "opacity-100" : "opacity-0",
-        className,
-      )}
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-0 size-full transition-opacity duration-[1600ms] ease-out",
+          active ? "opacity-100" : "opacity-0",
+          className,
+        )}
+      />
+      {/* O slogan na cena. Decorativo: o mesmo texto já está no rótulo acima do título. */}
+      <div
+        ref={sloganRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute hidden min-[1200px]:block [@media(max-height:560px)]:hidden [@media(orientation:portrait)]:hidden"
+      >
+        <p
+          data-active={active || undefined}
+          className="rocket-slogan font-serif text-[clamp(1.75rem,2.4vw,2.75rem)] leading-[1.02] tracking-[-0.01em] whitespace-nowrap text-white/85 italic"
+        >
+          <span>Beyond</span> <span>the</span>
+          <br />
+          <span>Vision.</span>
+        </p>
+      </div>
+    </>
   );
 }
