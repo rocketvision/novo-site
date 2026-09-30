@@ -38,8 +38,8 @@ const SERVICE_ICONS: Record<string, typeof Globe> = {
 /**
  * Abertura: uma tela só. O lançamento do foguete ocupa a tela inteira, em loop, e por cima,
  * direto sobre o vídeo, a assinatura da marca, a promessa e os dois caminhos. No rodapé, discretos,
- * o que a Rocket constrói e os projetos recentes. Linhas finas e a palavra ROCKET quase apagada
- * dão textura sem competir com o foguete. Tudo entra uma única vez, em cascata.
+ * o que a Rocket constrói e os projetos recentes. A palavra ROCKET quase apagada dá textura
+ * sem competir com o foguete. Tudo entra uma única vez, em cascata.
  * O vídeo pausa quando a abertura sai da tela.
  */
 export function HeroScene({ hero, services, projects }: Content) {
@@ -87,12 +87,6 @@ function HeroMedia({ play, still = false }: { play: boolean; still?: boolean }) 
       {/* Vinheta: as bordas afundam no escuro e o foguete ganha profundidade. */}
       <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_62%_45%,transparent_55%,rgb(3_5_9/0.55)_100%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(5_7_11/0.86)_0%,rgb(5_7_11/0.62)_28%,rgb(5_7_11/0.18)_52%,rgb(5_7_11/0)_68%),linear-gradient(0deg,rgb(5_7_11/0.72)_0%,rgb(5_7_11/0.2)_30%,transparent_50%),linear-gradient(180deg,rgb(5_7_11/0.5)_0%,transparent_18%)] max-md:bg-[linear-gradient(180deg,rgb(5_7_11/0.55)_0%,rgb(5_7_11/0)_20%,rgb(5_7_11/0)_32%,rgb(5_7_11/0.62)_50%,rgb(5_7_11/0.9)_70%,rgb(5_7_11/0.96)_100%)]" />
-      {/* Linhas finas da grade da marca. */}
-      <div className="absolute inset-0 hidden justify-between px-[30%] md:flex">
-        <span className="w-px bg-white/[0.05]" />
-        <span className="ml-3.5 w-px bg-white/[0.05]" />
-        <span className="w-px bg-white/[0.05]" />
-      </div>
     </div>
   );
 }
