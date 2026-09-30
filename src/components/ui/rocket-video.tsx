@@ -14,8 +14,9 @@ import { cn } from "@/lib/utils";
  *   Na navegação interna, sem abertura, começa na hora.
  * - Nunca recomeça: pausar fora da tela e voltar retoma de onde parou; depois do fim, fica no fim.
  *   Só um novo carregamento da página decola de novo.
- * - Duas versões: 16:9 (1280 × 720) e um recorte vertical 3:4 (540 × 720) centrado no foguete,
- *   para celulares e tablets em pé baixarem menos e não perderem o assunto no `object-fit: cover`.
+ * - Ampliado com IA (Real-ESRGAN) a partir da fonte 720p, em três versões escolhidas pela tela:
+ *   recorte vertical 3:4 (1080 × 1440) centrado no foguete para celulares e tablets em pé,
+ *   1920 × 1080 para a maioria dos desktops e 2560 × 1440 para telas grandes ou de alta densidade.
  *   Cada uma em VP9 (menor, preferido) e H.264 (para quem não tem VP9).
  * - Por baixo, uma imagem otimizada: o primeiro quadro enquanto o vídeo carrega (a troca não se nota)
  *   ou o quadro final, com o foguete planando, quando não há vídeo (movimento reduzido, economia
@@ -24,6 +25,8 @@ import { cn } from "@/lib/utils";
  */
 
 const PORTRAIT = "(orientation: portrait) and (max-width: 1024px)";
+/** Telas largas, ou notebooks e monitores com densidade de pixels alta: vale a versão 1440p. */
+const LARGE = "(min-width: 1921px), (min-width: 1280px) and (min-resolution: 1.5dppx)";
 
 /** Economia de dados ligada ou conexão 2G: fica só a imagem. */
 function prefersLiteMedia() {
@@ -52,10 +55,10 @@ function Frame({ name }: { name: "poster" | "still" }) {
   const common = { alt: "", sizes: "100vw", loading: "eager", fetchPriority: "high" } as const;
   const {
     props: { srcSet: portraitSrcSet },
-  } = getImageProps({ ...common, src: `/video/hero-liftoff-${name}-portrait.jpg`, width: 540, height: 720 });
+  } = getImageProps({ ...common, src: `/video/hero-liftoff-${name}-portrait.jpg`, width: 1080, height: 1440 });
   const {
     props: { srcSet, ...image },
-  } = getImageProps({ ...common, src: `/video/hero-liftoff-${name}.jpg`, width: 1280, height: 720 });
+  } = getImageProps({ ...common, src: `/video/hero-liftoff-${name}.jpg`, width: 2560, height: 1440 });
   return (
     <picture>
       <source media={PORTRAIT} srcSet={portraitSrcSet} />
@@ -124,6 +127,8 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
           >
             <source src="/video/hero-liftoff-portrait.webm" type="video/webm" media={PORTRAIT} />
             <source src="/video/hero-liftoff-portrait.mp4" type="video/mp4" media={PORTRAIT} />
+            <source src="/video/hero-liftoff-1440.webm" type="video/webm" media={LARGE} />
+            <source src="/video/hero-liftoff-1440.mp4" type="video/mp4" media={LARGE} />
             <source src="/video/hero-liftoff.webm" type="video/webm" />
             {/* O erro de carregamento chega pela última fonte, não pelo <video>. */}
             <source src="/video/hero-liftoff.mp4" type="video/mp4" onError={() => setFailed(true)} />
