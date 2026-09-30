@@ -101,6 +101,7 @@ export default async function DiagnosticsPage({ searchParams }: { searchParams: 
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
+                    {d.contactPreference === "agendou" && <span className="text-xs text-sky-700">call marcada</span>}
                     {d.notes && <span className="text-xs text-zinc-400">com anotações</span>}
                     <StatusBadge status={d.status} />
                     <ChevronRight className="size-4 text-zinc-300 group-hover:text-zinc-500" aria-hidden="true" />

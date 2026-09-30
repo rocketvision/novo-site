@@ -33,11 +33,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { stored, notified } = await receiveDiagnostic(parsed.data);
+    const { stored, notified, id, token } = await receiveDiagnostic(parsed.data);
     if (!stored && !notified) return NextResponse.json({ error: "not_configured" }, { status: 503 });
+    // id e token permitem agendar a call (e registrar a preferência de contato) por este diagnóstico.
+    return NextResponse.json({ ok: true, id, token });
   } catch (error) {
     log.error("diagnostic.failed", { error });
     return NextResponse.json({ error: "delivery_failed" }, { status: 502 });
   }
-  return NextResponse.json({ ok: true });
 }

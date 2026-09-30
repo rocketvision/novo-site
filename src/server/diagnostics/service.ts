@@ -1,4 +1,5 @@
 import "server-only";
+import { randomBytes } from "node:crypto";
 import { and, count, desc, eq, ilike, lt, or, type SQL } from "drizzle-orm";
 import { summarize, phoneDigits, maskPhone, statusLabel, type Diagnostic, type DiagnosticStatus } from "@/lib/diagnostic";
 import { audit } from "@/server/audit";
@@ -7,6 +8,7 @@ import { diagnostics, users } from "@/server/db/schema";
 import { env } from "@/server/env";
 import { notFound } from "@/server/http/errors";
 import { sendMail } from "@/server/mail";
+import { hashToken } from "@/server/calendar/bookings";
 import { log } from "@/server/log";
 
 type Actor = { id: string; email: string };
@@ -17,13 +19,18 @@ type Meta = { ip?: string | null; userAgent?: string | null };
  * e-mail (DIAGNOSTIC_NOTIFY_TO) e o webhook (CONTACT_WEBHOOK_URL) são extras, e uma falha neles não
  * derruba o envio. Sem banco e sem nenhum canal, o envio falha para o visitante saber.
  */
-export async function receiveDiagnostic(data: Diagnostic): Promise<{ stored: boolean; notified: boolean }> {
+export async function receiveDiagnostic(data: Diagnostic): Promise<{ stored: boolean; notified: boolean; id?: string; token?: string }> {
   const whatsapp = phoneDigits(data.whatsapp);
   let stored = false;
+  // Token só de quem enviou: é o que permite agendar a call por este diagnóstico (o banco guarda o hash).
+  const token = randomBytes(24).toString("base64url");
+  let id: string | undefined;
   if (isDatabaseConfigured()) {
-    await getDb()
+    const [row] = await getDb()
       .insert(diagnostics)
-      .values({ name: data.name, business: data.business, segment: data.segment, presence: data.presence, problems: data.problems, timing: data.timing, whatsapp, source: data.source ?? null });
+      .values({ name: data.name, business: data.business, segment: data.segment, presence: data.presence, problems: data.problems, timing: data.timing, whatsapp, source: data.source ?? null, bookingTokenHash: hashToken(token) })
+      .returning({ id: diagnostics.id });
+    id = row.id;
     stored = true;
   }
 
@@ -49,7 +56,7 @@ export async function receiveDiagnostic(data: Diagnostic): Promise<{ stored: boo
     }
   }
   if (!stored && !notified) log.warn("diagnostic.not_delivered", { business: data.business });
-  return { stored, notified };
+  return { stored, notified, ...(id && { id, token }) };
 }
 
 const PAGE = 50;

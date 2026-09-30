@@ -29,6 +29,13 @@
       "when": 1790789589105,
       "tag": "0003_diagnostics",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790791605556,
+      "tag": "0004_booking",
+      "breakpoints": true
     }
   ]
 }

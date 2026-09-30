@@ -3,8 +3,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, MessageCircle, X } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo";
+import { Scheduler, useSlots } from "./scheduler";
 import Link from "next/link";
 import { isValidPhone, maskPhone, phoneDigits, PRESENCE, PROBLEMS, readingFor, SEGMENTS, summarize, TIMING } from "@/lib/diagnostic";
 import { cn } from "@/lib/utils";
@@ -77,6 +78,8 @@ function Quiz({ whatsapp, onClose }: { whatsapp?: string; onClose: () => void })
   const [answers, setAnswers] = useState<Answers>(EMPTY);
   const [status, setStatus] = useState<Status>("idle");
   const [honeypot, setHoneypot] = useState("");
+  // Devolvidos pela API: permitem agendar a call e registrar a preferência por este diagnóstico.
+  const [diagnostic, setDiagnostic] = useState<{ id: string; token: string } | null>(null);
   const dialog = useRef<HTMLDivElement>(null);
   const first = answers.name.trim().split(/\s+/)[0] ?? "";
   const business = answers.business.trim();
@@ -114,6 +117,8 @@ function Quiz({ whatsapp, onClose }: { whatsapp?: string; onClose: () => void })
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...answers, name: answers.name.trim(), business, source: pathname, website: honeypot }),
       });
+      const data = await response.json().catch(() => null);
+      if (data?.id && data?.token) setDiagnostic({ id: data.id, token: data.token });
       setStatus(response.ok ? "done" : "error");
     } catch {
       setStatus("error");
@@ -160,7 +165,7 @@ function Quiz({ whatsapp, onClose }: { whatsapp?: string; onClose: () => void })
 
   const talk = whatsapp
     ? `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
-        `Olá! Sou ${first} da ${business}. Acabei de fazer o diagnóstico no site e quero agendar uma call.\n\n*Minhas respostas*\n${summarize(answers)}`,
+        `Olá! Sou ${first} da ${business}. Acabei de fazer o diagnóstico no site e quero conversar.\n\n*Minhas respostas*\n${summarize(answers)}`,
       )}`
     : null;
 
@@ -267,7 +272,7 @@ function Quiz({ whatsapp, onClose }: { whatsapp?: string; onClose: () => void })
               )}
 
               {step === 8 && status === "sending" && <p className="text-center font-mono text-[0.75rem] text-white/50">( enviando o seu diagnóstico )</p>}
-              {step === 8 && status === "done" && <Result first={first} business={business} answers={answers} talk={talk} onClose={onClose} />}
+              {step === 8 && status === "done" && <Result first={first} business={business} answers={answers} talk={talk} diagnostic={diagnostic} onClose={onClose} />}
               {step === 8 && status === "error" && (
                 <div className="text-center">
                   <h2 className="text-[clamp(2rem,4.6vw,3rem)] leading-[1.05] font-semibold tracking-[-0.04em]">Não conseguimos enviar agora.</h2>
@@ -437,15 +442,55 @@ function ChoiceStep({
  * Tela final: o recebido, uma leitura inicial feita com as próprias respostas, por onde começar
  * (com as páginas dos serviços) e os próximos passos até a call.
  */
-function Result({ first, business, answers, talk, onClose }: { first: string; business: string; answers: Answers; talk: string | null; onClose: () => void }) {
+function Result({
+  first,
+  business,
+  answers,
+  talk,
+  diagnostic,
+  onClose,
+}: {
+  first: string;
+  business: string;
+  answers: Answers;
+  talk: string | null;
+  diagnostic: { id: string; token: string } | null;
+  onClose: () => void;
+}) {
   const { points, services } = readingFor({ business, presence: answers.presence, problems: answers.problems, timing: answers.timing });
-  const steps = ["A Rocket lê as suas respostas com calma.", "Uma call de 15 minutos pelo WhatsApp pra entender o negócio de perto.", "Você recebe o plano: o que fazer primeiro, prazos e investimento."];
+  const [mode, setMode] = useState<"reading" | "schedule" | "waiting">("reading");
+  // Horários livres: só com a agenda conectada o botão de agendar aparece.
+  const { slots, reload } = useSlots(Boolean(diagnostic));
+  const canSchedule = Boolean(diagnostic && slots?.connected && slots.days.length > 0);
+
+  const prefer = (preference: "whatsapp" | "aguardar") => {
+    if (!diagnostic) return;
+    void fetch("/api/agenda/preferencia", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...diagnostic, preference }), keepalive: true }).catch(() => {});
+  };
+
+  if (mode === "schedule" && diagnostic && slots) {
+    return <Scheduler first={first} days={slots.days} diagnostic={diagnostic} onBack={() => setMode("reading")} onTaken={reload} onClose={onClose} />;
+  }
+  if (mode === "waiting") {
+    return (
+      <div className="pt-10 pb-6 text-center">
+        <h2 className="text-[clamp(2.2rem,5vw,3.4rem)] leading-[1.02] font-semibold tracking-[-0.045em]">Combinado, {first}.</h2>
+        <p className="mx-auto mt-5 max-w-[42ch] text-[1rem] leading-relaxed text-pretty text-white/60">
+          A Rocket te chama no WhatsApp <span className="text-white tabular-nums">{maskPhone(phoneDigits(answers.whatsapp))}</span> em até 72 horas úteis, com o diagnóstico da {business} em mãos.
+        </p>
+        <button type="button" onClick={onClose} className="mt-9 inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-[0.9375rem] text-white/85 transition-colors hover:border-white/35 hover:text-white">
+          Voltar pro site
+        </button>
+      </div>
+    );
+  }
+  const steps = ["A Rocket lê as suas respostas com calma.", "Uma call de até 30 minutos pelo Google Meet pra entender o negócio de perto.", "Você recebe o plano: o que fazer primeiro, prazos e investimento."];
   return (
     <div className="pt-10 pb-6">
       <div className="text-center">
         <h2 className="text-[clamp(2.4rem,5.4vw,3.6rem)] leading-[1.02] font-semibold tracking-[-0.045em]">Recebido, {first}!</h2>
         <p className="mx-auto mt-5 max-w-[46ch] text-[1rem] leading-relaxed text-pretty text-white/60">
-          Já temos o cenário da {business} aqui. O melhor jeito de te entregar o diagnóstico é numa call de 15 minutos: a gente entende seu negócio de perto e te mostra o plano.
+          Já temos o cenário da {business} aqui. O melhor jeito de te entregar o diagnóstico é numa call rápida, de até 30 minutos: a gente entende seu negócio de perto e te mostra o plano.
         </p>
       </div>
 
@@ -489,19 +534,36 @@ function Result({ first, business, answers, talk, onClose }: { first: string; bu
         </div>
       </section>
 
-      <div className="mt-9 flex flex-col items-center gap-4">
-        {talk ? (
-          <a href={talk} target="_blank" rel="noreferrer" className={SILVER_BUTTON}>
+      {/* Como seguir: agendar direto na agenda da Rocket, chamar no WhatsApp ou esperar o contato. */}
+      <div className="mt-9 flex flex-col items-center gap-3">
+        {canSchedule && (
+          <button type="button" onClick={() => setMode("schedule")} className={SILVER_BUTTON}>
             Agendar minha call
             <ArrowRight className="size-4" aria-hidden="true" />
-          </a>
-        ) : (
-          <p className="text-center text-[0.9375rem] text-white/75">
-            A Rocket vai te chamar no WhatsApp <span className="text-white tabular-nums">{maskPhone(phoneDigits(answers.whatsapp))}</span> pra marcar a call.
-          </p>
+          </button>
         )}
-        <button type="button" onClick={onClose} className="inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-[0.9375rem] text-white/85 transition-colors hover:border-white/35 hover:text-white">
-          Voltar pro site
+        {diagnostic && !slots && <span className="h-12 w-56 animate-pulse rounded-full bg-white/[0.06]" aria-hidden="true" />}
+        {talk && (
+          <a
+            href={talk}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => prefer("whatsapp")}
+            className="inline-flex h-12 items-center gap-2 rounded-full border border-white/[0.18] bg-white/[0.03] px-6 text-[0.95rem] font-medium text-white/85 transition-colors hover:border-white/40 hover:bg-white/[0.07] hover:text-white"
+          >
+            Chamar no WhatsApp
+            <MessageCircle className="size-4" aria-hidden="true" />
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            prefer("aguardar");
+            setMode("waiting");
+          }}
+          className="inline-flex h-11 items-center px-4 text-[0.9063rem] text-white/60 underline decoration-white/20 underline-offset-4 transition-colors hover:text-white hover:decoration-white/60"
+        >
+          Aguardar vocês me chamarem
         </button>
       </div>
     </div>

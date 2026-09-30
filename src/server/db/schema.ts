@@ -521,6 +521,10 @@ export const diagnostics = pgTable(
     source: text("source"),
     status: text("status").notNull().default("novo"),
     notes: text("notes").notNull().default(""),
+    /** Como a pessoa escolheu seguir no fim do quiz: agendou, vai chamar no WhatsApp ou aguarda (ver CONTACT_PREFERENCES). */
+    contactPreference: text("contact_preference"),
+    /** Hash do token devolvido só para quem enviou o diagnóstico: é o que permite agendar a call por ele. */
+    bookingTokenHash: text("booking_token_hash"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     updatedBy: uuid("updated_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
@@ -530,4 +534,60 @@ export const diagnostics = pgTable(
     index("diagnostics_status_idx").on(t.status, t.createdAt),
     check("diagnostics_status_check", sql`${t.status} in ('novo', 'em_contato', 'call_agendada', 'proposta', 'fechado', 'descartado')`),
   ],
+);
+
+/**
+ * Conexão com o Google Calendar (uma só, id "default"): a conta que recebe as calls. O refresh token
+ * fica criptografado (AES-GCM) com uma chave derivada de GOOGLE_CLIENT_SECRET.
+ */
+export const googleCalendarConnection = pgTable("google_calendar_connection", {
+  id: text("id").primaryKey().default("default"),
+  email: text("email").notNull(),
+  refreshTokenEnc: text("refresh_token_enc").notNull(),
+  calendarId: text("calendar_id").notNull().default("primary"),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+  connectedBy: uuid("connected_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
+});
+
+/** Calls agendadas pelo site. Um horário só pode ter uma call confirmada (índice único parcial). */
+export const bookings = pgTable(
+  "bookings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    diagnosticId: uuid("diagnostic_id").references((): AnyPgColumn => diagnostics.id, { onDelete: "set null" }),
+    name: text("name").notNull(),
+    business: text("business").notNull(),
+    whatsapp: text("whatsapp").notNull(),
+    email: text("email"),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    /** "confirmado" ou "cancelado". Enquanto o evento é criado no Google, fica "reservando". */
+    status: text("status").notNull().default("reservando"),
+    googleEventId: text("google_event_id"),
+    meetUrl: text("meet_url"),
+    eventUrl: text("event_url"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    cancelledBy: uuid("cancelled_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
+  },
+  (t) => [
+    uniqueIndex("bookings_slot_unique").on(t.startsAt).where(sql`${t.status} <> 'cancelado'`),
+    index("bookings_starts_idx").on(t.startsAt),
+    index("bookings_diagnostic_idx").on(t.diagnosticId),
+    check("bookings_status_check", sql`${t.status} in ('reservando', 'confirmado', 'cancelado')`),
+  ],
+);
+
+/** Horários e dias marcados como indisponíveis pelo CMS, por qualquer motivo. */
+export const availabilityBlocks = pgTable(
+  "availability_blocks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    reason: text("reason").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdBy: uuid("created_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
+  },
+  (t) => [index("availability_blocks_range_idx").on(t.startsAt, t.endsAt), check("availability_blocks_range_check", sql`${t.endsAt} > ${t.startsAt}`)],
 );

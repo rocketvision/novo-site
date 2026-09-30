@@ -38,6 +38,9 @@ export const POLICIES = {
   contactByIp: { name: "contact-ip", limit: 5, windowSeconds: 10 * 60, onError: "open" },
   /** Diagnóstico (quiz do site): poucos envios por IP, contra spam. */
   diagnosticByIp: { name: "diagnostic-ip", limit: 5, windowSeconds: 10 * 60, onError: "open" },
+  /** Agenda pública: consulta de horários (leitura) e confirmação de agendamento. */
+  slotsByIp: { name: "slots-ip", limit: 60, windowSeconds: 10 * 60, onError: "open" },
+  bookingByIp: { name: "booking-ip", limit: 10, windowSeconds: 10 * 60, onError: "open" },
   previewByUser: { name: "preview-user", limit: 60, windowSeconds: 60, onError: "open" },
   /** Busca pública do Blog: consulta de texto no banco, limitada por IP. */
   blogSearchByIp: { name: "blog-search-ip", limit: 30, windowSeconds: 60, onError: "open" },

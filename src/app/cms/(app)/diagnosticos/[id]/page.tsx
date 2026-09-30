@@ -9,6 +9,9 @@ import { formatDateTime, relativeTime } from "@/lib/cms/format";
 import { maskPhone, STATUS_KEYS, type DiagnosticStatus } from "@/lib/diagnostic";
 import { requirePermission } from "@/server/authz/guard";
 import { getDiagnostic } from "@/server/diagnostics/service";
+import { bookingsForDiagnostic } from "@/server/calendar/bookings";
+import { CONTACT_PREFERENCES, formatDay, localDate, localTime } from "@/lib/booking";
+import { Video } from "lucide-react";
 
 export const metadata: Metadata = { title: "Diagnóstico" };
 
@@ -19,8 +22,9 @@ export default async function DiagnosticPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const user = await requirePermission("diagnostics.view", `/cms/diagnosticos/${id}`);
   if (!UUID.test(id)) notFound();
-  const row = await getDiagnostic(id);
+  const [row, calls] = await Promise.all([getDiagnostic(id), bookingsForDiagnostic(id)]);
   if (!row) notFound();
+  const call = calls.find((c) => c.status === "confirmado");
   const d = row.diagnostic;
   const first = d.name.split(/\s+/)[0];
   const message = `Olá, ${first}! Aqui é da Rocket Vision. Recebemos o diagnóstico da ${d.business} e queremos marcar a call de 15 minutos pra te mostrar o plano. Qual horário fica bom pra você?`;
@@ -42,6 +46,7 @@ export default async function DiagnosticPage({ params }: { params: Promise<{ id:
       </ul>,
     ],
     ["Prazo", d.timing],
+    ["Como quer seguir", d.contactPreference ? CONTACT_PREFERENCES[d.contactPreference] ?? d.contactPreference : "Não escolheu (fechou o quiz)"],
     ["Aberto em", !d.source ? "não informado" : d.source === "/" ? "Página inicial" : d.source],
   ];
 
@@ -76,6 +81,20 @@ export default async function DiagnosticPage({ params }: { params: Promise<{ id:
         </Panel>
 
         <Panel title="Atendimento">
+          {call && (
+            <div className="mb-5 rounded-md bg-sky-50 p-3 ring-1 ring-sky-200">
+              <p className="text-xs text-sky-800">Call agendada</p>
+              <p className="mt-0.5 text-sm font-medium text-sky-950 first-letter:uppercase">
+                {formatDay(localDate(call.startsAt))} · {localTime(call.startsAt)}
+              </p>
+              {call.meetUrl && (
+                <a href={call.meetUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 hover:text-sky-900">
+                  <Video className="size-3.5" aria-hidden="true" />
+                  Entrar no Meet
+                </a>
+              )}
+            </div>
+          )}
           <DiagnosticManager
             id={d.id}
             status={status}
