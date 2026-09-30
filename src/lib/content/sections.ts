@@ -19,10 +19,10 @@ export const SECTIONS: {
   retired?: boolean;
 }[] = [
   { key: "hero", slug: "hero", label: "Hero", description: "Título, descrição e botões sobre o vídeo de abertura.", area: "landing", path: "/" },
-  { key: "problem", slug: "problema", label: "Problema", description: "Os improvisos que aparecem nas ilustrações dos serviços.", area: "landing", path: "/" },
+  { key: "problem", slug: "problema", label: "Problema", description: "Os improvisos do antigo manifesto e das ilustrações dos serviços.", area: "landing", path: "/", retired: true },
   { key: "shift", slug: "o-que-muda", label: "O que muda", description: "Pares de antes e depois, em cartões que passam na horizontal.", area: "landing", path: "/", retired: true },
   { key: "statement", slug: "virada", label: "Virada", description: "A proposta da Rocket e os improvisos se encaixando.", area: "landing", path: "/", retired: true },
-  { key: "services", slug: "servicos", label: "Serviços", description: "Cada serviço com problema, solução e resultados.", area: "landing", path: "/#servicos" },
+  { key: "services", slug: "servicos", label: "Serviços", description: "Os cartões de serviço: título, o que fazemos, resultados e o sinal na mini interface.", area: "landing", path: "/#servicos" },
   { key: "differentials", slug: "diferenciais", label: "Diferenciais", description: "Os compromissos da Rocket, um capítulo por vez.", area: "landing", path: "/#diferenciais", retired: true },
   { key: "workflow", slug: "processo", label: "Processo", description: "As etapas do caminho que o foguete percorre.", area: "landing", path: "/#processo" },
   { key: "turn", slug: "momento-tipografico", label: "Momento tipográfico", description: "A frase que se desmonta e dá lugar à outra.", area: "landing", path: "/", retired: true },

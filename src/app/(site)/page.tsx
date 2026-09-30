@@ -71,7 +71,7 @@ export default async function Home() {
       <Header />
       <main id="conteudo">
         <HeroScene hero={content.hero} services={content.services} />
-        <Services services={content.services} problem={content.problem} />
+        <Services services={content.services} />
         <ProjectsShowcase projects={projects} />
         <Process workflow={content.workflow} />
         <FinalCta cta={content.cta} contact={settings.contact} />

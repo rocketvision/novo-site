@@ -1,260 +1,146 @@
-"use client";
-
-import { useRef, useState } from "react";
-import { m, useMotionValueEvent, useTransform, type MotionValue } from "motion/react";
-import { Check } from "lucide-react";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { ServiceVisual } from "@/components/visuals/service-visuals";
+import { Check, Sparkle } from "lucide-react";
 import { Reveal } from "@/components/animations/reveal";
-import { scrollToY } from "@/components/animations/smooth-scroll";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import type { Resolved } from "@/lib/content/resolved";
-import { usePrefersReducedMotion } from "@/hooks/use-media-query";
-import { useScrollProgress } from "@/hooks/use-scroll-progress";
-import { useRevealProgress } from "@/hooks/use-reveal-progress";
-import { insetClip, segment } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
 
 type Content = Resolved<"services">;
-type Problem = Resolved<"problem">;
 type Service = Content["items"][number];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
- * Serviços: o que a Rocket constrói. Cada serviço com a própria ilustração, o que fazemos
- * e os resultados. Os projetos reais ficam só na seção Projetos, logo em seguida.
+ * Serviços: o que a Rocket constrói, numa grade bento, todos visíveis de uma vez.
+ *
+ * Cada cartão tem uma ilustração do unDraw recolorida no azul da Rocket (o do motor do foguete
+ * na abertura) e, sobre ela, o resultado do serviço como uma notificação. Sem scroll preso.
  */
-export function Services({ services, problem }: { services: Content; problem: Problem }) {
+export function Services({ services }: { services: Content }) {
   const items = services.items;
-  const reduceMotion = usePrefersReducedMotion();
-
   return (
     <section id="servicos" aria-labelledby="servicos-titulo" className="bg-paper">
-      <div className="container-page grid gap-8 pt-28 pb-12 md:pt-40 lg:grid-cols-12 lg:items-end lg:pb-16">
-        <Reveal className="lg:col-span-7">
-          <Eyebrow>{services.eyebrow}</Eyebrow>
-          <h2 id="servicos-titulo" className="text-headline mt-6 text-ink">
-            {services.title}
-          </h2>
+      <div className="container-page py-28 md:py-36">
+        <Reveal className="grid gap-6 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-7">
+            <Eyebrow>{services.eyebrow}</Eyebrow>
+            <h2 id="servicos-titulo" className="text-headline mt-6 text-ink">
+              {services.title}
+            </h2>
+          </div>
+          <p className="text-lead text-muted lg:col-span-4 lg:col-start-9">{services.lead}</p>
         </Reveal>
-        <Reveal delay={0.1} className="lg:col-span-4 lg:col-start-9">
-          <p className="text-lead text-muted">{services.lead}</p>
-        </Reveal>
+
+        <ul className="mt-14 grid gap-4 md:mt-16 md:grid-cols-2 lg:grid-cols-6 lg:gap-5">
+          {items.map((service, i) => {
+            const span = spanOf(i, items.length);
+            return (
+              <Reveal as="li" key={service.id} delay={Math.min(i, 4) * 0.06} className={cn(span.lg, span.md)}>
+                <ServiceCard service={service} index={i} wide={span.wide} />
+              </Reveal>
+            );
+          })}
+        </ul>
       </div>
-      {reduceMotion ? (
-        <ServicesStack items={items} problem={problem} />
-      ) : (
-        // As duas composições saem do servidor; o CSS escolhe pelo breakpoint, sem salto após carregar.
-        <>
-          <div className="hidden lg:block">
-            <ServicesStage items={items} problem={problem} />
-          </div>
-          <div className="lg:hidden">
-            <ServicesStack items={items} problem={problem} idSuffix="-m" />
-          </div>
-        </>
-      )}
     </section>
   );
 }
 
-/** Palco fixo: o visual do serviço troca por cortina e o texto acompanha, serviço a serviço. */
-function ServicesStage({ items, problem }: { items: Service[]; problem: Problem }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const total = items.length;
-  const progress = useScrollProgress(ref, ["start start", "end end"]);
-  const [active, setActive] = useState(0);
-  useMotionValueEvent(progress, "change", (v) => setActive(Math.min(total - 1, Math.floor(v * total))));
+/**
+ * Tamanho de cada cartão. Com quantidade ímpar, o primeiro vira uma faixa larga (texto e mini
+ * interface lado a lado) e os demais formam pares; com quantidade par, todos em pares.
+ */
+function spanOf(i: number, n: number) {
+  if (n % 2 === 1 && i === 0) return { lg: "lg:col-span-6", md: "md:col-span-2", wide: true };
+  return { lg: "lg:col-span-3", md: "", wide: false };
+}
 
-  const goTo = (index: number) => {
-    const el = ref.current;
-    if (!el) return;
-    const scrollable = el.offsetHeight - window.innerHeight;
-    const top = el.getBoundingClientRect().top + window.scrollY + ((index + 0.3) / total) * scrollable;
-    scrollToY(top);
-  };
-
+function ServiceCard({ service, index, wide }: { service: Service; index: number; wide: boolean }) {
   return (
-    // Altura proporcional ao número de serviços: 80vh de rolagem por serviço.
-    <div ref={ref} style={{ height: `${total * 80}vh` }} className="relative">
-      <div className="sticky top-0 flex h-svh overflow-hidden">
-        <div className="flex w-[40%] flex-col py-[calc(var(--header-height)+2rem)] pr-12 pl-[max(3rem,calc((100vw-80rem)/2+3rem))]">
-          <nav aria-label="Serviços">
-            <ul className="flex flex-wrap gap-x-4 gap-y-1">
-              {items.map((service, i) => (
-                <li key={service.id}>
-                  <button
-                    type="button"
-                    onClick={() => goTo(i)}
-                    aria-current={active === i ? "true" : undefined}
-                    className={cn(
-                      "relative py-1 text-[0.8125rem] transition-colors duration-500",
-                      active === i ? "text-ink" : "text-subtle hover:text-graphite",
-                    )}
-                  >
-                    {service.name}
-                    <span
-                      className={cn(
-                        "absolute -bottom-0.5 left-0 h-px bg-accent transition-all duration-500 ease-out",
-                        active === i ? "w-full" : "w-0",
-                      )}
-                    />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div className="relative mt-8 flex-1">
-            {items.map((service, i) => (
-              <ServiceCopy key={service.id} service={service} index={i} total={total} progress={progress} />
-            ))}
-          </div>
-        </div>
-
-        <div className="relative my-[calc(var(--header-height)+0.75rem)] flex-1 overflow-hidden rounded-l-[2rem] bg-mist">
-          {items.map((service, i) => (
-            <ServicePanel key={service.id} service={service} index={i} total={total} progress={progress} problem={problem} />
-          ))}
-          <p className="absolute top-8 right-10 font-mono text-xs text-white/85 tabular-nums mix-blend-difference" aria-hidden="true">
-            {pad(active + 1)} / {pad(total)}
-          </p>
-        </div>
+    <article
+      aria-labelledby={`servico-${service.id}-titulo`}
+      className={cn(
+        "group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] bg-mist ring-1 ring-black/[0.04] transition-[translate,box-shadow] duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_30px_60px_-30px_rgb(0_0_0/0.25)]",
+        wide && "lg:flex-row-reverse",
+      )}
+    >
+      <div className={cn("relative h-60 shrink-0 overflow-hidden md:h-72", wide && "lg:h-auto lg:min-h-[24rem] lg:w-[58%]")} aria-hidden="true">
+        <ServiceArt id={service.id} signal={service.signal} />
       </div>
+
+      <div className={cn("flex flex-1 flex-col p-7 md:p-8", wide && "lg:justify-center lg:p-12")}>
+        <p className="text-eyebrow text-muted">
+          <span className="text-ink tabular-nums">{pad(index + 1)}</span>
+          <span className="mx-2 text-black/20">/</span>
+          {service.name}
+        </p>
+        <h3 id={`servico-${service.id}-titulo`} className={cn("mt-4 text-[1.375rem] leading-[1.15] font-semibold tracking-[-0.025em] text-ink", wide && "lg:text-[2rem] lg:leading-[1.08]")}>
+          {service.title}
+        </h3>
+        <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">{service.what}</p>
+        {/* Empurra os resultados para a base: os cartões da mesma linha ficam alinhados. */}
+        <div className="flex-1" />
+        <ul className="mt-6 space-y-2 border-t border-line pt-5">
+          {service.outcomes.map((outcome, j) => (
+            <li key={j} className="flex gap-2.5 text-[0.875rem] leading-snug text-graphite">
+              <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-ink" strokeWidth={2.25} />
+              {outcome}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </article>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Ilustrações (unDraw), recoloridas no azul da Rocket: uma por serviço, pelo    */
+/* identificador cadastrado no CMS.                                             */
+/* -------------------------------------------------------------------------- */
+
+const ILLUSTRATIONS: Record<string, string> = {
+  sites: "sites",
+  lojas: "lojas",
+  "lojas-virtuais": "lojas",
+  sistemas: "sistemas",
+  aplicativos: "aplicativos",
+  apps: "aplicativos",
+  identidade: "identidade",
+  "identidade-visual": "identidade",
+};
+
+function ServiceArt({ id, signal }: { id: string; signal: string }) {
+  const file = ILLUSTRATIONS[id];
+  return (
+    <div className="absolute inset-0 bg-[radial-gradient(80%_70%_at_70%_15%,rgb(44_157_245/0.12),transparent_65%),linear-gradient(180deg,#f1f2f5,#e9eaee)]">
+      {file ? (
+        // SVG estático e leve: sem otimização de imagem (o Next não converte SVG).
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/illustrations/${file}.svg`}
+          alt=""
+          loading="lazy"
+          className="absolute inset-x-8 top-7 bottom-16 m-auto h-[calc(100%-5.75rem)] w-[calc(100%-4rem)] object-contain transition-transform duration-700 ease-out group-hover:-translate-y-1.5 group-hover:scale-[1.03]"
+        />
+      ) : (
+        <div className="absolute inset-0 grid place-items-center">
+          <span className="grid size-20 place-items-center rounded-2xl bg-white text-[#2c9df5] shadow-[0_20px_40px_-20px_rgb(0_0_0/0.3)] transition-transform duration-700 ease-out group-hover:rotate-6">
+            <Sparkle className="size-8" strokeWidth={1.5} />
+          </span>
+        </div>
+      )}
+      <Signal text={signal} />
     </div>
   );
 }
 
-const easeOutCubic = (x: number) => 1 - (1 - x) ** 3;
-
-function segmentOf(index: number, total: number) {
-  const start = index / total;
-  const end = (index + 1) / total;
-  return { start, end, w: end - start, first: index === 0, last: index === total - 1 };
-}
-
-type SlideProps = { service: Service; index: number; total: number; progress: MotionValue<number> };
-
-function ServiceCopy({ service, index, total, progress }: SlideProps) {
-  const { start, end, w, first, last } = segmentOf(index, total);
-  const opacity = useTransform(progress, [start, start + w * 0.16, end - w * 0.16, end], [first ? 1 : 0, 1, 1, last ? 1 : 0]);
-  const y = useTransform(progress, [start, start + w * 0.2, end - w * 0.2, end], [first ? 0 : 48, 0, 0, last ? 0 : -48]);
-  const outcomesOpacity = useTransform(progress, [start + w * 0.12, start + w * 0.3], [first ? 1 : 0, 1]);
-
-  return (
-    <m.article
-      style={{ opacity, y }}
-      aria-labelledby={`servico-${service.id}-titulo`}
-      className="absolute inset-0 flex flex-col justify-center"
-    >
-      <p className="text-eyebrow text-muted">
-        <span className="text-accent-strong tabular-nums">{pad(index + 1)}</span>
-        <span className="mx-2 text-black/20">/</span>
-        {service.name}
-      </p>
-      <h3 id={`servico-${service.id}-titulo`} className="text-title mt-5 text-ink">
-        {service.title}
-      </h3>
-      <p className="text-body mt-5 text-graphite">{service.what}</p>
-      <m.ul style={{ opacity: outcomesOpacity }} className="mt-7 space-y-2.5 border-t border-line pt-6">
-        {service.outcomes.map((outcome, i) => (
-          <li key={i} className="flex gap-3 text-[0.9375rem] text-graphite">
-            <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={2.25} />
-            {outcome}
-          </li>
-        ))}
-      </m.ul>
-    </m.article>
-  );
-}
-
-function ServicePanel({ service, index, total, progress, problem }: SlideProps & { problem: Problem }) {
-  const { start, end, w, last } = segmentOf(index, total);
-  // O improviso chega ao resultado enquanto o serviço entra; o selo fecha a cena.
-  const t = useTransform(progress, (v) => segment(v, start - w * 0.2, start + w * 0.2));
-  // O visual seguinte nasce como uma janela no centro e se abre até as bordas, com a câmera se aproximando.
-  const clipPath = useTransform(progress, (v) => {
-    if (index === 0) return insetClip(0, 0, 0, 0);
-    // Começa como um ponto (invisível) e se abre com desaceleração.
-    const k = 1 - easeOutCubic(segment(v, start - w * 0.32, start + w * 0.1));
-    return insetClip(k * 50, k * 50, k * 50, k * 50, 40 * Math.min(1, k * 3));
-  });
-  // Ao dar lugar ao próximo, o visual passa pela câmera: cresce e escurece.
-  const scale = useTransform(progress, [start - w * 0.32, start + w * 0.1, end - w * 0.3, end + w * 0.1], [0.72, 1, 1, last ? 1 : 1.18]);
-  const dim = useTransform(progress, [end - w * 0.3, end + w * 0.1], [0, last ? 0 : 0.55]);
-  const signalOpacity = useTransform(progress, [start + w * 0.1, start + w * 0.25, end - w * 0.1, end], [index === 0 ? 1 : 0, 1, 1, 0]);
-  const signalY = useTransform(progress, [start + w * 0.1, start + w * 0.25], [index === 0 ? 0 : 24, 0]);
-  const signalScale = useTransform(progress, [start + w * 0.1, start + w * 0.25], [index === 0 ? 1 : 0.85, 1]);
-
-  return (
-    <m.div style={{ clipPath }} className="absolute inset-0">
-      <m.div style={{ scale }} className="absolute inset-0">
-        <ServiceVisual service={service} t={t} problem={problem} />
-      </m.div>
-      <m.div style={{ opacity: dim }} className="pointer-events-none absolute inset-0 bg-ink" />
-      <m.div style={{ opacity: signalOpacity, y: signalY, scale: signalScale }} className="absolute bottom-10 left-10 z-10 origin-bottom-left">
-        <Signal text={service.signal} />
-      </m.div>
-    </m.div>
-  );
-}
-
-/** O resultado do serviço, como uma notificação discreta sobre o visual. */
+/** O resultado do serviço, como uma notificação que chega ao passar o mouse. */
 function Signal({ text }: { text: string }) {
   return (
-    <p className="flex items-center gap-3 rounded-full bg-white/90 py-2.5 pr-5 pl-2.5 text-sm font-medium tracking-tight text-ink shadow-[0_20px_50px_-20px_rgb(0_0_0/0.5)] backdrop-blur-md">
-      <span className="flex size-7 items-center justify-center rounded-full bg-ink text-white">
+    <div className="absolute bottom-5 left-5 flex max-w-[calc(100%-2.5rem)] translate-y-1 items-center gap-2.5 rounded-full bg-white/90 py-1.5 pr-4 pl-1.5 text-[0.8125rem] font-medium text-ink opacity-90 shadow-[0_12px_30px_-12px_rgb(0_0_0/0.3)] backdrop-blur transition-[translate,opacity] duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+      <span className="grid size-6 shrink-0 place-items-center rounded-full bg-ink text-white">
         <Check className="size-3.5" strokeWidth={2.5} />
       </span>
-      {text}
-    </p>
-  );
-}
-
-/** A composição ilustrativa do serviço, que acontece quando entra na tela. */
-function ComposedVisual({ service, problem }: { service: Service; problem: Problem }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const t = useRevealProgress(ref);
-  return (
-    <div ref={ref} className="absolute inset-0">
-      <ServiceVisual service={service} t={t} problem={problem} size={[2.8, 3.4]} />
-    </div>
-  );
-}
-
-/** Mobile e reduced motion: cada serviço com o próprio visual, em sequência. */
-function ServicesStack({ items, problem, idSuffix = "" }: { items: Service[]; problem: Problem; idSuffix?: string }) {
-  return (
-    <div className="pb-24">
-      {items.map((service, i) => (
-        <article key={service.id} aria-labelledby={`servico-${service.id}-titulo${idSuffix}`} className="mt-14 first:mt-4 md:mt-24">
-          <Reveal className="relative mx-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] sm:mx-8 sm:aspect-[16/10]">
-            <ComposedVisual service={service} problem={problem} />
-            <div className="absolute bottom-5 left-5">
-              <Signal text={service.signal} />
-            </div>
-          </Reveal>
-          <div className="container-page mt-8 max-w-2xl sm:mx-0">
-            <p className="text-eyebrow text-muted">
-              <span className="text-accent-strong tabular-nums">{pad(i + 1)}</span>
-              <span className="mx-2 text-black/20">/</span>
-              {service.name}
-            </p>
-            <h3 id={`servico-${service.id}-titulo${idSuffix}`} className="text-title mt-4 text-ink">
-              {service.title}
-            </h3>
-            <p className="text-body mt-4 text-graphite">{service.what}</p>
-            <ul className="mt-6 space-y-2.5 border-t border-line pt-5">
-              {service.outcomes.map((outcome, j) => (
-                <li key={j} className="flex gap-3 text-[0.9375rem] text-graphite">
-                  <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={2.25} />
-                  {outcome}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </article>
-      ))}
+      <span className="truncate">{text}</span>
     </div>
   );
 }
