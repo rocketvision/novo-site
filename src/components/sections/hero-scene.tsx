@@ -30,7 +30,7 @@ const SERVICE_ICONS: Record<string, typeof Globe> = {
 };
 
 /**
- * Abertura: uma tela só. O lançamento do foguete ocupa a tela inteira, em loop, e por cima,
+ * Abertura: uma tela só. O foguete decola uma vez em tela cheia e fica planando sobre a Terra; por cima,
  * direto sobre o vídeo, a assinatura da marca, a promessa e os dois caminhos. No rodapé, discretos,
  * o que a Rocket constrói. A palavra ROCKET quase apagada dá textura
  * sem competir com o foguete. Tudo entra uma única vez, em cascata.
