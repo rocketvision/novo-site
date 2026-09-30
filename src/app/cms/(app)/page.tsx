@@ -8,6 +8,7 @@ import { relativeTime } from "@/lib/cms/format";
 import { redirect } from "next/navigation";
 import { isBlogOnly, requireUser } from "@/server/authz/guard";
 import { getDashboard } from "@/server/cms/dashboard";
+import { countDiagnosticsByStatus } from "@/server/diagnostics/service";
 
 export const metadata: Metadata = { title: "Visão geral" };
 
@@ -18,6 +19,9 @@ export default async function DashboardPage() {
   const { counts, pendingSections, pendingProjects, activity } = await getDashboard({ onlyActorId: canAudit ? undefined : user.id });
   const canLanding = user.permissions.has("landing.view");
   const canProjects = user.permissions.has("projects.view");
+  const canDiagnostics = user.permissions.has("diagnostics.view");
+  const diagnostics = canDiagnostics ? await countDiagnosticsByStatus() : null;
+  const newDiagnostics = diagnostics?.novo ?? 0;
 
   const pending = [
     ...(canLanding
@@ -57,6 +61,22 @@ export default async function DashboardPage() {
           </>
         }
       />
+
+      {/* Diagnósticos novos (quiz do site) esperando retorno. */}
+      {canDiagnostics && newDiagnostics > 0 && (
+        <Link
+          href="/cms/diagnosticos?etapa=novo"
+          className="group mb-6 flex items-center justify-between gap-4 rounded-lg border border-sky-200 bg-sky-50 px-5 py-4 transition-colors hover:bg-sky-100/70"
+        >
+          <span>
+            <span className="block text-sm font-medium text-sky-900">
+              {newDiagnostics === 1 ? "1 diagnóstico novo esperando retorno" : `${newDiagnostics} diagnósticos novos esperando retorno`}
+            </span>
+            <span className="block text-xs text-sky-800/70">Respondidos no site. Chame no WhatsApp e avance a etapa.</span>
+          </span>
+          <ArrowRight aria-hidden="true" className="size-4 text-sky-700 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      )}
 
       {canProjects && (
         <div className="mb-6 grid grid-cols-3 divide-x divide-zinc-200 rounded-lg border border-zinc-200 bg-white">

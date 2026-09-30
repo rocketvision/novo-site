@@ -22,6 +22,20 @@
       "when": 1790704977470,
       "tag": "0002_blog",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790789589105,
+      "tag": "0003_diagnostics",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790791605556,
+      "tag": "0004_booking",
+      "breakpoints": true
     }
   ]
 }

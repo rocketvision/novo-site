@@ -36,6 +36,21 @@ export const POLICIES = {
   uploadByUser: { name: "upload-user", limit: 40, windowSeconds: 10 * 60, onError: "open" },
   apiReadByUser: { name: "read-user", limit: 600, windowSeconds: 60, onError: "open" },
   contactByIp: { name: "contact-ip", limit: 5, windowSeconds: 10 * 60, onError: "open" },
+  /** Diagnóstico (quiz do site): poucos envios por IP e um teto geral por hora, contra spam e inundação do banco. */
+  diagnosticByIp: { name: "diagnostic-ip", limit: 5, windowSeconds: 10 * 60, onError: "open" },
+  diagnosticGlobal: { name: "diagnostic-all", limit: 200, windowSeconds: 60 * 60, onError: "open" },
+  /**
+   * Agenda pública. Consulta de horários: por IP e um teto geral (cada consulta vai ao Google Calendar;
+   * o teto protege a cota da conta). Agendamento: por IP, por diagnóstico e um teto diário geral
+   * (cada call cria um evento e pode mandar convite por e-mail: impede usar a agenda para disparar
+   * convites em massa). Fecham em falha do banco: sem contagem, nada chega ao Google.
+   */
+  slotsByIp: { name: "slots-ip", limit: 60, windowSeconds: 10 * 60, onError: "open" },
+  slotsGlobal: { name: "slots-all", limit: 1500, windowSeconds: 10 * 60, onError: "open" },
+  bookingByIp: { name: "booking-ip", limit: 10, windowSeconds: 10 * 60, onError: "closed" },
+  bookingByDiagnostic: { name: "booking-diagnostic", limit: 6, windowSeconds: 60 * 60, onError: "closed" },
+  bookingGlobal: { name: "booking-all", limit: 40, windowSeconds: 24 * 60 * 60, onError: "closed" },
+  preferenceByIp: { name: "preference-ip", limit: 20, windowSeconds: 10 * 60, onError: "open" },
   previewByUser: { name: "preview-user", limit: 60, windowSeconds: 60, onError: "open" },
   /** Busca pública do Blog: consulta de texto no banco, limitada por IP. */
   blogSearchByIp: { name: "blog-search-ip", limit: 30, windowSeconds: 60, onError: "open" },

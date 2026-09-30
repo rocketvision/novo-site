@@ -34,7 +34,26 @@
   --breakpoint-xs: 26rem;
 }
 
+/* Tom da cena (claro ou escuro): texto e linhas seguem o fundo de cada seção. "inline" para a
+   cor ser resolvida no elemento (onde .tone-light ou .tone-dark definem as variáveis), não na raiz. */
+@theme inline {
+  --color-fg: var(--tone-fg, #fff);
+  --color-tone: var(--tone-bg, #0a0a0b);
+}
+
+/* As cenas presas ao scroll alternam entre claro e escuro, como capítulos. */
+.tone-dark {
+  --tone-fg: #fff;
+  --tone-bg: #0a0a0b;
+}
+.tone-light {
+  --tone-fg: #0a0a0b;
+  --tone-bg: #fbfbfd;
+}
+
 :root {
+  /* Largura do trilho lateral (telas a partir de 1024 px). */
+  --rail: 4.75rem;
   --duration-fast: 300ms;
   --duration-base: 700ms;
   --header-height: 4rem;
@@ -812,4 +831,11 @@ html:not(.intro-done) .animate-fade-in {
 .rv-editor-content th {
   min-width: 4rem;
   border: 1px solid #e4e4e7;
+}
+
+/* Com o trilho lateral na tela, o menu do topo abre espaço para ele. */
+@media (width >= 64rem) {
+  html.rail-on header .container-page {
+    padding-left: calc(var(--rail) + 1.5rem);
+  }
 }

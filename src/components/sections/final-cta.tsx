@@ -1,20 +1,19 @@
 "use client";
 
 import { useRef } from "react";
-import { Reveal } from "@/components/animations/reveal";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { LaunchpadVideo } from "@/components/ui/launchpad-video";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { gsap, SplitText, useGSAP } from "@/lib/gsap";
-import { ContactForm } from "./contact-form";
+import { LetsGo } from "./lets-go";
 
 /**
  * Convite final: o foguete na plataforma, motores acesos, pronto para decolar. A abertura mostra
  * a decolagem; aqui é a contagem regressiva do próximo lançamento, o projeto de quem está lendo.
  * O vídeo surge como uma janela pequena com cantos arredondados e se abre até as bordas da tela.
  * Enquanto isso, um contador desce de T−10 a T−00 com o scroll (quem rola faz a contagem); no zero,
- * "Ignição", e o título sobe linha a linha. O formulário vem logo abaixo, no mesmo escuro.
+ * "Ignição", e o título sobe linha a linha. Logo abaixo, no mesmo escuro, o convite para o diagnóstico.
  */
 
 /** Momentos da contagem no progresso da cena (0 a 1): termina logo antes do título subir. */
@@ -69,7 +68,8 @@ export function FinalCta({ cta, contact }: { cta: Resolved<"cta">; contact: Reso
         <div className="sticky top-0 h-svh overflow-hidden">
           <div data-window className="absolute inset-0 overflow-hidden">
             <div data-video className="absolute inset-0">
-              <LaunchpadVideo play={!reduceMotion} />
+              {/* Toca mesmo com "reduzir movimento" (escolha da Rocket); a coreografia de scroll fica desligada. */}
+              <LaunchpadVideo />
             </div>
             <div data-shade className="absolute inset-0 bg-[linear-gradient(0deg,var(--color-ink)_0%,rgb(10_10_11/0.55)_45%,rgb(10_10_11/0.15)_100%)]" />
           </div>
@@ -104,14 +104,8 @@ export function FinalCta({ cta, contact }: { cta: Resolved<"cta">; contact: Reso
         </div>
       </div>
 
-      <div className="container-page grid gap-14 pt-10 pb-28 md:pb-36 lg:grid-cols-12 lg:gap-12">
-        <Reveal as="p" className="text-lead text-white/65 lg:col-span-4">
-          {cta.lead}
-        </Reveal>
-        <Reveal delay={0.1} className="lg:col-span-7 lg:col-start-6">
-          <ContactForm cta={cta} contact={contact} />
-        </Reveal>
-      </div>
+      {/* Convite final: no lugar do formulário, o "Vamos?" que abre o diagnóstico. */}
+      <LetsGo whatsapp={contact.whatsapp} />
     </section>
   );
 }

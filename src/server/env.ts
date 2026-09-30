@@ -21,6 +21,11 @@ const schema = z.object({
   /** Resend: envio de e-mails transacionais (convites e redefinição de senha). Opcional. */
   RESEND_API_KEY: optional(z.string().min(1)),
   MAIL_FROM: optional(z.string().min(3)),
+  /** E-mail que recebe o aviso de cada diagnóstico enviado pelo site (quiz). Opcional: sem ele, os diagnósticos ficam só no CMS. */
+  DIAGNOSTIC_NOTIFY_TO: optional(z.string().email()),
+  /** Google Calendar (agendamento das calls do diagnóstico): cliente OAuth "Aplicativo da Web" do Google Cloud. */
+  GOOGLE_CLIENT_ID: optional(z.string().min(10)),
+  GOOGLE_CLIENT_SECRET: optional(z.string().min(10)),
   /** Segredo das rotas de cron (a Vercel envia como "Authorization: Bearer ..."). Sem ele, as rotas de cron recusam tudo. */
   CRON_SECRET: optional(z.string().min(16)),
 });

@@ -23,7 +23,7 @@ export const site = {
     email: "",
     phone: "",
     /** Número no formato internacional, só dígitos. Ex.: 5514999999999 */
-    whatsapp: "",
+    whatsapp: "5514998247073",
   } as { email: string; phone: string; whatsapp: string },
   /** CONFIRMAR: redes sociais reais. Lista vazia não renderiza nada. */
   social: [] as { label: string; href: string }[],
@@ -38,7 +38,7 @@ export const nav = [
   { label: "Serviços", href: "/#servicos" },
   { label: "Projetos", href: "/projetos" },
   { label: "Blog", href: "/blog" },
-  { label: "Como trabalhamos", href: "/#processo" },
+  { label: "Planos", href: "/#planos" },
 ] as const;
 
-export const primaryCta = { label: "Solicitar orçamento", href: "/#contato" } as const;
+export const primaryCta = { label: "Fazer diagnóstico", href: "/#diagnostico" } as const;
