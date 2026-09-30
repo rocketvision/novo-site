@@ -164,7 +164,7 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
         { type: "text", key: "title", label: "Título", max: 80 },
         { type: "text", key: "what", label: "O que fazemos", max: 240, multiline: true },
         { type: "lines", key: "outcomes", label: "Resultados", itemLabel: "Resultado", max: 80, min: 1, maxItems: 4 },
-        { type: "text", key: "signal", label: "Sinal de resultado", max: 50, hint: "Notificação exibida sobre o visual do serviço." },
+        { type: "text", key: "signal", label: "Sinal de resultado", max: 50, hint: "Notificação que aparece sobre a mini interface do cartão." },
       ],
     },
   ],
