@@ -14,7 +14,7 @@ const SILVER = "bg-[linear-gradient(180deg,#f6f7f9,#bcc1ca)]";
  * Trilho lateral: a rota da página em capítulos. Entra deslizando quando a abertura sai da tela e fica
  * até o fim. Cada capítulo é uma letra da marca (R de Resultado, V de Visão e o foguete) apagada que
  * se preenche de prata, de baixo para cima, conforme o scroll avança naquele capítulo; o capítulo
- * atual acende o nome e ganha um ponto azul. No pé, o convite: orçamento e o botão de conversa
+ * atual acende o nome e ganha um ponto azul. No pé, o convite: o diagnóstico e o botão de conversa
  * (WhatsApp quando há número cadastrado). Telas a partir de 1024 px.
  */
 export function SideRail({ whatsapp }: { whatsapp?: string }) {
@@ -104,9 +104,9 @@ export function SideRail({ whatsapp }: { whatsapp?: string }) {
       </nav>
 
       <div className="flex flex-col items-center gap-4">
-        <Link href="/#contato" className="rotate-180 text-[0.68rem] tracking-[0.08em] text-white/60 uppercase transition-colors [writing-mode:vertical-rl] hover:text-white">
-          Orçamento
-        </Link>
+        <button type="button" data-diagnostico className="rotate-180 text-[0.68rem] tracking-[0.08em] text-white/60 uppercase transition-colors [writing-mode:vertical-rl] hover:text-white">
+          Diagnóstico
+        </button>
         <a
           href={talk.href}
           {...(talk.external && { target: "_blank", rel: "noreferrer" })}

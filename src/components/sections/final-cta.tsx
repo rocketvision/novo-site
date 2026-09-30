@@ -7,14 +7,14 @@ import { LaunchpadVideo } from "@/components/ui/launchpad-video";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { gsap, SplitText, useGSAP } from "@/lib/gsap";
-import { ContactForm } from "./contact-form";
+import { ArrowRight } from "lucide-react";
 
 /**
  * Convite final: o foguete na plataforma, motores acesos, pronto para decolar. A abertura mostra
  * a decolagem; aqui é a contagem regressiva do próximo lançamento, o projeto de quem está lendo.
  * O vídeo surge como uma janela pequena com cantos arredondados e se abre até as bordas da tela.
  * Enquanto isso, um contador desce de T−10 a T−00 com o scroll (quem rola faz a contagem); no zero,
- * "Ignição", e o título sobe linha a linha. O formulário vem logo abaixo, no mesmo escuro.
+ * "Ignição", e o título sobe linha a linha. Logo abaixo, no mesmo escuro, o convite para o diagnóstico.
  */
 
 /** Momentos da contagem no progresso da cena (0 a 1): termina logo antes do título subir. */
@@ -105,13 +105,37 @@ export function FinalCta({ cta, contact }: { cta: Resolved<"cta">; contact: Reso
         </div>
       </div>
 
-      <div className="container-page grid gap-14 pt-10 pb-28 md:pb-36 lg:grid-cols-12 lg:gap-12">
-        <Reveal as="p" className="text-lead text-white/65 lg:col-span-4">
-          {cta.lead}
-        </Reveal>
-        <Reveal delay={0.1} className="lg:col-span-7 lg:col-start-6">
-          <ContactForm cta={cta} contact={contact} />
-        </Reveal>
+      {/* Convite final: no lugar do formulário, o diagnóstico (quiz em tela cheia). */}
+      <div className="relative overflow-hidden">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(55%_60%_at_50%_0%,rgb(44_157_245/0.12),transparent_70%)]" />
+        <div className="container-page relative flex flex-col items-center pt-24 pb-28 text-center md:pt-32 md:pb-36">
+          <Reveal as="p" className="text-[clamp(4.5rem,17vw,13rem)] leading-[0.85] font-black tracking-[-0.06em]">
+            Vamos?
+          </Reveal>
+          <Reveal as="p" delay={0.08} className="mt-7 max-w-[34rem] text-[1.0625rem] leading-relaxed text-pretty text-white/60">
+            Responda 7 perguntas rápidas e a gente lê o cenário do seu negócio. Leva 1 minuto, sem compromisso.
+          </Reveal>
+          <Reveal delay={0.14} className="mt-9 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              data-diagnostico
+              className="group inline-flex h-12 items-center gap-2 rounded-full bg-[linear-gradient(180deg,#f6f7f9,#bcc1ca)] px-6 text-[0.9375rem] font-semibold text-[#0b0b0e] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition-shadow hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_32px_-8px_rgb(44_157_245/0.7)]"
+            >
+              Fazer meu diagnóstico
+              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
+            </button>
+            {contact.whatsapp && (
+              <a
+                href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent("Olá! Vim pelo site da Rocket Vision e quero conversar sobre um projeto.")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-[0.9375rem] text-white/85 transition-colors hover:border-white/35 hover:text-white"
+              >
+                Chamar no WhatsApp
+              </a>
+            )}
+          </Reveal>
+        </div>
       </div>
     </section>
   );

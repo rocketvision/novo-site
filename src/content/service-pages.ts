@@ -108,8 +108,9 @@ export const servicePageCopy = {
   cta: {
     title: "Vamos colocar isso no ar?",
     body: "A primeira conversa é sem compromisso: você conta o que precisa e a Rocket mostra o caminho.",
-    primary: "Quero isso!",
-    secondary: "Ver os planos",
+    primary: "Fazer meu diagnóstico",
+    secondary: "Chamar no WhatsApp",
+    plans: "Ver os planos",
   },
   others: "Outros serviços",
 };

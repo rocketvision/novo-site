@@ -59,9 +59,8 @@ export default async function ServicePage({ params }: Props) {
   const projects = page.projects.flatMap((slug) => all.filter((p) => p.slug === slug));
   const others = servicePages.filter((p) => p.slug !== page.slug && items.some((s) => s.id === p.service));
   const whatsapp = settings.contact.whatsapp.replace(/\D/g, "");
-  const primary = whatsapp
-    ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Olá! Vim pela página de ${page.title} no site da Rocket Vision e quero saber mais.`)}`
-    : "/#contato";
+  // Com WhatsApp cadastrado, o segundo botão chama direto; sem ele, leva aos planos.
+  const talk = whatsapp ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Olá! Vim pela página de ${page.title} no site da Rocket Vision e quero saber mais.`)}` : null;
 
   return (
     <>
@@ -168,9 +167,9 @@ export default async function ServicePage({ params }: Props) {
               </Reveal>
               <p className="mx-auto mt-5 max-w-[42ch] text-[1rem] leading-relaxed text-pretty text-white/65">{copy.cta.body}</p>
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+                {/* O diagnóstico (quiz) abre por este link, como em todo o site. */}
                 <a
-                  href={primary}
-                  {...(whatsapp && { target: "_blank", rel: "noreferrer" })}
+                  href="#diagnostico"
                   className="group inline-flex h-12 items-center gap-2 rounded-full bg-[linear-gradient(180deg,#f6f7f9,#bcc1ca)] pr-2 pl-5 text-[0.9375rem] font-semibold text-[#0b0b0e] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition-shadow hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_32px_-8px_rgb(44_157_245/0.7)]"
                 >
                   {copy.cta.primary}
@@ -178,10 +177,16 @@ export default async function ServicePage({ params }: Props) {
                     <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
                   </span>
                 </a>
-                <Link href="/#planos" className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 px-5 text-[0.9375rem] font-medium text-white/85 transition-colors hover:border-white/35 hover:text-white">
-                  {copy.cta.secondary}
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
+                {talk ? (
+                  <a href={talk} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 px-5 text-[0.9375rem] font-medium text-white/85 transition-colors hover:border-white/35 hover:text-white">
+                    {copy.cta.secondary}
+                  </a>
+                ) : (
+                  <Link href="/#planos" className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 px-5 text-[0.9375rem] font-medium text-white/85 transition-colors hover:border-white/35 hover:text-white">
+                    {copy.cta.plans}
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </Link>
+                )}
               </div>
 
               {others.length > 0 && (

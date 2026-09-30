@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { ArrowRight, Bell, Check, MapPin, MessageCircle, Search, ShoppingBag, Star } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Bell, Check, MapPin, Search, ShoppingBag, Star } from "lucide-react";
 import { Reveal } from "@/components/animations/reveal";
 import { scenes, servicesIntro as intro, toneOf } from "@/content/landing-scenes";
 import { servicePageFor } from "@/content/service-pages";
@@ -604,13 +604,10 @@ function AdsScene({ service, index, tone, from, variant, heading }: SceneProps) 
                     {copy.you.name}
                     <span className="rounded bg-fg/10 px-1.5 py-0.5 text-[0.6rem] font-normal text-fg/70">{copy.you.badge}</span>
                   </p>
-                  <p className="mt-1 flex items-center gap-1 text-[0.72rem] text-fg/55">
-                    <Star className="size-3 fill-current" />
-                    {copy.you.meta}
-                  </p>
+                  <p className="mt-1 truncate text-[0.72rem] text-fg/55">{copy.you.meta}</p>
                 </div>
-                <span className="hidden h-8 items-center gap-1.5 rounded-full bg-fg/[0.08] px-3 text-[0.72rem] text-fg sm:inline-flex">
-                  <MessageCircle className="size-3.5" />
+                <span className="hidden h-8 shrink-0 items-center gap-1.5 rounded-full bg-fg/[0.08] px-3 text-[0.72rem] text-fg sm:inline-flex">
+                  <ArrowUpRight className="size-3.5" />
                   {copy.you.action}
                 </span>
               </div>
@@ -624,9 +621,9 @@ function AdsScene({ service, index, tone, from, variant, heading }: SceneProps) 
                 <p className="text-[0.6rem] text-fg/45">{copy.social.badge}</p>
               </div>
             </div>
-            <div className="grid aspect-square w-full place-items-center rounded-lg bg-[radial-gradient(80%_80%_at_30%_20%,#5cb8ff,#1a6fc0_60%,#0b2745)]">
-              <LogoGlyph />
-            </div>
+            {/* O anúncio nas redes mostra o próprio site da MMV. */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- faixa já otimizada, recortada no topo */}
+            <img src={copy.social.image} alt="" loading="lazy" className="aspect-square w-full rounded-lg object-cover object-top" />
             <span className="mt-2 flex h-8 items-center justify-center rounded-lg text-[0.7rem] font-medium text-white" style={{ background: BLUE }}>
               {copy.social.action}
             </span>
@@ -636,9 +633,4 @@ function AdsScene({ service, index, tone, from, variant, heading }: SceneProps) 
       </div>
     </Stage>
   );
-}
-
-/** Marca genérica do "seu negócio" no anúncio das redes. */
-function LogoGlyph() {
-  return <span className="text-[2.5rem] font-bold tracking-[-0.06em] text-white/90">SN</span>;
 }

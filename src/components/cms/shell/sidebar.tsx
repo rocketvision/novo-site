@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowUpRight,
+  ClipboardCheck,
   FolderKanban,
   Image as ImageIcon,
   LayoutDashboard,
@@ -23,13 +24,14 @@ import { StudioLogo } from "@/components/cms/brand";
 import { api } from "@/lib/cms/api";
 import { cn } from "@/lib/utils";
 
-export type NavKey = "dashboard" | "blog" | "landing" | "projects" | "media" | "users" | "audit" | "settings";
+export type NavKey = "dashboard" | "blog" | "landing" | "projects" | "diagnostics" | "media" | "users" | "audit" | "settings";
 
 const ITEMS: { key: NavKey; label: string; href: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Visão geral", href: "/cms", icon: LayoutDashboard },
   { key: "landing", label: "Landing page", href: "/cms/landing", icon: PanelsTopLeft },
   { key: "blog", label: "Blog", href: "/cms/blog", icon: Newspaper },
   { key: "projects", label: "Projetos", href: "/cms/projetos", icon: FolderKanban },
+  { key: "diagnostics", label: "Diagnósticos", href: "/cms/diagnosticos", icon: ClipboardCheck },
   { key: "media", label: "Mídia", href: "/cms/midia", icon: ImageIcon },
   { key: "users", label: "Usuários", href: "/cms/usuarios", icon: Users },
   { key: "audit", label: "Auditoria", href: "/cms/auditoria", icon: ScrollText },

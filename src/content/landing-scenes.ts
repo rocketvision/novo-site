@@ -13,7 +13,7 @@ export const projectsTrack = {
   legend: "cliente",
   live: "Ver o site no ar",
   details: "Ver o case",
-  next: { title: ["O próximo", "pode ser", "o seu."], cta: "Começar meu projeto", href: "#contato" },
+  next: { title: ["O próximo", "pode ser", "o seu."], cta: "Fazer meu diagnóstico", href: "#diagnostico" },
 };
 
 export const servicesIntro = {
@@ -92,15 +92,17 @@ export const scenes = {
     sample: "pedidos de exemplo",
   },
   anuncios: {
-    query: "barbearia perto de mim",
+    // A busca é do ramo da MMV Assessoria (cliente real da Rocket) e o site dela aparece no topo.
+    query: "assessoria segurança do trabalho",
+    // Concorrentes genéricos, fictícios: a busca é de exemplo.
     competitors: [
-      { name: "Barbearia Centro", meta: "4,3 · 1,8 km" },
-      { name: "Studio do Corte", meta: "4,1 · 2,4 km" },
-      { name: "Barber Prime", meta: "4,4 · 3,1 km" },
-      { name: "Navalha & Cia", meta: "3,9 · 3,6 km" },
+      { name: "Consultoria em SST", meta: "4,3 · 1,8 km" },
+      { name: "Engenharia de Segurança", meta: "4,1 · 2,4 km" },
+      { name: "Laudos e Treinamentos", meta: "4,4 · 3,1 km" },
+      { name: "Gestão Ocupacional", meta: "3,9 · 3,6 km" },
     ],
-    you: { initials: "SN", name: "Seu negócio", badge: "Patrocinado", meta: "4,9 · 0,6 km · aberto agora", action: "Chamar" },
-    social: { handle: "seunegocio", badge: "Patrocinado", action: "Enviar mensagem" },
+    you: { initials: "M", name: "MMV Assessoria", badge: "Patrocinado", meta: "mmvassessoria.com.br · Segurança, engenharia e conformidade", action: "Ver site", href: "https://mmvassessoria.com.br" },
+    social: { handle: "MMV Assessoria", badge: "Patrocinado", action: "Saiba mais", image: "/projects/strips/mmv-assessoria-mobile.webp" },
     sample: "busca de exemplo",
   },
   aplicativos: {
@@ -136,8 +138,8 @@ export const plans = {
   label: "Planos",
   title: ["Três rotas.", "Você decola de onde está."],
   lead: "Cada plano inclui o anterior, e dá pra subir de rota quando o negócio pedir, sem refazer nada.",
-  note: "O valor sai na primeira conversa, de graça e sem compromisso.",
-  cta: { label: "Quero conversar", href: "#contato" },
+  note: "O valor sai no diagnóstico, de graça e sem compromisso.",
+  cta: { label: "Fazer meu diagnóstico", href: "#diagnostico" },
   items: [
     {
       tag: "plano essencial",

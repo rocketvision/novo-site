@@ -41,4 +41,4 @@ export const nav = [
   { label: "Planos", href: "/#planos" },
 ] as const;
 
-export const primaryCta = { label: "Solicitar orçamento", href: "/#contato" } as const;
+export const primaryCta = { label: "Fazer diagnóstico", href: "/#diagnostico" } as const;

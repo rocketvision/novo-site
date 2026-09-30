@@ -501,3 +501,25 @@ export const rateLimits = pgTable(
   },
   (t) => [index("rate_limits_expires_idx").on(t.expiresAt)],
 );
+
+/**
+ * Diagnósticos enviados pelo quiz do site (substitui o formulário de contato). Cada linha é um lead:
+ * quem é, o negócio, as respostas e o WhatsApp. `handledAt` marca quando a equipe já retornou.
+ */
+export const diagnostics = pgTable(
+  "diagnostics",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    business: text("business").notNull(),
+    segment: text("segment").notNull(),
+    presence: text("presence").notNull(),
+    problems: jsonb("problems").$type<string[]>().notNull(),
+    timing: text("timing").notNull(),
+    whatsapp: text("whatsapp").notNull(),
+    source: text("source"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    handledAt: timestamp("handled_at", { withTimezone: true }),
+  },
+  (t) => [index("diagnostics_created_idx").on(t.createdAt)],
+);
