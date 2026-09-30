@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getImageProps } from "next/image";
+import { RocketHover } from "@/components/ui/rocket-hover";
 import { cn } from "@/lib/utils";
 
 /**
@@ -9,7 +10,8 @@ import { cn } from "@/lib/utils";
  *
  * - Toca uma única vez, sem loop. Os últimos segundos estão em câmera lenta com desaceleração
  *   no próprio arquivo, então o foguete chega ao quadro final sem freada. Depois o vídeo fica
- *   parado no último quadro e o push-in lento de câmera (CSS) mantém a cena viva.
+ *   parado no último quadro: o motor continua aceso, partículas descem pelo rastro e estrelas
+ *   piscam (RocketHover), com o push-in lento de câmera (CSS) por baixo.
  * - A decolagem espera a abertura da página (preloader) terminar, para não acontecer escondida.
  *   Na navegação interna, sem abertura, começa na hora.
  * - Nunca recomeça: pausar fora da tela e voltar retoma de onde parou; depois do fim, fica no fim.
@@ -21,6 +23,7 @@ import { cn } from "@/lib/utils";
  * - Por baixo, uma imagem otimizada: o primeiro quadro enquanto o vídeo carrega (a troca não se nota)
  *   ou o quadro final, com o foguete planando, quando não há vídeo (movimento reduzido, economia
  *   de dados, falha ou autoplay bloqueado).
+ * - Com mouse, a cena inteira tem uma paralaxe discreta, de poucos pixels, seguindo o cursor.
  * - Tratamento de cor no próprio arquivo: pretos mais profundos, azul do motor mais vivo e nitidez leve.
  */
 
@@ -69,10 +72,12 @@ function Frame({ name }: { name: "poster" | "still" }) {
 
 export function RocketVideo({ play = true, still = false, className }: { play?: boolean; still?: boolean; className?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const sceneRef = useRef<HTMLDivElement>(null);
   const [lite, setLite] = useState(false);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const [introDone, setIntroDone] = useState(false);
+  const [ended, setEnded] = useState(false);
 
   useEffect(() => {
     // Detectado depois da hidratação: desmontar o <video> interrompe o download já iniciado.
@@ -89,6 +94,7 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
     // O primeiro quadro pode ter chegado antes da hidratação, sem evento para ouvir.
     // (Uma falha antes da hidratação também passa sem aviso, mas o vídeo segue invisível sobre a imagem.)
     if (video.readyState >= 2) setReady(true);
+    if (video.ended) setEnded(true);
     if (!play || !introDone) {
       video.pause();
       return;
@@ -103,37 +109,80 @@ export function RocketVideo({ play = true, still = false, className }: { play?: 
     });
   }, [play, introDone, showVideo]);
 
+  // Paralaxe: a cena desliza alguns pixels na direção oposta ao cursor, com inércia.
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene || still || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    const target = { x: 0, y: 0 };
+    const current = { x: 0, y: 0 };
+    let raf = 0;
+    const step = () => {
+      current.x += (target.x - current.x) * 0.08;
+      current.y += (target.y - current.y) * 0.08;
+      // Zoom só o bastante para o deslocamento nunca mostrar a borda, crescendo junto (sem salto).
+      const zoom = 1.002 + Math.max((32 * Math.abs(current.x)) / scene.clientWidth, (20 * Math.abs(current.y)) / scene.clientHeight);
+      scene.style.transform = `translate3d(${(-current.x * 16).toFixed(2)}px, ${(-current.y * 10).toFixed(2)}px, 0) scale(${zoom.toFixed(4)})`;
+      raf = Math.abs(target.x - current.x) + Math.abs(target.y - current.y) > 0.001 ? requestAnimationFrame(step) : 0;
+    };
+    const kick = () => {
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    const onMove = (event: PointerEvent) => {
+      target.x = event.clientX / window.innerWidth - 0.5;
+      target.y = event.clientY / window.innerHeight - 0.5;
+      kick();
+    };
+    const onLeave = () => {
+      target.x = 0;
+      target.y = 0;
+      kick();
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onLeave);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", onMove);
+      document.documentElement.removeEventListener("pointerleave", onLeave);
+    };
+  }, [still]);
+
   return (
     <div className={cn("absolute inset-0 overflow-hidden bg-ink", className)} aria-hidden="true">
-      {/* Câmera: um push-in lento e contínuo; depois da decolagem, é o que faz o foguete parecer planar. */}
-      <div className="animate-push-in absolute inset-0">
-        <Frame name={showVideo ? "poster" : "still"} />
+      <div ref={sceneRef} className="absolute inset-0 will-change-transform">
+        {/* Câmera: um push-in lento e contínuo; depois da decolagem, é o que faz o foguete parecer planar. */}
+        <div className="animate-push-in absolute inset-0">
+          <Frame name={showVideo ? "poster" : "still"} />
 
-        {showVideo && (
-          <video
-            ref={ref}
-            className={cn(
-              "absolute inset-0 size-full object-cover transition-opacity duration-500 ease-out",
-              ready ? "opacity-100" : "opacity-0",
-            )}
-            muted
-            playsInline
-            disablePictureInPicture
-            disableRemotePlayback
-            preload="auto"
-            tabIndex={-1}
-            onLoadedData={() => setReady(true)}
-            onError={() => setFailed(true)}
-          >
-            <source src="/video/hero-liftoff-portrait.webm" type="video/webm" media={PORTRAIT} />
-            <source src="/video/hero-liftoff-portrait.mp4" type="video/mp4" media={PORTRAIT} />
-            <source src="/video/hero-liftoff-1440.webm" type="video/webm" media={LARGE} />
-            <source src="/video/hero-liftoff-1440.mp4" type="video/mp4" media={LARGE} />
-            <source src="/video/hero-liftoff.webm" type="video/webm" />
-            {/* O erro de carregamento chega pela última fonte, não pelo <video>. */}
-            <source src="/video/hero-liftoff.mp4" type="video/mp4" onError={() => setFailed(true)} />
-          </video>
-        )}
+          {showVideo && (
+            <video
+              ref={ref}
+              className={cn(
+                "absolute inset-0 size-full object-cover transition-opacity duration-500 ease-out",
+                ready ? "opacity-100" : "opacity-0",
+              )}
+              muted
+              playsInline
+              disablePictureInPicture
+              disableRemotePlayback
+              preload="auto"
+              tabIndex={-1}
+              onLoadedData={() => setReady(true)}
+              onEnded={() => setEnded(true)}
+              onError={() => setFailed(true)}
+            >
+              <source src="/video/hero-liftoff-portrait.webm" type="video/webm" media={PORTRAIT} />
+              <source src="/video/hero-liftoff-portrait.mp4" type="video/mp4" media={PORTRAIT} />
+              <source src="/video/hero-liftoff-1440.webm" type="video/webm" media={LARGE} />
+              <source src="/video/hero-liftoff-1440.mp4" type="video/mp4" media={LARGE} />
+              <source src="/video/hero-liftoff.webm" type="video/webm" />
+              {/* O erro de carregamento chega pela última fonte, não pelo <video>. */}
+              <source src="/video/hero-liftoff.mp4" type="video/mp4" onError={() => setFailed(true)} />
+            </video>
+          )}
+
+          {/* Depois da decolagem (ou direto, quando não há vídeo), a cena parada continua viva. */}
+          {!still && <RocketHover active={ended || !showVideo} />}
+        </div>
       </div>
     </div>
   );
