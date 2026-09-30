@@ -84,14 +84,19 @@ export default async function Home() {
       <Header />
       <main id="conteudo">
         <HeroScene hero={content.hero} services={content.services} />
-        <ProjectsTrack projects={projects} />
-        <ServiceScenes services={content.services} tiles={siteTiles(projects)} />
-        <Promises />
-        <Plans />
-        <FinalCta cta={content.cta} contact={settings.contact} />
+        {/* Depois da abertura, o conteúdo abre espaço à esquerda para o trilho lateral. */}
+        <div className="lg:pl-[var(--rail)]">
+          <ProjectsTrack projects={projects} />
+          <ServiceScenes services={content.services} tiles={siteTiles(projects)} />
+          <Promises />
+          <Plans />
+          <FinalCta cta={content.cta} contact={settings.contact} />
+        </div>
       </main>
-      <SideRail />
-      <Footer settings={settings} />
+      <SideRail whatsapp={settings.contact.whatsapp} />
+      <div className="lg:pl-[var(--rail)]">
+        <Footer settings={settings} />
+      </div>
       {previewing && <PreviewBar />}
     </>
   );

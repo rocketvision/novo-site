@@ -21,6 +21,8 @@ export function Plans() {
       const tl = gsap.timeline({ scrollTrigger: { trigger: q("[data-plans]")[0], start: "top 85%", end: "bottom 60%", scrub: 0.6 } });
       tl.fromTo(q("[data-plan]"), { opacity: 0, y: 80 }, { opacity: 1, y: 0, stagger: 0.25, duration: 0.6, ease: "power3.out" })
         .fromTo(q("[data-line]"), { scaleX: 0 }, { scaleX: 1, stagger: 0.25, duration: 0.5, ease: "none" }, 0.2);
+      // Os planos escurecem enquanto sobem: o claro das letras vira o escuro do convite final.
+      gsap.fromTo(ref.current, { backgroundColor: "#fbfbfd" }, { backgroundColor: "#0a0a0b", ease: "none", scrollTrigger: { trigger: ref.current, start: "top 85%", end: "top 20%", scrub: true } });
       gsap.fromTo(q("[data-letter]"), { yPercent: 12 }, { yPercent: -12, ease: "none", scrollTrigger: { trigger: ref.current, start: "top bottom", end: "bottom top", scrub: true } });
     },
     { scope: ref },

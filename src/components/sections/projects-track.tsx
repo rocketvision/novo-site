@@ -42,39 +42,61 @@ export function ProjectsTrack({ projects: all }: { projects: Project[] }) {
       if (!section) return;
       const q = gsap.utils.selector(section);
       const track = q("[data-track]")[0] as HTMLElement;
-      const distance = () => Math.max(0, track.scrollWidth - window.innerWidth);
+      // A largura visível é a do palco (a tela menos o trilho lateral, quando ele existe).
+      const pin = q("[data-pin]")[0] as HTMLElement;
+      const distance = () => Math.max(0, track.scrollWidth - pin.clientWidth);
 
-      const move = gsap.to(track, {
+      // Cada faixa: onde o trilho está quando o site deve estar no topo (x0) e no rodapé (x1).
+      type Strip = { el: HTMLElement; travel: number; x0: number; x1: number };
+      let strips: Strip[] = [];
+      const measure = () => {
+        const vw = pin.clientWidth;
+        const max = distance();
+        strips = q("[data-panel]").flatMap((panel) => {
+          const left = panel.offsetLeft;
+          // Começa no topo quando o projeto entra pela direita (ou já na abertura, se ele começa visível)
+          // e chega ao rodapé quando sai pela esquerda (ou no fim do trilho, se ele não chegar a sair).
+          const x0 = Math.min(0, vw * 0.92 - left);
+          const x1 = Math.max(-max, vw * 0.3 - (left + panel.offsetWidth));
+          return Array.from(panel.querySelectorAll<HTMLElement>("[data-screen]")).flatMap((screen) => {
+            const el = screen.querySelector<HTMLElement>("[data-strip]");
+            return el ? [{ el, travel: Math.max(0, el.offsetHeight - screen.clientHeight), x0, x1: Math.min(x1, x0 - 1) }] : [];
+          });
+        });
+      };
+      const scrollStrips = () => {
+        const x = Number(gsap.getProperty(track, "x"));
+        for (const s of strips) {
+          const k = gsap.utils.clamp(0, 1, (s.x0 - x) / (s.x0 - s.x1));
+          s.el.style.transform = `translate3d(0, ${(-k * s.travel).toFixed(1)}px, 0)`;
+        }
+      };
+
+      // O trilho anda mais devagar que o scroll: dá tempo de ver cada site passar inteiro.
+      const length = () => distance() * 1.6;
+      gsap.to(track, {
         x: () => -distance(),
         ease: "none",
+        onUpdate: scrollStrips,
         scrollTrigger: {
           trigger: q("[data-pin]")[0],
           pin: true,
           scrub: true,
           start: "top top",
-          end: () => `+=${distance()}`,
+          end: () => `+=${length()}`,
           invalidateOnRefresh: true,
           anticipatePin: 1,
+          onRefresh: () => {
+            measure();
+            scrollStrips();
+          },
         },
       });
 
       // A letra ao fundo anda mais devagar que o trilho (profundidade) e a barra marca o progresso.
-      const behind = { trigger: q("[data-pin]")[0], start: "top top", end: () => `+=${distance()}`, scrub: true, invalidateOnRefresh: true };
+      const behind = { trigger: q("[data-pin]")[0], start: "top top", end: () => `+=${length()}`, scrub: true, invalidateOnRefresh: true };
       gsap.to(q("[data-letter]"), { xPercent: -45, ease: "none", scrollTrigger: behind });
       gsap.fromTo(q("[data-progress]"), { scaleX: 0 }, { scaleX: 1, ease: "none", scrollTrigger: { ...behind } });
-
-      // Dentro de cada aparelho, a página desce do topo ao rodapé enquanto o projeto atravessa a tela.
-      q("[data-panel]").forEach((panel) => {
-        panel.querySelectorAll<HTMLElement>("[data-screen]").forEach((screen) => {
-          const strip = screen.querySelector<HTMLElement>("[data-strip]");
-          if (!strip) return;
-          gsap.to(strip, {
-            y: () => -Math.max(0, strip.offsetHeight - screen.clientHeight),
-            ease: "none",
-            scrollTrigger: { trigger: panel, containerAnimation: move, start: "left 85%", end: "right 15%", scrub: true, invalidateOnRefresh: true },
-          });
-        });
-      });
 
       // As faixas carregam aos poucos: quando cada uma chega, as medidas mudam.
       const images = Array.from(section.querySelectorAll("img"));

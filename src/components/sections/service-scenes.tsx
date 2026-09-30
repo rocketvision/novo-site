@@ -17,6 +17,12 @@ type SceneId = (typeof SCENE_IDS)[keyof typeof SCENE_IDS];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const BLUE = "#2c9df5";
+const DARK = "#0a0a0b";
+const LIGHT = "#fbfbfd";
+
+type Tone = "light" | "dark";
+/** O tom de cada cena: alternam entre claro e escuro, como capítulos. */
+const TONES: Record<SceneId, Tone> = { sites: "light", lojas: "dark", sistemas: "light", aplicativos: "dark" };
 
 /**
  * Serviços: uma abertura e uma cena presa ao scroll para cada serviço, com o texto vindo do CMS.
@@ -31,15 +37,24 @@ export function ServiceScenes({ services, tiles }: { services: Resolved<"service
     return scene ? [{ service, scene }] : [];
   });
 
+  // A abertura clareia enquanto sobe: o escuro dos projetos vira o claro dos serviços, sem corte.
+  const introRef = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      gsap.fromTo(introRef.current, { backgroundColor: DARK }, { backgroundColor: LIGHT, ease: "none", scrollTrigger: { trigger: introRef.current, start: "top 85%", end: "top 15%", scrub: true } });
+    },
+    { scope: introRef },
+  );
+
   return (
-    <section id="servicos" aria-labelledby="servicos-titulo" data-header="dark" className="relative bg-ink text-white">
-      <div className="relative overflow-hidden">
-        <span aria-hidden="true" className="pointer-events-none absolute -top-[8vw] right-[4vw] text-[min(80vw,64rem)] leading-none font-bold tracking-[-0.06em] text-white/[0.025] select-none">
+    <section id="servicos" aria-labelledby="servicos-titulo" className="relative">
+      <div ref={introRef} className="tone-light relative overflow-hidden bg-tone text-fg">
+        <span aria-hidden="true" className="pointer-events-none absolute -top-[8vw] right-[4vw] text-[min(80vw,64rem)] leading-none font-bold tracking-[-0.06em] text-fg/[0.035] select-none">
           V
         </span>
         <div className="container-page relative flex min-h-[80svh] flex-col justify-center py-28">
           <Reveal>
-            <p className="text-eyebrow text-white/45">{intro.label}</p>
+            <p className="text-eyebrow text-fg/45">{intro.label}</p>
             <h2 id="servicos-titulo" className="mt-6 text-[clamp(2.5rem,1.2rem+4.4vw,5.5rem)] leading-[0.95] font-semibold tracking-[-0.05em]">
               {intro.title.map((line) => (
                 <span key={line} className="block">
@@ -47,20 +62,22 @@ export function ServiceScenes({ services, tiles }: { services: Resolved<"service
                 </span>
               ))}
             </h2>
-            <p className="mt-7 max-w-[26rem] text-[0.9375rem] leading-relaxed text-white/55">{intro.lead}</p>
+            <p className="mt-7 max-w-[26rem] text-[0.9375rem] leading-relaxed text-fg/55">{intro.lead}</p>
           </Reveal>
         </div>
       </div>
 
       {items.map(({ service, scene }, i) => {
         const Scene = SCENES[scene];
-        return <Scene key={service.id} service={service} index={i} tiles={tiles} />;
+        // Cada cena entra ainda com a cor da anterior e acende no seu tom: claro, escuro, claro...
+        const from = i === 0 ? "light" : TONES[items[i - 1].scene];
+        return <Scene key={service.id} service={service} index={i} tiles={tiles} tone={TONES[scene]} from={from} />;
       })}
     </section>
   );
 }
 
-type SceneProps = { service: Service; index: number; tiles: SiteTile[] };
+type SceneProps = { service: Service; index: number; tiles: SiteTile[]; tone: Tone; from: Tone };
 
 const SCENES: Record<SceneId, (props: SceneProps) => React.ReactNode> = {
   sites: SitesScene,
@@ -79,6 +96,9 @@ function useScene(build: (tl: gsap.core.Timeline, q: (selector: string) => HTMLE
         defaults: { ease: "power2.inOut" },
         scrollTrigger: { trigger: ref.current, start: "top top", end: "bottom bottom", scrub: 0.6 },
       });
+      // O véu com a cor da cena anterior se desfaz logo no começo: a troca de tom é um fade, não um corte.
+      const veil = q("[data-veil]");
+      if (veil.length) tl.fromTo(veil, { opacity: 1 }, { opacity: 0, duration: 0.07, ease: "none" }, 0);
       build(tl, q);
     },
     { scope: ref },
@@ -86,10 +106,27 @@ function useScene(build: (tl: gsap.core.Timeline, q: (selector: string) => HTMLE
   return ref;
 }
 
-function Stage({ stageRef, height = 300, children, className }: { stageRef: React.Ref<HTMLDivElement>; height?: number; children: React.ReactNode; className?: string }) {
+function Stage({
+  stageRef,
+  height = 300,
+  tone,
+  from,
+  children,
+  className,
+}: {
+  stageRef: React.Ref<HTMLDivElement>;
+  height?: number;
+  tone: Tone;
+  from: Tone;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div ref={stageRef} className="relative" style={{ height: `${height}svh` }}>
-      <div className={cn("sticky top-0 h-svh overflow-hidden", className)}>{children}</div>
+    <div ref={stageRef} className="relative" style={{ height: `${height}svh` }} data-header={tone === "dark" ? "dark" : undefined}>
+      <div className={cn(`tone-${tone} sticky top-0 h-svh overflow-hidden bg-tone text-fg`, className)}>
+        {children}
+        {from !== tone && <div data-veil aria-hidden="true" className="pointer-events-none absolute inset-0 z-30" style={{ background: from === "dark" ? DARK : LIGHT }} />}
+      </div>
     </div>
   );
 }
@@ -98,24 +135,24 @@ function Stage({ stageRef, height = 300, children, className }: { stageRef: Reac
 function SceneText({ service, index, className }: { service: Service; index: number; className?: string }) {
   return (
     <div data-text className={cn("max-w-[24rem]", className)}>
-      <p className="font-mono text-[0.6875rem] tracking-[0.12em] text-white/45 uppercase">
-        <span className="text-white tabular-nums">{pad(index + 1)}</span>
-        <span className="mx-2 text-white/20">/</span>
+      <p className="font-mono text-[0.6875rem] tracking-[0.12em] text-fg/45 uppercase">
+        <span className="text-fg tabular-nums">{pad(index + 1)}</span>
+        <span className="mx-2 text-fg/20">/</span>
         {service.name}
       </p>
       <h3 className="mt-4 text-[clamp(1.625rem,1.1rem+2vw,3rem)] leading-[1.02] font-semibold tracking-[-0.04em]">{service.title}</h3>
-      <p className="mt-4 text-[0.9375rem] leading-relaxed text-white/60 max-lg:line-clamp-3 max-lg:text-[0.875rem]">{service.what}</p>
+      <p className="mt-4 text-[0.9375rem] leading-relaxed text-fg/60 max-lg:line-clamp-3 max-lg:text-[0.875rem]">{service.what}</p>
       <ul className="mt-5 space-y-2 max-lg:hidden">
         {service.outcomes.slice(0, 3).map((outcome, j) => (
-          <li key={j} className="flex gap-2.5 text-[0.8125rem] leading-snug text-white/70">
-            <span className="mt-[0.55em] h-px w-3 shrink-0 bg-white/40" aria-hidden="true" />
+          <li key={j} className="flex gap-2.5 text-[0.8125rem] leading-snug text-fg/70">
+            <span className="mt-[0.55em] h-px w-3 shrink-0 bg-fg/40" aria-hidden="true" />
             {outcome}
           </li>
         ))}
       </ul>
       <Link
         href="#contato"
-        className="group mt-7 inline-flex h-10 max-lg:mt-5 items-center gap-2 rounded-full bg-white/[0.06] px-4 text-[0.8125rem] font-medium text-white ring-1 ring-white/15 backdrop-blur transition-colors hover:bg-white/[0.12]"
+        className="group mt-7 inline-flex h-10 max-lg:mt-5 items-center gap-2 rounded-full bg-fg/[0.06] px-4 text-[0.8125rem] font-medium text-fg ring-1 ring-fg/15 backdrop-blur transition-colors hover:bg-fg/[0.12]"
       >
         {intro.more}
         <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
@@ -125,14 +162,14 @@ function SceneText({ service, index, className }: { service: Service; index: num
 }
 
 function SampleNote({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <p className={cn("font-mono text-[0.625rem] tracking-[0.14em] text-white/30 uppercase", className)}>( {children} )</p>;
+  return <p className={cn("font-mono text-[0.625rem] tracking-[0.14em] text-fg/35 uppercase", className)}>( {children} )</p>;
 }
 
 /* -------------------------------------------------------------------------- */
 /* Sites: SITES recortado sobre páginas reais, que se abre num mosaico.         */
 /* -------------------------------------------------------------------------- */
 
-function SitesScene({ service, index, tiles }: SceneProps) {
+function SitesScene({ service, index, tiles, tone, from }: SceneProps) {
   const ref = useScene((tl, q) => {
     tl.fromTo(q("[data-word]"), { scale: 1 }, { scale: 1.08, duration: 0.3, ease: "none" }, 0)
       .fromTo(q("[data-grid]"), { scale: 1.9, yPercent: 6 }, { scale: 1.55, yPercent: 0, duration: 0.3, ease: "none" }, 0)
@@ -147,22 +184,29 @@ function SitesScene({ service, index, tiles }: SceneProps) {
   const list = Array.from({ length: 16 }, (_, i) => tiles[i % Math.max(tiles.length, 1)]).filter(Boolean);
 
   return (
-    <Stage stageRef={ref} height={320}>
+    <Stage stageRef={ref} height={320} tone={tone} from={from}>
       <div data-grid className="absolute inset-[-6%] grid origin-center grid-cols-4 gap-[1.2vw] p-[1.2vw] max-md:grid-cols-3">
         {list.map((tile, i) => (
-          <div key={i} className="relative overflow-hidden rounded-[clamp(4px,0.6vw,10px)] bg-white/5">
+          <div key={i} className="relative overflow-hidden rounded-[clamp(4px,0.6vw,10px)] bg-fg/5">
             {/* eslint-disable-next-line @next/next/no-img-element -- faixas já otimizadas, recortadas por object-position */}
             <img src={tile.src} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" style={{ objectPosition: tile.position }} />
           </div>
         ))}
       </div>
-      {/* Recorte: preto com a palavra em branco, multiplicado sobre o mosaico, mostra as páginas só dentro das letras. */}
-      <div data-knockout aria-hidden="true" className="absolute inset-0 grid place-items-center bg-black mix-blend-multiply">
-        <span data-word className="block text-[clamp(6rem,27vw,30rem)] leading-none font-black tracking-[-0.06em] text-white">
+      {/* Recorte: no escuro, preto com a palavra em branco multiplicado sobre o mosaico; no claro, o inverso
+          em "screen". Nos dois casos as páginas só aparecem dentro das letras. */}
+      <div data-knockout aria-hidden="true" className={cn("absolute inset-0 grid place-items-center", tone === "light" ? "bg-white mix-blend-screen" : "bg-black mix-blend-multiply")}>
+        <span data-word className={cn("block text-[clamp(6rem,27vw,30rem)] leading-none font-black tracking-[-0.06em]", tone === "light" ? "text-black" : "text-white")}>
           {scenes.sites.word}
         </span>
       </div>
-      <div data-dim className="absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_50%,rgb(10_10_11/0.72),rgb(10_10_11/0.9))]" />
+      <div
+        data-dim
+        className={cn(
+          "absolute inset-0",
+          tone === "light" ? "bg-[radial-gradient(60%_60%_at_50%_50%,rgb(251_251_253/0.86),rgb(251_251_253/0.95))]" : "bg-[radial-gradient(60%_60%_at_50%_50%,rgb(10_10_11/0.72),rgb(10_10_11/0.9))]",
+        )}
+      />
       <div className="absolute inset-0 grid place-items-center px-4">
         <SceneText service={service} index={index} className="max-w-[28rem] text-center [&_li]:justify-center [&_ul]:inline-block [&_ul]:text-left" />
       </div>
@@ -185,7 +229,7 @@ const NOTE_SPOTS = [
   { x: 36, y: 32, r: -5 },
 ];
 
-function SystemsScene({ service, index }: SceneProps) {
+function SystemsScene({ service, index, tone, from }: SceneProps) {
   const copy = scenes.sistemas;
   const ref = useScene((tl, q) => {
     const notes = q("[data-note]");
@@ -207,10 +251,10 @@ function SystemsScene({ service, index }: SceneProps) {
   const bars = [38, 52, 44, 61, 57, 70, 66, 82, 74, 96];
 
   return (
-    <Stage stageRef={ref} height={300}>
+    <Stage stageRef={ref} height={300} tone={tone} from={from}>
       <div className="absolute inset-0 grid place-items-center" aria-hidden="true">
         {copy.notes.map((note) => (
-          <span key={note} data-note className="absolute rounded-[3px] bg-[#d9d9dc] px-[clamp(0.75rem,1.4vw,1.25rem)] py-[clamp(0.9rem,1.8vw,1.75rem)] font-mono text-[clamp(0.625rem,0.8vw,0.8125rem)] text-black/70 shadow-[0_20px_40px_-12px_rgb(0_0_0/0.8)]">
+          <span key={note} data-note className="absolute rounded-[3px] bg-white ring-1 ring-black/[0.06] px-[clamp(0.75rem,1.4vw,1.25rem)] py-[clamp(0.9rem,1.8vw,1.75rem)] font-mono text-[clamp(0.625rem,0.8vw,0.8125rem)] text-black/70 shadow-[0_24px_40px_-18px_rgb(0_0_0/0.35)]">
             {note}
           </span>
         ))}
@@ -220,48 +264,48 @@ function SystemsScene({ service, index }: SceneProps) {
         <SceneText service={service} index={index} className="lg:col-span-4" />
         <div className="lg:col-span-7 lg:col-start-6" aria-hidden="true">
           <div className="grid grid-cols-3 gap-2.5 text-[0.75rem] sm:gap-3">
-            <div data-card className="col-span-1 rounded-xl bg-white/[0.045] p-3 ring-1 ring-white/10 sm:p-4">
-              <p className="text-white/45">{d.revenue.label}</p>
+            <div data-card className="col-span-1 rounded-xl bg-fg/[0.035] p-3 ring-1 ring-fg/10 sm:p-4">
+              <p className="text-fg/45">{d.revenue.label}</p>
               <p className="mt-2 text-[1.125rem] font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums sm:text-[1.5rem]">{d.revenue.value}</p>
               <p className="mt-1 text-[0.6875rem]" style={{ color: BLUE }}>
                 {d.revenue.delta}
               </p>
             </div>
-            <div data-card className="rounded-xl bg-white/[0.045] p-3 ring-1 ring-white/10 sm:p-4">
-              <p className="text-white/45">{d.orders.label}</p>
+            <div data-card className="rounded-xl bg-fg/[0.035] p-3 ring-1 ring-fg/10 sm:p-4">
+              <p className="text-fg/45">{d.orders.label}</p>
               <p className="mt-2 text-[1.25rem] font-semibold whitespace-nowrap tabular-nums sm:text-[1.5rem]">{d.orders.value}</p>
             </div>
-            <div data-card className="rounded-xl bg-white/[0.045] p-3 ring-1 ring-white/10 sm:p-4">
-              <p className="text-white/45">{d.ticket.label}</p>
+            <div data-card className="rounded-xl bg-fg/[0.035] p-3 ring-1 ring-fg/10 sm:p-4">
+              <p className="text-fg/45">{d.ticket.label}</p>
               <p className="mt-2 text-[1.25rem] font-semibold whitespace-nowrap tabular-nums sm:text-[1.5rem]">{d.ticket.value}</p>
             </div>
-            <div data-card className="col-span-3 rounded-xl bg-white/[0.045] p-3 ring-1 ring-white/10 sm:p-4 lg:col-span-2">
-              <p className="text-white/45">{d.chart}</p>
+            <div data-card className="col-span-3 rounded-xl bg-fg/[0.035] p-3 ring-1 ring-fg/10 sm:p-4 lg:col-span-2">
+              <p className="text-fg/45">{d.chart}</p>
               <div className="mt-4 flex h-16 items-end gap-1.5 sm:h-36">
                 {bars.map((h, i) => (
                   <span
                     key={i}
                     data-bar
                     className="flex-1 origin-bottom rounded-[3px]"
-                    style={{ height: `${h}%`, background: i === bars.length - 1 ? BLUE : "rgb(255 255 255 / 0.16)" }}
+                    style={{ height: `${h}%`, background: i === bars.length - 1 ? BLUE : "color-mix(in oklab, var(--color-fg) 14%, transparent)" }}
                   />
                 ))}
               </div>
             </div>
-            <div data-card className="col-span-3 flex flex-col gap-3 rounded-xl max-lg:hidden bg-white/[0.045] p-4 ring-1 ring-white/10 sm:col-span-1">
+            <div data-card className="col-span-3 flex flex-col gap-3 rounded-xl max-lg:hidden bg-fg/[0.035] p-4 ring-1 ring-fg/10 sm:col-span-1">
               <div>
-                <p className="flex items-center gap-1.5 text-white/45">
+                <p className="flex items-center gap-1.5 text-fg/45">
                   <span className="size-1.5 rounded-full" style={{ background: BLUE }} />
                   {d.stock.label}
                 </p>
                 <p className="mt-2 text-[1.25rem] font-semibold">{d.stock.value}</p>
               </div>
-              <ul className="space-y-1.5 border-t border-white/10 pt-3 text-[0.6875rem]">
+              <ul className="space-y-1.5 border-t border-fg/10 pt-3 text-[0.6875rem]">
                 {d.recent.map((r) => (
-                  <li key={r.who} className="flex justify-between gap-2 text-white/60">
+                  <li key={r.who} className="flex justify-between gap-2 text-fg/60">
                     <span>{r.who}</span>
-                    <span className="tabular-nums text-white">{r.value}</span>
-                    <span className="text-white/35">{r.status}</span>
+                    <span className="tabular-nums text-fg">{r.value}</span>
+                    <span className="text-fg/35">{r.status}</span>
                   </li>
                 ))}
               </ul>
@@ -278,7 +322,7 @@ function SystemsScene({ service, index }: SceneProps) {
 /* Lojas virtuais: a loja vendendo enquanto o dono dorme.                       */
 /* -------------------------------------------------------------------------- */
 
-function StoreScene({ service, index }: SceneProps) {
+function StoreScene({ service, index, tone, from }: SceneProps) {
   const copy = scenes.lojas;
   const ref = useScene((tl, q) => {
     const orders = q("[data-order]");
@@ -299,7 +343,7 @@ function StoreScene({ service, index }: SceneProps) {
   });
 
   return (
-    <Stage stageRef={ref} height={300} className="bg-[radial-gradient(90%_70%_at_70%_40%,#0b1a2b_0%,var(--color-ink)_65%)]">
+    <Stage stageRef={ref} height={300} tone={tone} from={from} className="bg-[radial-gradient(90%_70%_at_70%_40%,#0b1a2b_0%,var(--color-ink)_65%)]">
       <div data-glow aria-hidden="true" className="absolute top-[18%] right-[12%] size-[38vw] rounded-full bg-[radial-gradient(circle,rgb(44_157_245/0.18),transparent_65%)] blur-2xl" />
       <div aria-hidden="true" className="absolute inset-x-0 bottom-[6%] grid place-items-center">
         {copy.orders.map((o) => (
@@ -362,7 +406,7 @@ function StoreScene({ service, index }: SceneProps) {
 /* Aplicativos: o app chega na tela do celular, notifica e abre.                */
 /* -------------------------------------------------------------------------- */
 
-function AppScene({ service, index }: SceneProps) {
+function AppScene({ service, index, tone, from }: SceneProps) {
   const copy = scenes.aplicativos;
   const ref = useScene((tl, q) => {
     tl.fromTo(q("[data-text]"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.12, ease: "power3.out" }, 0.05)
@@ -380,7 +424,7 @@ function AppScene({ service, index }: SceneProps) {
   const s = copy.screen;
 
   return (
-    <Stage stageRef={ref} height={300}>
+    <Stage stageRef={ref} height={300} tone={tone} from={from}>
       <div aria-hidden="true" className="absolute top-1/2 right-[18%] size-[42vw] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(44_157_245/0.12),transparent_65%)] blur-2xl" />
       <div className="container-page relative grid h-full content-center gap-10 pt-[var(--header-height)] lg:grid-cols-12 lg:items-center">
         <SceneText service={service} index={index} className="lg:col-span-5" />

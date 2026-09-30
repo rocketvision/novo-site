@@ -115,10 +115,12 @@ export const plans = {
   ],
 };
 
-/** Trilho lateral: as seções da página, como marcos de uma rota. */
+/**
+ * Trilho lateral: os capítulos da página. Cada um é uma letra da marca que se preenche com o scroll,
+ * de `from` (topo da primeira seção) a `to` (fim da última).
+ */
 export const rail = [
-  { id: "projetos", label: "Projetos" },
-  { id: "servicos", label: "Serviços" },
-  { id: "rocket", label: "Rocket" },
-  { id: "planos", label: "Planos" },
+  { id: "projetos", from: "projetos", to: "projetos", label: "Projetos", glyph: "R", meaning: "R de Resultado" },
+  { id: "servicos", from: "servicos", to: "rocket", label: "Serviços", glyph: "V", meaning: "V de Visão" },
+  { id: "planos", from: "planos", to: "planos", label: "Planos", glyph: "mark", meaning: "o foguete da Rocket" },
 ];

@@ -27,6 +27,8 @@ export function Promises() {
         scrollTrigger: { trigger: ref.current, start: "top top", end: "bottom bottom", scrub: 0.6 },
       });
       gsap.set(blocks.slice(1), { autoAlpha: 0, y: 30 });
+      // Entra ainda escura, com a cor da cena anterior, e clareia.
+      tl.fromTo(q("[data-veil]"), { opacity: 1 }, { opacity: 0, duration: 0.06, ease: "none" }, 0);
 
       // Giro contínuo e lento: as letras mostram a espessura enquanto a página desce.
       tl.fromTo(r, { rotateY: -32, rotateX: 8 }, { rotateY: 28, rotateX: -6, duration: 1, ease: "none" }, 0)
@@ -57,12 +59,13 @@ export function Promises() {
   );
 
   return (
-    <section id="rocket" aria-labelledby="rocket-titulo" data-header="dark" className="relative bg-ink text-white">
+    <section id="rocket" aria-labelledby="rocket-titulo" className="tone-light relative bg-tone text-fg">
       <div ref={ref} className="relative h-[420svh]">
         <div className="sticky top-0 h-svh overflow-hidden">
+          <div data-veil aria-hidden="true" className="pointer-events-none absolute inset-0 z-30 bg-ink" />
           <div className="container-page grid h-full content-center gap-6 pt-[var(--header-height)] lg:grid-cols-12 lg:items-center">
             <div className="relative grid place-items-center lg:col-span-6 [perspective:1400px]" aria-hidden="true">
-              <div data-ring className="absolute size-[min(34rem,78vw)] rounded-full border border-white/10 opacity-0 max-lg:size-[min(22rem,70vw)]">
+              <div data-ring className="absolute size-[min(34rem,78vw)] rounded-full border border-fg/10 opacity-0 max-lg:size-[min(22rem,70vw)]">
                 <span className="absolute top-1/2 -left-1 size-2 -translate-y-1/2 rounded-full" style={{ background: BLUE, boxShadow: `0 0 18px ${BLUE}` }} />
               </div>
               <div data-letters className="flex items-center gap-[4vw]">
@@ -87,22 +90,22 @@ export function Promises() {
 
 function Glyph({ letter, orbit, label }: { letter: string; orbit: "r" | "v"; label: string }) {
   const size = "text-[clamp(8rem,20vw,19rem)]";
-  // Espessura: uma cópia escura empilhada atrás, deslocada pixel a pixel.
-  const depth = Array.from({ length: 14 }, (_, i) => `${(i + 1) * 0.6}px ${(i + 1) * 0.6}px 0 hsl(215 8% ${22 - i}%)`).join(",");
+  // Metal escuro sobre o claro. Espessura: uma cópia empilhada atrás, deslocada pixel a pixel.
+  const depth = Array.from({ length: 14 }, (_, i) => `${(i + 1) * 0.6}px ${(i + 1) * 0.6}px 0 hsl(215 6% ${74 - i * 2}%)`).join(",");
   return (
     <div data-glyph className="relative [transform-style:preserve-3d]">
       <svg data-orbit={orbit} viewBox="0 0 200 120" className="absolute top-1/2 left-1/2 w-[150%] -translate-x-1/2 -translate-y-1/2 opacity-40" fill="none">
-        <ellipse cx="100" cy="60" rx="96" ry="34" stroke="rgb(255 255 255 / 0.22)" strokeWidth="0.6" transform="rotate(-14 100 60)" />
+        <ellipse cx="100" cy="60" rx="96" ry="34" stroke="rgb(10 10 11 / 0.2)" strokeWidth="0.6" transform="rotate(-14 100 60)" />
         <circle cx="12" cy="76" r="2.2" fill={BLUE} />
       </svg>
-      <span data-orbit={orbit} className="absolute -right-[18%] top-[18%] font-mono text-[0.625rem] tracking-[0.14em] whitespace-nowrap text-white/45 uppercase opacity-40 max-sm:hidden">
+      <span data-orbit={orbit} className="absolute -right-[18%] top-[18%] font-mono text-[0.625rem] tracking-[0.14em] whitespace-nowrap text-fg/45 uppercase opacity-40 max-sm:hidden">
         — {label}
       </span>
       <span className={cn("relative block leading-[0.8] font-black tracking-[-0.04em]", size)}>
-        <span className="absolute inset-0 text-[#2a2e35]" style={{ textShadow: depth }}>
+        <span className="absolute inset-0 text-[#9ba1a9]" style={{ textShadow: depth }}>
           {letter}
         </span>
-        <span className="relative bg-[linear-gradient(172deg,#ffffff_0%,#b9c0c9_28%,#f3f5f8_46%,#6b737e_64%,#dfe4ea_82%,#8d949e_100%)] bg-clip-text text-transparent">{letter}</span>
+        <span className="relative bg-[linear-gradient(172deg,#6b727c_0%,#1c1f24_30%,#8f97a1_48%,#202328_66%,#5e656f_84%,#2a2d33_100%)] bg-clip-text text-transparent">{letter}</span>
       </span>
     </div>
   );
@@ -126,9 +129,9 @@ function Block({ title, body, accent, link, id, later }: { title: readonly strin
           </span>
         ))}
       </Tag>
-      <p className="mt-5 max-w-[26rem] text-[0.9375rem] leading-relaxed text-white/55">{body}</p>
+      <p className="mt-5 max-w-[26rem] text-[0.9375rem] leading-relaxed text-fg/55">{body}</p>
       {link && (
-        <Link href={link.href} className="group mt-6 inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-white">
+        <Link href={link.href} className="group mt-6 inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-fg">
           <span className="link-underline">{link.label}</span>
           <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
         </Link>
