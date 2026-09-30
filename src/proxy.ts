@@ -9,6 +9,9 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const PUBLIC_CMS_PATHS = [/^\/cms\/login$/, /^\/cms\/esqueci-senha$/, /^\/cms\/redefinir-senha\/[^/]+$/, /^\/cms\/convite\/[^/]+$/];
 const SESSION_COOKIES = ["__Host-rv_session", "rv_session"];
+/** Alliance Hub: portal dos parceiros, com sessão própria (independente do CMS). */
+const PUBLIC_HUB_PATHS = [/^\/alliance\/login$/, /^\/alliance\/esqueci-senha$/, /^\/alliance\/redefinir-senha\/[^/]+$/, /^\/alliance\/convite\/[^/]+$/, /^\/alliance\/confirmar-email\/[^/]+$/];
+const HUB_COOKIES = ["__Host-rv_partner", "rv_partner"];
 /** Cookie do modo de rascunho do Next: a pré-visualização abre páginas do site no endereço do CMS. */
 const DRAFT_COOKIE = "__prerender_bypass";
 
@@ -25,6 +28,7 @@ const cmsUrl = urlOf(process.env.CMS_URL);
 const splitHosts = siteUrl && cmsUrl && siteUrl.host !== cmsUrl.host ? { site: siteUrl, cms: cmsUrl } : null;
 
 const isCmsPath = (pathname: string) => pathname === "/cms" || pathname.startsWith("/cms/");
+const isHubPath = (pathname: string) => pathname === "/alliance" || pathname.startsWith("/alliance/");
 
 function redirectTo(base: URL, request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -49,6 +53,7 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  if (isHubPath(pathname)) return hub(request);
   if (!isCmsPath(pathname)) return NextResponse.next();
   if (PUBLIC_CMS_PATHS.some((re) => re.test(pathname))) return NextResponse.next();
 
@@ -65,6 +70,26 @@ export function proxy(request: NextRequest) {
   const headers = new Headers(request.headers);
   headers.set("x-cms-path", pathname + search);
   return NextResponse.next({ request: { headers } });
+}
+
+/** Mesma checagem otimista do CMS, para o Hub: sem cookie, direto ao login do Hub. O Hub nunca é indexado. */
+function hub(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+  let response: NextResponse;
+  if (PUBLIC_HUB_PATHS.some((re) => re.test(pathname))) {
+    response = NextResponse.next();
+  } else if (!HUB_COOKIES.some((name) => request.cookies.has(name))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/alliance/login";
+    url.search = pathname === "/alliance" ? "" : `?next=${encodeURIComponent(pathname + search)}`;
+    response = NextResponse.redirect(url);
+  } else {
+    const headers = new Headers(request.headers);
+    headers.set("x-hub-path", pathname + search);
+    response = NextResponse.next({ request: { headers } });
+  }
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return response;
 }
 
 export const config = {

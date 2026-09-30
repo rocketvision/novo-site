@@ -281,4 +281,67 @@ export const SECTION_FIELDS: Record<SectionKey, FieldSpec[]> = {
       ],
     },
   ],
+  alliance: [
+    {
+      type: "group",
+      key: "whatIs",
+      label: "O que é o Rocket Alliance",
+      hint: "O conceito oficial do programa. O nome, a assinatura e os slogans ficam fixos na página.",
+      fields: [
+        { type: "text", key: "title", label: "Título", max: 90 },
+        { type: "lines", key: "paragraphs", label: "Parágrafos", itemLabel: "Parágrafo", max: 900, min: 1, maxItems: 5 },
+      ],
+    },
+    {
+      type: "group",
+      key: "commissions",
+      label: "Comissões e benefícios",
+      fields: [
+        {
+          type: "select",
+          key: "rates",
+          label: "Percentuais na página",
+          options: [
+            { value: "hide", label: "Não exibir: só benefícios e regras" },
+            { value: "show", label: "Exibir os percentuais das regras públicas aprovadas" },
+          ],
+          hint: "Os percentuais vêm das regras de comissão aprovadas e marcadas como públicas (Comissões > Regras). Nunca são digitados aqui.",
+        },
+        { type: "text", key: "intro", label: "Introdução", max: 400, multiline: true },
+        { type: "lines", key: "rules", label: "Regras públicas", itemLabel: "Regra", max: 260, min: 1, maxItems: 8 },
+      ],
+    },
+    {
+      type: "group",
+      key: "directory",
+      label: "Diretório de parceiros",
+      fields: [
+        { type: "text", key: "title", label: "Título", max: 90 },
+        { type: "text", key: "lead", label: "Descrição", max: 300, multiline: true },
+      ],
+    },
+    {
+      type: "list",
+      key: "faq",
+      label: "Perguntas frequentes",
+      itemLabel: "Pergunta",
+      itemTitle: (item) => String(item.question ?? ""),
+      min: 0,
+      maxItems: 20,
+      newItem: () => ({ question: "", answer: "" }),
+      fields: [
+        { type: "text", key: "question", label: "Pergunta", max: 160 },
+        { type: "text", key: "answer", label: "Resposta", max: 1200, multiline: true },
+      ],
+    },
+    {
+      type: "group",
+      key: "apply",
+      label: "Candidatura",
+      fields: [
+        { type: "text", key: "title", label: "Título", max: 90 },
+        { type: "text", key: "lead", label: "Descrição", max: 300, multiline: true },
+      ],
+    },
+  ],
 };

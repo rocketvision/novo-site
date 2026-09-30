@@ -22,6 +22,8 @@ npm-debug.log*
 
 # uploads locais do CMS em desenvolvimento
 /public/uploads/
+# arquivos privados do Rocket Alliance em desenvolvimento (fora de /public)
+/.data/
 
 # estado gerado pelos testes e2e (senhas aleatórias, imagens de teste, relatórios)
 /tests/e2e/.state/

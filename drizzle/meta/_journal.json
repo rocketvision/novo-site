@@ -36,6 +36,13 @@
       "when": 1790791605556,
       "tag": "0004_booking",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790799124315,
+      "tag": "0005_alliance",
+      "breakpoints": true
     }
   ]
 }

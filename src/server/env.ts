@@ -26,6 +26,12 @@ const schema = z.object({
   /** Google Calendar (agendamento das calls do diagnóstico): cliente OAuth "Aplicativo da Web" do Google Cloud. */
   GOOGLE_CLIENT_ID: optional(z.string().min(10)),
   GOOGLE_CLIENT_SECRET: optional(z.string().min(10)),
+  /**
+   * Rocket Alliance: chave (32+ caracteres aleatórios) que cifra os segredos do 2FA do Alliance Hub.
+   * Sem ela, o Hub funciona normalmente, mas a verificação em duas etapas fica indisponível.
+   * Gerar: openssl rand -base64 48
+   */
+  ALLIANCE_ENCRYPTION_KEY: optional(z.string().min(32)),
   /** Segredo das rotas de cron (a Vercel envia como "Authorization: Bearer ..."). Sem ele, as rotas de cron recusam tudo. */
   CRON_SECRET: optional(z.string().min(16)),
 });

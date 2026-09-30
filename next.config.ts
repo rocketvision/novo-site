@@ -60,6 +60,15 @@ const nextConfig: NextConfig = {
         ],
       },
       { source: "/cms", headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }, { key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+      // Alliance Hub (portal dos parceiros): dados de cada empresa, nunca em cache compartilhado nem indexados.
+      {
+        source: "/alliance/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store, max-age=0" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+      { source: "/alliance", headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }, { key: "X-Robots-Tag", value: "noindex, nofollow" }] },
     ];
   },
 };

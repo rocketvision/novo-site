@@ -43,7 +43,9 @@ export async function seed(databaseUrl: string) {
         const created = Boolean(row);
         const roleId = row?.id ?? (await tx.query.roles.findFirst({ where: (r, { eq }) => eq(r.key, role.key) }))!.id;
 
-        if (created || role.key === OWNER_ROLE_KEY) {
+        // O Gestor do Alliance nasce na migration 0005; num banco novo as permissões de mídia ainda não
+        // existiam nesse momento, então o seed completa as dele (sem remover nada).
+        if (created || role.key === OWNER_ROLE_KEY || role.key === "alliance_manager") {
           const perms = role.key === OWNER_ROLE_KEY ? ALL_PERMISSIONS : role.permissions;
           await tx
             .insert(schema.rolePermissions)

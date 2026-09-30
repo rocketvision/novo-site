@@ -54,6 +54,26 @@ export const POLICIES = {
   previewByUser: { name: "preview-user", limit: 60, windowSeconds: 60, onError: "open" },
   /** Busca pública do Blog: consulta de texto no banco, limitada por IP. */
   blogSearchByIp: { name: "blog-search-ip", limit: 30, windowSeconds: 60, onError: "open" },
+  /** Rocket Alliance: candidatura pública (por IP e teto geral, contra spam e inundação do banco). */
+  applicationByIp: { name: "alliance-apply-ip", limit: 3, windowSeconds: 60 * 60, onError: "open" },
+  applicationGlobal: { name: "alliance-apply-all", limit: 100, windowSeconds: 60 * 60, onError: "open" },
+  /**
+   * Alliance Hub: autenticação com limites próprios (independentes dos do CMS) e fechados em falha,
+   * como os do login do Studio. O segundo fator tem limite por desafio: 5 códigos errados e o login
+   * recomeça do zero.
+   */
+  hubLoginByIp: { name: "hub-login-ip", limit: 20, windowSeconds: 15 * 60, onError: "closed" },
+  hubLoginByEmail: { name: "hub-login-email", limit: 5, windowSeconds: 15 * 60, onError: "closed" },
+  hubTwoFactor: { name: "hub-2fa", limit: 5, windowSeconds: 15 * 60, onError: "closed" },
+  hubResetByIp: { name: "hub-reset-ip", limit: 5, windowSeconds: 60 * 60, onError: "closed" },
+  hubResetByEmail: { name: "hub-reset-email", limit: 3, windowSeconds: 60 * 60, onError: "closed" },
+  hubTokenByIp: { name: "hub-token-ip", limit: 10, windowSeconds: 60 * 60, onError: "closed" },
+  hubMutationByUser: { name: "hub-mutation-user", limit: 60, windowSeconds: 60, onError: "open" },
+  hubReadByUser: { name: "hub-read-user", limit: 600, windowSeconds: 60, onError: "open" },
+  /** Indicações e chamados: limite por pessoa, para um acesso comprometido não inundar a equipe. */
+  referralByUser: { name: "hub-referral-user", limit: 20, windowSeconds: 60 * 60, onError: "open" },
+  ticketByUser: { name: "hub-ticket-user", limit: 15, windowSeconds: 60 * 60, onError: "open" },
+  downloadByUser: { name: "hub-download-user", limit: 120, windowSeconds: 10 * 60, onError: "open" },
   /** Rota do cron: protegida por segredo, o limite só evita abuso de quem tente adivinhar. */
   cronByIp: { name: "cron-ip", limit: 30, windowSeconds: 60, onError: "open" },
 } satisfies Record<string, Policy>;

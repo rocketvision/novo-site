@@ -14,11 +14,12 @@ export function isMailConfigured() {
   return Boolean(env.RESEND_API_KEY && env.MAIL_FROM);
 }
 
-export async function sendMail(mail: Mail): Promise<{ delivered: boolean }> {
+/** `id`: identificador do envio no Resend (para rastrear a entrega). `error`: motivo curto da falha, sem dados do e-mail. */
+export async function sendMail(mail: Mail): Promise<{ delivered: boolean; id?: string; error?: string }> {
   if (!isMailConfigured()) {
     if (isProduction) log.warn("mail.not_configured", { subject: mail.subject });
     else log.info("mail.dev_outbox", { to: mail.to, subject: mail.subject, text: mail.text });
-    return { delivered: false };
+    return { delivered: false, error: "not_configured" };
   }
 
   try {
@@ -30,11 +31,12 @@ export async function sendMail(mail: Mail): Promise<{ delivered: boolean }> {
     });
     if (!response.ok) {
       log.error("mail.failed", { status: response.status, subject: mail.subject });
-      return { delivered: false };
+      return { delivered: false, error: `http_${response.status}` };
     }
-    return { delivered: true };
+    const body = (await response.json().catch(() => null)) as { id?: unknown } | null;
+    return { delivered: true, ...(typeof body?.id === "string" && { id: body.id }) };
   } catch (error) {
     log.error("mail.failed", { subject: mail.subject, error });
-    return { delivered: false };
+    return { delivered: false, error: error instanceof Error && error.name === "TimeoutError" ? "timeout" : "network" };
   }
 }

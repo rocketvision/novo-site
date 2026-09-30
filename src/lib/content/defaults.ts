@@ -19,6 +19,7 @@ import {
   workflow,
 } from "@/content/landing";
 import { site } from "@/lib/site";
+import { allianceContent } from "@/content/alliance";
 import type { SectionContent, SectionKey } from "./schemas";
 
 
@@ -91,4 +92,5 @@ export const DEFAULT_CONTENT: { [K in SectionKey]: SectionContent<K> } = {
     social: site.social.map((s) => ({ label: s.label, href: s.href })),
     legal: { companyName: site.legal.companyName, cnpj: site.legal.cnpj },
   },
+  alliance: allianceContent,
 };

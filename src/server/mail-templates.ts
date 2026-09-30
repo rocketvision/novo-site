@@ -8,7 +8,7 @@ import type { Mail } from "@/server/mail";
  * os clientes de e-mail entendem) e versão em texto puro com o mesmo conteúdo.
  */
 
-type Template = {
+export type Template = {
   to: string;
   subject: string;
   /** Texto curto que aparece ao lado do assunto na caixa de entrada. */
@@ -17,8 +17,12 @@ type Template = {
   title: string;
   greeting: string;
   paragraphs: string[];
-  action: { label: string; url: string };
+  /** Destaques em lista (ex.: dados de uma indicação), antes do botão. */
+  details?: { label: string; value: string }[];
+  action?: { label: string; url: string };
   note: string[];
+  /** Produto no cabeçalho e no rodapé. Padrão: Content Studio. */
+  product?: { label: string; footer: string };
 };
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -28,11 +32,33 @@ function escape(value: string) {
   return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-function render(t: Template): Mail {
+export function render(t: Template): Mail {
   const siteOrigin = new URL(env.NEXT_PUBLIC_SITE_URL).origin;
   const siteHost = new URL(siteOrigin).host;
   const logo = `${cmsOrigin}/brand/rocket-vision-mark.png`;
-  const url = escape(t.action.url);
+  const url = t.action ? escape(t.action.url) : "";
+  const product = t.product ?? { label: "Content Studio", footer: `E-mail automático do ${STUDIO_NAME}` };
+  const details = (t.details ?? [])
+    .map(
+      (d) =>
+        `<tr><td style="padding:10px 0;border-top:1px solid #efeff4;font:400 13px/1.5 ${FONT};color:#86868b;width:38%;vertical-align:top;">${escape(d.label)}</td><td style="padding:10px 0;border-top:1px solid #efeff4;font:500 14px/1.5 ${FONT};color:#1d1d1f;vertical-align:top;">${escape(d.value)}</td></tr>`,
+    )
+    .join("");
+  const actionHtml = t.action
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 32px;"><tr>
+<td style="border-radius:10px;background:#0a0a0b;">
+<a href="${url}" target="_blank" style="display:inline-block;padding:14px 26px;font:600 15px/1 ${FONT};color:#ffffff;text-decoration:none;border-radius:10px;">${escape(t.action.label)}&nbsp;&nbsp;<span style="color:#a1a1a6;">&rarr;</span></a>
+</td>
+</tr></table>`
+    : `<div style="height:12px;"></div>`;
+  const fallbackLink = t.action
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;">
+<tr><td style="border-top:1px solid #efeff4;padding-top:20px;">
+<p style="margin:0 0 6px;font:400 12px/1.5 ${FONT};color:#86868b;">Se o botão não funcionar, copie e cole este endereço no navegador:</p>
+<p style="margin:0;font:400 12px/1.5 ${MONO};color:#3a3a3c;word-break:break-all;"><a href="${url}" target="_blank" style="color:#3a3a3c;text-decoration:underline;">${url}</a></p>
+</td></tr>
+</table>`
+    : "";
 
   const paragraphs = t.paragraphs
     .map((p) => `<p style="margin:0 0 16px;font:400 15px/1.65 ${FONT};color:#3a3a3c;">${escape(p)}</p>`)
@@ -60,7 +86,7 @@ function render(t: Template): Mail {
 <td style="vertical-align:middle;"><img src="${logo}" width="36" height="36" alt="Rocket Vision" style="display:block;border:0;border-radius:9px;"></td>
 <td style="vertical-align:middle;padding-left:12px;">
 <div style="font:600 17px/1 ${FONT};letter-spacing:-0.02em;color:#0a0a0b;">Rocket <span style="font-weight:400;color:#6e6e73;">Vision</span></div>
-<div style="font:300 9.5px/1 ${FONT};letter-spacing:0.42em;text-transform:uppercase;color:#6e6e73;padding-top:7px;">Content Studio</div>
+<div style="font:300 9.5px/1 ${FONT};letter-spacing:0.42em;text-transform:uppercase;color:#6e6e73;padding-top:7px;">${escape(product.label)}</div>
 </td>
 </tr></table>
 </td></tr>
@@ -72,24 +98,16 @@ function render(t: Template): Mail {
 <h1 class="rv-title" style="margin:0 0 24px;font:600 26px/1.2 ${FONT};letter-spacing:-0.02em;color:#0a0a0b;">${escape(t.title)}</h1>
 <p style="margin:0 0 16px;font:400 15px/1.65 ${FONT};color:#3a3a3c;">${escape(t.greeting)}</p>
 ${paragraphs}
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 32px;"><tr>
-<td style="border-radius:10px;background:#0a0a0b;">
-<a href="${url}" target="_blank" style="display:inline-block;padding:14px 26px;font:600 15px/1 ${FONT};color:#ffffff;text-decoration:none;border-radius:10px;">${escape(t.action.label)}&nbsp;&nbsp;<span style="color:#a1a1a6;">&rarr;</span></a>
-</td>
-</tr></table>
+${details ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 4px;">${details}</table>` : ""}
+${actionHtml}
 ${note}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;">
-<tr><td style="border-top:1px solid #efeff4;padding-top:20px;">
-<p style="margin:0 0 6px;font:400 12px/1.5 ${FONT};color:#86868b;">Se o botão não funcionar, copie e cole este endereço no navegador:</p>
-<p style="margin:0;font:400 12px/1.5 ${MONO};color:#3a3a3c;word-break:break-all;"><a href="${url}" target="_blank" style="color:#3a3a3c;text-decoration:underline;">${url}</a></p>
-</td></tr>
-</table>
+${fallbackLink}
 </td></tr>
 </table>
 </td></tr>
 
 <tr><td style="padding:24px 4px 0;">
-<p style="margin:0 0 4px;font:400 12px/1.6 ${FONT};color:#86868b;">E-mail automático do ${escape(STUDIO_NAME)}, enviado para ${escape(t.to)}. Não é preciso responder.</p>
+<p style="margin:0 0 4px;font:400 12px/1.6 ${FONT};color:#86868b;">${escape(product.footer)}, enviado para ${escape(t.to)}. Não é preciso responder.</p>
 <p style="margin:0;font:400 12px/1.6 ${FONT};color:#86868b;"><a href="${siteOrigin}" target="_blank" style="color:#86868b;text-decoration:underline;">${escape(siteHost)}</a></p>
 </td></tr>
 
@@ -103,11 +121,11 @@ ${note}
     t.greeting,
     "",
     ...t.paragraphs.flatMap((p) => [p, ""]),
-    `${t.action.label}: ${t.action.url}`,
-    "",
+    ...(t.details?.length ? [...t.details.map((d) => `${d.label}: ${d.value}`), ""] : []),
+    ...(t.action ? [`${t.action.label}: ${t.action.url}`, ""] : []),
     ...t.note,
     "",
-    `${STUDIO_NAME}`,
+    t.product ? t.product.label : `${STUDIO_NAME}`,
     siteOrigin,
   ].join("\n");
 

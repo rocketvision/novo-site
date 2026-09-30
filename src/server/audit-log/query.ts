@@ -12,6 +12,7 @@ export const AUDIT_CATEGORIES = {
   role: { label: "Funções", prefix: "role." },
   blog: { label: "Blog", prefix: "blog." },
   diagnostic: { label: "Diagnósticos", prefix: "diagnostic." },
+  alliance: { label: "Rocket Alliance", prefix: "alliance." },
 } as const;
 
 export type AuditCategory = keyof typeof AUDIT_CATEGORIES;
@@ -21,8 +22,9 @@ export const AUDIT_PAGE_SIZE = 50;
  * Consulta paginada por cursor (id decrescente): estável mesmo com eventos novos chegando.
  * Período em dias do calendário de São Paulo, convertido para UTC.
  */
-export async function queryAudit(input: { category?: AuditCategory; actorId?: string; from?: string; to?: string; before?: number }) {
+export async function queryAudit(input: { category?: AuditCategory; actionPrefix?: string; actorId?: string; from?: string; to?: string; before?: number }) {
   const where: SQL[] = [];
+  if (input.actionPrefix) where.push(like(schema.auditLogs.action, `${input.actionPrefix.replace(/[%_\\]/g, "")}%`));
   if (input.category) {
     const prefix = AUDIT_CATEGORIES[input.category].prefix;
     // Eventos do tipo user.* também incluem a conta própria (perfil) e o bootstrap.

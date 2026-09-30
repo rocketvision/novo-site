@@ -49,6 +49,17 @@ export const PERMISSIONS = {
   "blog.delete": "Excluir artigos",
   "blog.categories": "Gerenciar categorias do Blog",
   "blog.authors": "Gerenciar autores do Blog",
+
+  "alliance.view": "Ver o Rocket Alliance: visão geral, parceiros e indicações",
+  "alliance.applications": "Avaliar candidaturas ao Rocket Alliance",
+  "alliance.partners": "Cadastrar parceiros e convidar pessoas para o Alliance Hub",
+  "alliance.publish": "Publicar parceiros no diretório e editar as páginas exclusivas",
+  "alliance.referrals": "Gerenciar as indicações dos parceiros",
+  "alliance.finance": "Ver e gerenciar comissões, recebimentos e pagamentos a parceiros",
+  "alliance.contracts": "Gerenciar contratos e termos de parceria",
+  "alliance.resources": "Gerenciar materiais, treinamentos e oportunidades do Alliance Hub",
+  "alliance.communications": "Enviar comunicados e atender o suporte dos parceiros",
+  "alliance.settings": "Alterar regras, níveis, modalidades e conteúdo público do programa",
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -68,6 +79,7 @@ export const PERMISSION_GROUPS: { label: string; prefix: string }[] = [
   { label: "Diagnósticos", prefix: "diagnostics." },
   { label: "Configurações", prefix: "settings." },
   { label: "Blog", prefix: "blog." },
+  { label: "Rocket Alliance", prefix: "alliance." },
 ];
 
 /** Todas as permissões do Blog (editores e administradores recebem o módulo inteiro). */
@@ -75,6 +87,15 @@ export const BLOG_PERMISSIONS = ALL_PERMISSIONS.filter((p) => p.startsWith("blog
 
 /** O que um autor precisa para escrever: criar, editar os próprios artigos e enviar para revisão. */
 export const BLOG_AUTHOR_PERMISSIONS: Permission[] = ["blog.view", "blog.create", "blog.edit_own"];
+
+/** Todas as permissões do Rocket Alliance. */
+export const ALLIANCE_PERMISSIONS = ALL_PERMISSIONS.filter((p) => p.startsWith("alliance."));
+
+/**
+ * Dados financeiros, contratos e configurações do programa nunca vêm junto com outras áreas:
+ * só o owner (e quem receber explicitamente, como o Gestor do Alliance) tem acesso.
+ */
+export const ALLIANCE_SENSITIVE_PERMISSIONS: Permission[] = ["alliance.finance", "alliance.contracts", "alliance.settings"];
 
 /** Função com acesso total e proteções extras (não pode ficar sem ao menos um usuário ativo). */
 export const OWNER_ROLE_KEY = "owner";
@@ -99,7 +120,15 @@ export const DEFAULT_ROLES: {
     name: "Administrador",
     description: "Gerencia conteúdo, usuários e configurações.",
     isSystem: false,
-    permissions: ALL_PERMISSIONS,
+    // Opera o Rocket Alliance, mas sem finanças, contratos e configurações do programa.
+    permissions: ALL_PERMISSIONS.filter((p) => !ALLIANCE_SENSITIVE_PERMISSIONS.includes(p)),
+  },
+  {
+    key: "alliance_manager",
+    name: "Gestor do Alliance",
+    description: "Administra o Rocket Alliance inteiro, inclusive comissões, contratos e configurações. Não edita o site.",
+    isSystem: false,
+    permissions: [...ALLIANCE_PERMISSIONS, "media.view", "media.upload", "media.edit"],
   },
   {
     key: "editor",

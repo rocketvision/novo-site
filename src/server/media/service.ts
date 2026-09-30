@@ -151,7 +151,8 @@ export function isUuid(value: unknown): value is string {
  * Valida, normaliza, grava no storage e registra a mídia.
  * Se a mesma imagem (mesmo SHA-256 depois de normalizada) já existe, devolve a existente em vez de duplicar.
  */
-export async function uploadMedia(actor: Actor, file: { buffer: Buffer; filename: string; alt?: string }, ctx: Ctx) {
+/** `actor.id` nulo: envio feito por uma pessoa do Alliance Hub (logotipo em pedido de alteração). */
+export async function uploadMedia(actor: { id: string | null; email: string }, file: { buffer: Buffer; filename: string; alt?: string }, ctx: Ctx) {
   const image = await processImage(file.buffer);
   const db = getDb();
 

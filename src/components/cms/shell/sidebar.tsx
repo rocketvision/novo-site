@@ -9,6 +9,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   FolderKanban,
+  Handshake,
   Image as ImageIcon,
   LayoutDashboard,
   LogOut,
@@ -25,7 +26,7 @@ import { StudioLogo } from "@/components/cms/brand";
 import { api } from "@/lib/cms/api";
 import { cn } from "@/lib/utils";
 
-export type NavKey = "dashboard" | "blog" | "landing" | "projects" | "diagnostics" | "agenda" | "media" | "users" | "audit" | "settings";
+export type NavKey = "dashboard" | "blog" | "landing" | "projects" | "diagnostics" | "agenda" | "alliance" | "media" | "users" | "audit" | "settings";
 
 const ITEMS: { key: NavKey; label: string; href: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Visão geral", href: "/cms", icon: LayoutDashboard },
@@ -34,6 +35,7 @@ const ITEMS: { key: NavKey; label: string; href: string; icon: typeof LayoutDash
   { key: "projects", label: "Projetos", href: "/cms/projetos", icon: FolderKanban },
   { key: "diagnostics", label: "Diagnósticos", href: "/cms/diagnosticos", icon: ClipboardCheck },
   { key: "agenda", label: "Agenda", href: "/cms/agenda", icon: CalendarDays },
+  { key: "alliance", label: "Rocket Alliance", href: "/cms/alliance", icon: Handshake },
   { key: "media", label: "Mídia", href: "/cms/midia", icon: ImageIcon },
   { key: "users", label: "Usuários", href: "/cms/usuarios", icon: Users },
   { key: "audit", label: "Auditoria", href: "/cms/auditoria", icon: ScrollText },
