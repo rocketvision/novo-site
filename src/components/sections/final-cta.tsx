@@ -3,16 +3,17 @@
 import { useRef } from "react";
 import { Reveal } from "@/components/animations/reveal";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { EmberVideo } from "@/components/ui/ember-video";
+import { LaunchpadVideo } from "@/components/ui/launchpad-video";
 import type { Resolved } from "@/lib/content/resolved";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { gsap, SplitText, useGSAP } from "@/lib/gsap";
 import { ContactForm } from "./contact-form";
 
 /**
- * Convite final: o vídeo em brasa da abertura volta. Ele surge como uma janela pequena
- * com cantos arredondados e se abre até as bordas da tela enquanto o título sobe linha a linha.
- * O formulário vem logo abaixo, no mesmo escuro. A página termina onde começou.
+ * Convite final: o foguete na plataforma, motores acesos, pronto para decolar. A abertura mostra
+ * a decolagem; aqui é a contagem regressiva do próximo lançamento, o projeto de quem está lendo.
+ * O vídeo surge como uma janela pequena com cantos arredondados e se abre até as bordas da tela
+ * enquanto o título sobe linha a linha. O formulário vem logo abaixo, no mesmo escuro.
  */
 export function FinalCta({ cta, contact }: { cta: Resolved<"cta">; contact: Resolved<"site">["contact"] }) {
   const bandRef = useRef<HTMLDivElement>(null);
@@ -43,7 +44,7 @@ export function FinalCta({ cta, contact }: { cta: Resolved<"cta">; contact: Reso
         <div className="sticky top-0 h-svh overflow-hidden">
           <div data-window className="absolute inset-0 overflow-hidden">
             <div data-video className="absolute inset-0">
-              <EmberVideo lazy play={!reduceMotion} />
+              <LaunchpadVideo play={!reduceMotion} />
             </div>
             <div data-shade className="absolute inset-0 bg-[linear-gradient(0deg,var(--color-ink)_0%,rgb(10_10_11/0.55)_45%,rgb(10_10_11/0.15)_100%)]" />
           </div>

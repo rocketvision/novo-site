@@ -32,6 +32,6 @@ As fotografias que aparecem dentro das telas também são do Unsplash, sob a mes
 
 ## Vídeo do convite final
 
-`public/hero-loop.webm` e `public/hero-loop.mp4` (e o quadro `public/hero-poster.jpg`) vem do template de prompt "Fluxora", baixado uma vez e servido pelo próprio site. Foi recodificado sem áudio, 1280 × 720, quadro-chave a cada 2 s: VP9 (cerca de 450 KB, carregado primeiro) e H.264 (cerca de 1,6 MB, para os navegadores sem VP9).
+`public/video/launchpad*` vem do mesmo vídeo da abertura: os primeiros 1,75 s, com o foguete ainda na plataforma e os motores acesos. Cada quadro foi ampliado 4× com IA (Real-ESRGAN, `realesr-general-x4v3`) e reduzido para 2560 × 1440; depois, câmera lenta a 25% (interpolação a 96 quadros por segundo) e loop de 5,5 s em que o último 1,5 s se dissolve no primeiro. Mesmo tratamento de cor da abertura. Três versões, cada uma em VP9 e H.264: 2560 × 1440 (`launchpad-1440.*`, cerca de 420 KB / 670 KB), 1920 × 1080 (`launchpad.*`, cerca de 290 KB / 420 KB) e recorte vertical 810 × 1080 centrado no foguete (`launchpad-portrait.*`, cerca de 210 KB / 280 KB). `launchpad-poster*.jpg` é o primeiro quadro.
 
-**Situação:** direito de uso confirmado pelo responsável da Rocket Vision.
+**Situação:** vídeo fornecido pela própria Rocket Vision (o mesmo da abertura).

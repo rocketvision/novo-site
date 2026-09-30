@@ -47,12 +47,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: securityHeaders },
       {
-        // Vídeo de abertura: guardado no navegador e na CDN para começar a tocar na hora nas próximas visitas.
-        source: "/:file(hero-loop\\.mp4|hero-loop\\.webm|hero-poster\\.jpg)",
-        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
-      },
-      {
-        // Vídeo do foguete (abertura) e seus quadros, nas versões 16:9 e vertical.
+        // Vídeos do foguete (abertura e convite final) e seus quadros: guardados no navegador e na CDN.
         source: "/video/:file*",
         headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
       },
