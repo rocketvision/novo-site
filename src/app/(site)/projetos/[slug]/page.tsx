@@ -10,6 +10,7 @@ import { Reveal } from "@/components/animations/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { blur, BrowserFrame, PhoneFrame } from "@/components/projects/devices";
+import { readableAccent } from "@/lib/projects/color";
 import type { PublicProject } from "@/lib/projects/types";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,9 @@ export default async function ProjectPage({ params }: Props) {
   if (!project) notFound();
 
   const light = project.theme.tone === "light";
+  // A cor de destaque aparece sobre a cor da marca (categoria) e sobre o papel (destaques).
+  const accentOnBrand = readableAccent(project.theme.accent, project.theme.bg);
+  const accentOnPaper = readableAccent(project.theme.accent, "#fbfbfd");
   const index = all.findIndex((p) => p.slug === project.slug);
   const next = all.length > 1 ? all[(index + 1) % all.length] : null;
   const hasScreens = Boolean(project.screens.desktop || project.screens.phones.length || project.cover);
@@ -108,7 +112,7 @@ export default async function ProjectPage({ params }: Props) {
             <div className="mt-12 grid gap-10 lg:mt-16 lg:grid-cols-12 lg:items-end">
               <div className="lg:col-span-7">
                 <p className={cn("text-eyebrow animate-fade-up", light ? "text-white/60" : "text-black/55")} style={delay(0)}>
-                  <span style={{ color: project.theme.accent }}>{project.category}</span>
+                  <span style={{ color: accentOnBrand }}>{project.category}</span>
                   {project.year && (
                     <>
                       <span className="mx-1.5 opacity-40">/</span>
@@ -193,7 +197,7 @@ export default async function ProjectPage({ params }: Props) {
                 <ul className="mt-6 grid gap-x-12 gap-y-4 border-t border-line pt-8 md:grid-cols-2">
                   {project.highlights.map((item, i) => (
                     <li key={i} className="flex gap-3 text-lg tracking-tight text-graphite">
-                      <Check aria-hidden="true" className="mt-1 size-5 shrink-0" style={{ color: project.theme.accent }} strokeWidth={2.25} />
+                      <Check aria-hidden="true" className="mt-1 size-5 shrink-0 text-ink" style={{ color: accentOnPaper }} strokeWidth={2.25} />
                       {item}
                     </li>
                   ))}

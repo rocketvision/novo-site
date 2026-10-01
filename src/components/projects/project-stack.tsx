@@ -8,6 +8,7 @@ import type { PublicProject as Project } from "@/lib/projects/types";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollProgress } from "@/hooks/use-scroll-progress";
 import { lerp, segment } from "@/lib/scroll";
+import { readableAccent } from "@/lib/projects/color";
 import { cn } from "@/lib/utils";
 import { BrowserFrame, PhoneFrame } from "./devices";
 
@@ -129,6 +130,7 @@ function ProjectCard({
   contentStyle?: MotionStyle;
 }) {
   const light = project.theme.tone === "light";
+  const accent = readableAccent(project.theme.accent, project.theme.bg);
 
   return (
     <div
@@ -171,7 +173,7 @@ function ProjectCard({
         className="absolute inset-x-0 bottom-0 p-5 pb-8 md:p-10 md:pb-12 lg:top-0 lg:right-auto lg:flex lg:w-[36%] lg:flex-col lg:justify-end lg:pr-4"
       >
         <p className={cn("text-eyebrow", light ? "text-white/60" : "text-black/55")}>
-          <span style={{ color: project.theme.accent }}>{project.category}</span>
+          <span style={{ color: accent }}>{project.category}</span>
           {project.year && (
             <>
               <span className="mx-1.5 opacity-40">/</span>
@@ -191,7 +193,7 @@ function ProjectCard({
         <ul className={cn("mt-6 hidden space-y-2 border-t pt-5 sm:block", light ? "border-white/15" : "border-black/10")}>
           {project.highlights.map((item, i) => (
             <li key={i} className={cn("flex gap-3 text-[0.9375rem]", light ? "text-white/85" : "text-black/75")}>
-              <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" style={{ color: project.theme.accent }} strokeWidth={2.25} />
+              <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" style={{ color: accent }} strokeWidth={2.25} />
               {item}
             </li>
           ))}
