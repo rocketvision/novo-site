@@ -169,7 +169,7 @@ export async function invitePartnerUser(
     if (!hubCan(by.user.role, "team.manage", { managersInvite: by.user.partner.managersInvite })) throw forbidden();
     // Manager (quando habilitado) convida só membros; ninguém cria outro owner pelo Hub.
     if (by.user.role !== "owner" && input.role !== "member") throw forbidden("Você só pode convidar membros.");
-    if (input.role === "owner") throw forbidden("O Responsável é definido pela Rocket Vision.");
+    if (input.role === "owner") throw forbidden("O Partner Owner é definido pela Rocket Vision.");
   }
   const db = getDb();
   const result = await db.transaction(async (tx) => {

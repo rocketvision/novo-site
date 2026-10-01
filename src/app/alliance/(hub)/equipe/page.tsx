@@ -6,7 +6,7 @@ import { hubCan } from "@/lib/alliance/constants";
 import { requireHubSession } from "@/server/alliance/hub/guard";
 import { listPartnerUsers } from "@/server/alliance/team";
 
-export const metadata: Metadata = { title: "Equipe" };
+export const metadata: Metadata = { title: "Team Access" };
 
 export default async function HubTeamPage() {
   const { user } = await requireHubSession();
@@ -15,7 +15,7 @@ export default async function HubTeamPage() {
   const people = await listPartnerUsers(user.partner.id);
   return (
     <div className="max-w-4xl">
-      <PageHeader title="Equipe" description={`Quem da ${user.partner.tradeName} acessa o Alliance Hub.`} />
+      <PageHeader title="Team Access" description={`Quem da ${user.partner.tradeName} acessa o Alliance Hub.`} />
       <HubTeam people={people.map((p) => ({ ...p, lastLoginAt: p.lastLoginAt?.toISOString() ?? null }))} me={user.id} isOwner={user.role === "owner"} canInvite={canInvite} />
     </div>
   );

@@ -46,7 +46,7 @@ export const allianceContent: SectionContent<"alliance"> = {
     {
       question: "Qual modalidade devo escolher?",
       answer:
-        "A modalidade define como o parceiro atua. Parceiro Indicador indica clientes; Parceiro de Negócios inclui as soluções da Rocket no próprio portfólio; Parceiro de Tecnologia complementa a capacidade técnica; Parceiro Estratégico constrói relações de longo prazo. Uma empresa pode ter mais de uma modalidade, se autorizada.",
+        "A modalidade define como o parceiro atua. Referral Partner indica clientes; Business Partner inclui as soluções da Rocket no próprio portfólio; Technology Partner complementa a capacidade técnica; Strategic Partner constrói relações de longo prazo. Uma empresa pode ter mais de uma modalidade, se autorizada.",
     },
     {
       question: "Como funcionam as comissões?",

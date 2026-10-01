@@ -16,7 +16,7 @@ type Person = { id: string; name: string; email: string; role: string; status: s
 
 /**
  * Equipe da empresa no Alliance Hub, vista pela Rocket: convidar (o primeiro convite costuma ser o
- * Responsável), mudar papéis, desativar e desfazer o 2FA de quem perdeu o celular.
+ * Partner Owner), mudar papéis, desativar e desfazer o 2FA de quem perdeu o celular.
  */
 export function HubTeamAdmin({ partnerId, people, canManage, open }: { partnerId: string; people: Person[]; canManage: boolean; open: boolean }) {
   const router = useRouter();
@@ -75,7 +75,7 @@ export function HubTeamAdmin({ partnerId, people, canManage, open }: { partnerId
       )}
       <Panel title="Pessoas com acesso" description="Cada pessoa vê só os dados desta empresa. Ninguém do Hub acessa o Content Studio.">
         {people.length === 0 ? (
-          <EmptyState title="Ninguém da empresa tem acesso ainda. Comece convidando o Responsável." />
+          <EmptyState title="Ninguém da empresa tem acesso ainda. Comece convidando o Partner Owner." />
         ) : (
           <ul className="-my-2 divide-y divide-zinc-100">
             {people.map((p) => (

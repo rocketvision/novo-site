@@ -13,8 +13,8 @@ import { PARTNER_ROLES, partnerRoleLabel } from "@/lib/alliance/constants";
 type Person = { id: string; name: string; email: string; role: string; status: string; totpEnabled: boolean; lastLoginAt: string | null };
 
 /**
- * Equipe da empresa no Hub. Responsável gerencia papéis e acessos (menos o de outro owner);
- * com a opção habilitada pela Rocket, o Gestor convida membros.
+ * Equipe da empresa no Hub. Partner Owner gerencia papéis e acessos (menos o de outro owner);
+ * com a opção habilitada pela Rocket, o Partner Manager convida membros.
  */
 export function HubTeam({ people, me, isOwner, canInvite }: { people: Person[]; me: string; isOwner: boolean; canInvite: boolean }) {
   const router = useRouter();

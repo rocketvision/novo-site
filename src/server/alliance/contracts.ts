@@ -138,11 +138,11 @@ export async function hubContracts(user: HubUser) {
 }
 
 /**
- * Aceite pelo Responsável. Confere que o texto é o mesmo que foi enviado (hash): se a versão que a
+ * Aceite pelo Partner Owner. Confere que o texto é o mesmo que foi enviado (hash): se a versão que a
  * pessoa leu não for a atual, recusa e pede para recarregar.
  */
 export async function acceptContract(user: HubUser, id: string, seenHash: string, ctx: Ctx) {
-  if (!hubCan(user.role, "contracts.accept")) throw forbidden("Só o Responsável aceita termos em nome da empresa.");
+  if (!hubCan(user.role, "contracts.accept")) throw forbidden("Só o Partner Owner aceita termos em nome da empresa.");
   await getDb().transaction(async (tx) => {
     const [row] = await tx.select().from(schema.partnerContracts).where(and(eq(schema.partnerContracts.id, id), eq(schema.partnerContracts.partnerId, user.partner.id))).for("update");
     if (!row) throw notFound("Documento não encontrado.");
