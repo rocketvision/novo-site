@@ -9,7 +9,7 @@ export const SECTIONS: {
   slug: string;
   label: string;
   description: string;
-  area: "landing" | "settings";
+  area: "landing" | "settings" | "alliance";
   /** Onde a seção aparece no site, para o preview. */
   path: string;
   /**
@@ -29,6 +29,7 @@ export const SECTIONS: {
   { key: "cta", slug: "contato", label: "Contato", description: "Convite final sobre o vídeo e o formulário.", area: "landing", path: "/#contato" },
   { key: "projectsPage", slug: "pagina-de-projetos", label: "Página de projetos", description: "Abertura e convite final da página de projetos.", area: "landing", path: "/projetos" },
   { key: "site", slug: "site", label: "Site", description: "SEO, contato, redes sociais e dados do rodapé.", area: "settings", path: "/" },
+  { key: "alliance", slug: "rocket-alliance", label: "Página do Rocket Alliance", description: "Conceito do programa, modelo comercial, diretório, FAQ e candidatura em /partners.", area: "alliance", path: "/partners" },
 ];
 
 export const LANDING_SECTIONS = SECTIONS.filter((s) => s.area === "landing" && !s.retired);

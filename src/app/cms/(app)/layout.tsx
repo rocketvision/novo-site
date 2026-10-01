@@ -14,6 +14,7 @@ export default async function CmsAppLayout({ children }: { children: React.React
     ["projects", "projects.view"],
     ["diagnostics", "diagnostics.view"],
     ["agenda", "diagnostics.view"],
+    ["alliance", "alliance.view"],
     ["media", "media.view"],
     ["users", "users.view"],
     ["audit", "audit.view"],

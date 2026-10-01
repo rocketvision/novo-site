@@ -3,6 +3,7 @@ import { site } from "@/lib/site";
 import { getPublishedProjects } from "@/server/projects/public";
 import { getBlogSitemapEntries } from "@/server/blog/public";
 import { servicePages } from "@/content/service-pages";
+import { getPublishedPartnerSlugs } from "@/server/alliance/public";
 
 /** Revalida junto com os projetos e o Blog: publicar ou despublicar invalida as tags "projects" e "blog". */
 export const revalidate = 3600;
@@ -11,6 +12,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages: MetadataRoute.Sitemap = [{ url: site.url, lastModified: new Date(), changeFrequency: "monthly", priority: 1 }];
   // Páginas de cada serviço, abertas pelo "Saiba mais" das cenas da home.
   for (const page of servicePages) pages.push({ url: `${site.url}/servicos/${page.slug}`, changeFrequency: "monthly", priority: 0.7 });
+  // Rocket Alliance: a página do programa e a de cada parceiro publicado.
+  pages.push({ url: `${site.url}/partners`, changeFrequency: "weekly", priority: 0.8 });
+  for (const p of await getPublishedPartnerSlugs()) pages.push({ url: `${site.url}/partners/${p.slug}`, ...(p.publishedAt && { lastModified: p.publishedAt }), changeFrequency: "monthly", priority: 0.6 });
   const projects = await getPublishedProjects();
   // Projetos de exemplo nunca entram. A página /projetos só entra quando tiver apenas projetos reais.
   const real = projects.filter((p) => !p.sample);

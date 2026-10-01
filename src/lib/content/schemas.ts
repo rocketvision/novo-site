@@ -225,6 +225,26 @@ export const siteSchema = z.object({
   }),
 });
 
+/**
+ * Página do Rocket Alliance (/partners): o conceito do programa, o modelo comercial público, o
+ * diretório, o FAQ e a candidatura. Nome, assinatura e slogans oficiais ficam fixos no código.
+ */
+export const allianceSchema = z.object({
+  whatIs: z.object({
+    title: text(90, "O título"),
+    paragraphs: z.array(text(900, "Cada parágrafo")).min(1).max(5, "Use até 5 parágrafos."),
+  }),
+  commissions: z.object({
+    /** "show": exibe os percentuais das regras públicas aprovadas; "hide": só benefícios e regras. */
+    rates: z.enum(["show", "hide"]),
+    intro: text(400, "A introdução"),
+    rules: z.array(text(260, "Cada regra")).min(1).max(8, "Use até 8 regras."),
+  }),
+  directory: z.object({ title: text(90, "O título"), lead: text(300, "A descrição") }),
+  faq: z.array(z.object({ question: text(160, "A pergunta"), answer: text(1200, "A resposta") })).max(20, "Use até 20 perguntas."),
+  apply: z.object({ title: text(90, "O título"), lead: text(300, "A descrição") }),
+});
+
 export const SECTION_SCHEMAS = {
   hero: heroSchema,
   problem: problemSchema,
@@ -237,6 +257,7 @@ export const SECTION_SCHEMAS = {
   cta: ctaSchema,
   projectsPage: projectsPageSchema,
   site: siteSchema,
+  alliance: allianceSchema,
 } as const;
 
 export type SectionKey = keyof typeof SECTION_SCHEMAS;

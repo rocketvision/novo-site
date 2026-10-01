@@ -12,6 +12,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
+  bigint,
   bigserial,
   customType,
   boolean,
@@ -591,3 +592,824 @@ export const availabilityBlocks = pgTable(
   },
   (t) => [index("availability_blocks_range_idx").on(t.startsAt, t.endsAt), check("availability_blocks_range_check", sql`${t.endsAt} > ${t.startsAt}`)],
 );
+
+/* ========================================================================== */
+/* Rocket Alliance: programa de parcerias                                      */
+/* ========================================================================== */
+
+/*
+ * Convenções do módulo:
+ * - Dinheiro sempre em centavos inteiros (bigint) e taxas em pontos-base (500 = 5%). Nada em float.
+ * - Pessoas das empresas parceiras (Alliance Hub) têm identidade própria (partner_users), separada dos
+ *   usuários do CMS: nenhuma conta de parceiro entra no CMS, nenhuma conta do CMS entra no Hub.
+ * - Todo dado de parceiro carrega partner_id: é por ele que o Hub isola uma empresa da outra.
+ * - Registros financeiros nunca são apagados: estornos, cancelamentos e ajustes viram novos lançamentos.
+ */
+
+const money = (name: string) => bigint(name, { mode: "number" });
+
+/** Modalidades oficiais (como o parceiro atua). Chaves fixas; nome e descrição editáveis. */
+export const partnerModalities = pgTable("partner_modalities", {
+  key: text("key").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  sortOrder: smallint("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Níveis de reconhecimento (quais benefícios o parceiro tem). `rank` ordena Member < Pro < Elite. */
+export const partnerTiers = pgTable(
+  "partner_tiers",
+  {
+    key: text("key").primaryKey(),
+    name: text("name").notNull(),
+    rank: smallint("rank").notNull(),
+    label: text("label").notNull().default(""),
+    description: text("description").notNull(),
+    benefits: jsonb("benefits").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("partner_tiers_rank_unique").on(t.rank)],
+);
+
+/** Candidaturas enviadas pela página /partners. Entram como pending_review; nunca criam acesso ao Hub sozinhas. */
+export const partnerApplications = pgTable(
+  "partner_applications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    company: text("company").notNull(),
+    email: text("email").notNull(),
+    website: text("website").notNull().default(""),
+    phone: text("phone").notNull(),
+    sector: text("sector").notNull(),
+    modalityKey: text("modality_key")
+      .notNull()
+      .references(() => partnerModalities.key, { onDelete: "restrict", onUpdate: "cascade" }),
+    companyDescription: text("company_description").notNull(),
+    interest: text("interest").notNull(),
+    /** Consentimento (LGPD) para tratar os dados da candidatura: obrigatório. */
+    consentPrivacy: boolean("consent_privacy").notNull(),
+    /** Aceite para receber comunicações do programa: opcional. */
+    consentMarketing: boolean("consent_marketing").notNull().default(false),
+    consentAt: timestamp("consent_at", { withTimezone: true }).notNull().defaultNow(),
+    status: text("status").notNull().default("pending_review"),
+    /** Motivo da recusa ou pedido de informações (vai para a pessoa por e-mail). */
+    decisionMessage: text("decision_message").notNull().default(""),
+    internalNotes: text("internal_notes").notNull().default(""),
+    partnerId: uuid("partner_id").references((): AnyPgColumn => partners.id, { onDelete: "set null" }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [
+    index("partner_applications_status_idx").on(t.status, t.createdAt.desc()),
+    index("partner_applications_email_idx").on(sql`lower(${t.email})`),
+    check("partner_applications_status_check", sql`${t.status} in ('pending_review', 'info_requested', 'approved', 'rejected')`),
+    check("partner_applications_consent_check", sql`${t.consentPrivacy} = true`),
+  ],
+);
+
+/** Histórico de cada candidatura (envio, pedidos de informação, decisão, anotações). */
+export const partnerApplicationEvents = pgTable(
+  "partner_application_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    applicationId: uuid("application_id")
+      .notNull()
+      .references(() => partnerApplications.id, { onDelete: "cascade" }),
+    action: text("action").notNull(),
+    message: text("message").notNull().default(""),
+    actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("partner_application_events_app_idx").on(t.applicationId, t.createdAt)],
+);
+
+/**
+ * Empresas parceiras: cadastro interno (razão social, contatos, situação, nível) e perfil público
+ * (logos, textos, setor, especialidades). O site lê só `published_snapshot`, congelado ao publicar.
+ * Aparece no diretório apenas com situação ativa, publicação habilitada e snapshot presente.
+ */
+export const partners = pgTable(
+  "partners",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    tradeName: text("trade_name").notNull(),
+    legalName: text("legal_name").notNull().default(""),
+    taxId: text("tax_id").notNull().default(""),
+    status: text("status").notNull().default("onboarding"),
+    tierKey: text("tier_key")
+      .notNull()
+      .default("member")
+      .references(() => partnerTiers.key, { onDelete: "restrict", onUpdate: "cascade" }),
+    // Contato principal: interno, nunca publicado.
+    contactName: text("contact_name").notNull().default(""),
+    contactEmail: text("contact_email").notNull().default(""),
+    contactPhone: text("contact_phone").notNull().default(""),
+    // Perfil público.
+    sector: text("sector").notNull().default(""),
+    shortDescription: text("short_description").notNull().default(""),
+    description: text("description").notNull().default(""),
+    specialties: text("specialties").array().notNull().default(sql`'{}'::text[]`),
+    services: text("services").array().notNull().default(sql`'{}'::text[]`),
+    websiteUrl: text("website_url").notNull().default(""),
+    socialLinks: jsonb("social_links").$type<{ label: string; url: string }[]>().notNull().default(sql`'[]'::jsonb`),
+    location: text("location").notNull().default(""),
+    logoMediaId: uuid("logo_media_id").references(() => media.id, { onDelete: "restrict" }),
+    /** Logo alternativo, para fundos escuros. */
+    logoAltMediaId: uuid("logo_alt_media_id").references(() => media.id, { onDelete: "restrict" }),
+    coverMediaId: uuid("cover_media_id").references(() => media.id, { onDelete: "restrict" }),
+    ogMediaId: uuid("og_media_id").references(() => media.id, { onDelete: "restrict" }),
+    /** Cor de destaque da página exclusiva (identidade própria dentro do Design System). */
+    accentColor: text("accent_color").notNull().default("#2c9df5"),
+    testimonials: jsonb("testimonials").$type<{ quote: string; author: string; role: string; approved: boolean }[]>().notNull().default(sql`'[]'::jsonb`),
+    seoTitle: text("seo_title").notNull().default(""),
+    seoDescription: text("seo_description").notNull().default(""),
+    /** Mostrar o nível no site (só com autorização). */
+    showTier: boolean("show_tier").notNull().default(false),
+    /** Publicação habilitada no diretório e na página exclusiva. */
+    directoryEnabled: boolean("directory_enabled").notNull().default(false),
+    featured: boolean("featured").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    /** Com a opção, o Partner Manager também convida membros para a equipe. */
+    managersInvite: boolean("managers_invite").notNull().default(false),
+    // Avaliação para evolução de nível (não depende só do faturamento).
+    qualityScore: smallint("quality_score"),
+    satisfactionScore: smallint("satisfaction_score"),
+    complianceOk: boolean("compliance_ok").notNull().default(true),
+    internalNotes: text("internal_notes").notNull().default(""),
+    applicationId: uuid("application_id"),
+    publishedSnapshot: jsonb("published_snapshot"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    publishedBy: uuid("published_by").references(() => users.id, { onDelete: "set null" }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+    version: integer("version").notNull().default(1),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("partners_slug_unique").on(t.slug),
+    index("partners_status_idx").on(t.status),
+    index("partners_directory_idx").on(t.directoryEnabled, t.featured, t.sortOrder),
+    check("partners_slug_format", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    check("partners_status_check", sql`${t.status} in ('onboarding', 'active', 'suspended', 'terminated')`),
+    check("partners_accent_hex", sql`${t.accentColor} ~ '^#[0-9a-f]{6}$'`),
+    check("partners_scores_range", sql`(${t.qualityScore} IS NULL OR ${t.qualityScore} BETWEEN 1 AND 5) AND (${t.satisfactionScore} IS NULL OR ${t.satisfactionScore} BETWEEN 1 AND 5)`),
+  ],
+);
+
+/** Modalidades autorizadas para cada parceiro (pode ter mais de uma, com aprovação). */
+export const partnerModalityLinks = pgTable(
+  "partner_modality_links",
+  {
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+    modalityKey: text("modality_key")
+      .notNull()
+      .references(() => partnerModalities.key, { onDelete: "restrict", onUpdate: "cascade" }),
+    approvedBy: uuid("approved_by").references(() => users.id, { onDelete: "set null" }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.partnerId, t.modalityKey] })],
+);
+
+/** Galeria de imagens do parceiro (biblioteca de mídia do CMS). */
+export const partnerMedia = pgTable(
+  "partner_media",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+    mediaId: uuid("media_id")
+      .notNull()
+      .references(() => media.id, { onDelete: "restrict" }),
+    position: smallint("position").notNull().default(0),
+    caption: text("caption").notNull().default(""),
+  },
+  (t) => [index("partner_media_partner_idx").on(t.partnerId, t.position), index("partner_media_media_idx").on(t.mediaId)],
+);
+
+/** Projetos conjuntos: ligação com os projetos do portfólio já existentes. */
+export const partnerProjects = pgTable(
+  "partner_projects",
+  {
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    position: smallint("position").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.partnerId, t.projectId] })],
+);
+
+/** Conteúdo em blocos da página exclusiva (/partners/[slug]). Publicado junto com o perfil. */
+export const partnerPages = pgTable("partner_pages", {
+  partnerId: uuid("partner_id")
+    .primaryKey()
+    .references(() => partners.id, { onDelete: "cascade" }),
+  content: jsonb("content").notNull(),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Alterações de dados públicos pedidas pelo parceiro no Hub: só valem depois da aprovação da Rocket. */
+export const partnerChangeRequests = pgTable(
+  "partner_change_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+    requestedBy: uuid("requested_by").references((): AnyPgColumn => partnerUsers.id, { onDelete: "set null" }),
+    changes: jsonb("changes").notNull(),
+    status: text("status").notNull().default("pending"),
+    reviewNote: text("review_note").notNull().default(""),
+    reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("partner_change_requests_partner_idx").on(t.partnerId, t.createdAt.desc()),
+    index("partner_change_requests_status_idx").on(t.status),
+    check("partner_change_requests_status_check", sql`${t.status} in ('pending', 'approved', 'rejected', 'withdrawn')`),
+  ],
+);
+
+/* -------------------------------------------------------------------------- */
+/* Alliance Hub: contas das empresas parceiras                                 */
+/* -------------------------------------------------------------------------- */
+
+/** Pessoas de uma empresa parceira. Cada conta pertence a uma única empresa. */
+export const partnerUsers = pgTable(
+  "partner_users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    name: text("name").notNull(),
+    role: text("role").notNull().default("member"),
+    /** Argon2id (PHC). Nulo enquanto o convite não for aceito. */
+    passwordHash: text("password_hash"),
+    status: text("status").notNull().default("invited"),
+    /** Aceitar o convite (link enviado ao e-mail) comprova o endereço. */
+    emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+    /** Segredo TOTP cifrado (AES-GCM). Só vale com totp_enabled_at preenchido. */
+    totpSecretEnc: text("totp_secret_enc"),
+    totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
+    /** Hashes SHA-256 dos códigos de recuperação ainda não usados. */
+    recoveryCodes: jsonb("recovery_codes").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
+    invitedByUserId: uuid("invited_by_user_id").references(() => users.id, { onDelete: "set null" }),
+    invitedByPartnerUserId: uuid("invited_by_partner_user_id").references((): AnyPgColumn => partnerUsers.id, { onDelete: "set null" }),
+    version: integer("version").notNull().default(1),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("partner_users_email_unique").on(sql`lower(${t.email})`),
+    index("partner_users_partner_idx").on(t.partnerId),
+    check("partner_users_role_check", sql`${t.role} in ('owner', 'manager', 'member')`),
+    check("partner_users_status_check", sql`${t.status} in ('invited', 'active', 'disabled')`),
+    check("partner_users_active_has_password", sql`${t.status} <> 'active' OR ${t.passwordHash} IS NOT NULL`),
+  ],
+);
+
+/** Sessões do Hub, no mesmo padrão das do CMS: o banco guarda só o SHA-256 do token. */
+export const partnerSessions = pgTable(
+  "partner_sessions",
+  {
+    id: text("id").primaryKey(),
+    partnerUserId: uuid("partner_user_id")
+      .notNull()
+      .references(() => partnerUsers.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("partner_sessions_user_idx").on(t.partnerUserId), index("partner_sessions_expires_idx").on(t.expiresAt)],
+);
+
+/** Tokens de uso único do Hub: convite, redefinição de senha, troca de e-mail e segundo fator do login. */
+export const partnerUserTokens = pgTable(
+  "partner_user_tokens",
+  {
+    id: text("id").primaryKey(),
+    partnerUserId: uuid("partner_user_id")
+      .notNull()
+      .references(() => partnerUsers.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    /** Dado extra do token (ex.: o novo e-mail). Nunca segredos. */
+    payload: jsonb("payload"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("partner_user_tokens_user_idx").on(t.partnerUserId, t.type),
+    check("partner_user_tokens_type_check", sql`${t.type} in ('invite', 'password_reset', 'email_change', 'login_challenge')`),
+  ],
+);
+
+/* -------------------------------------------------------------------------- */
+/* Indicações                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Indicações registradas pelos parceiros. `code` é o identificador exibido (RA-000123); a URL usa o
+ * UUID e toda leitura no Hub filtra pela empresa. A proteção da oportunidade vale até `protected_until`.
+ */
+export const referrals = pgTable(
+  "referrals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    code: text("code").notNull().default(sql`'RA-' || lpad(nextval('referral_code_seq')::text, 6, '0')`),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "restrict" }),
+    submittedBy: uuid("submitted_by").references(() => partnerUsers.id, { onDelete: "set null" }),
+    companyName: text("company_name").notNull(),
+    companyWebsite: text("company_website").notNull().default(""),
+    companyTaxId: text("company_tax_id"),
+    companyDomain: text("company_domain"),
+    companyNameKey: text("company_name_key"),
+    contactName: text("contact_name").notNull(),
+    contactRole: text("contact_role").notNull().default(""),
+    contactEmail: text("contact_email").notNull(),
+    contactPhone: text("contact_phone").notNull().default(""),
+    city: text("city").notNull().default(""),
+    need: text("need").notNull(),
+    services: text("services").array().notNull().default(sql`'{}'::text[]`),
+    /** Estimativa do parceiro (informativa). */
+    estimatedValueCents: money("estimated_value_cents"),
+    /** Valor do contrato fechado, informado pela Rocket ao marcar como Won. */
+    dealValueCents: money("deal_value_cents"),
+    /** O parceiro confirma que o cliente autorizou o contato (LGPD). */
+    consentConfirmed: boolean("consent_confirmed").notNull(),
+    status: text("status").notNull().default("submitted"),
+    ownerUserId: uuid("owner_user_id").references(() => users.id, { onDelete: "set null" }),
+    protectedUntil: timestamp("protected_until", { withTimezone: true }).notNull(),
+    lostReason: text("lost_reason").notNull().default(""),
+    internalNotes: text("internal_notes").notNull().default(""),
+    /**
+     * Mesmo nome de empresa de outra indicação ainda protegida (sem domínio ou CNPJ em comum): entra,
+     * mas marcada para a equipe decidir a atribuição. Domínio ou CNPJ iguais são recusados na hora.
+     */
+    possibleDuplicateOf: uuid("possible_duplicate_of").references((): AnyPgColumn => referrals.id, { onDelete: "set null" }),
+    wonAt: timestamp("won_at", { withTimezone: true }),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    version: integer("version").notNull().default(1),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("referrals_code_unique").on(t.code),
+    index("referrals_partner_idx").on(t.partnerId, t.createdAt.desc()),
+    index("referrals_status_idx").on(t.status, t.createdAt.desc()),
+    index("referrals_domain_idx").on(t.companyDomain),
+    index("referrals_tax_id_idx").on(t.companyTaxId),
+    index("referrals_name_key_idx").on(t.companyNameKey),
+    check(
+      "referrals_status_check",
+      sql`${t.status} in ('submitted', 'under_review', 'qualified', 'in_negotiation', 'won', 'lost', 'cancelled')`,
+    ),
+    check("referrals_consent_check", sql`${t.consentConfirmed} = true`),
+    check("referrals_values_positive", sql`(${t.estimatedValueCents} IS NULL OR ${t.estimatedValueCents} >= 0) AND (${t.dealValueCents} IS NULL OR ${t.dealValueCents} >= 0)`),
+  ],
+);
+
+/** Histórico de status e observações de cada indicação. `visible_to_partner` controla o que o Hub mostra. */
+export const referralEvents = pgTable(
+  "referral_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    referralId: uuid("referral_id")
+      .notNull()
+      .references(() => referrals.id, { onDelete: "cascade" }),
+    fromStatus: text("from_status"),
+    toStatus: text("to_status"),
+    note: text("note").notNull().default(""),
+    visibleToPartner: boolean("visible_to_partner").notNull().default(true),
+    actorType: text("actor_type").notNull(),
+    actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    actorPartnerUserId: uuid("actor_partner_user_id").references(() => partnerUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("referral_events_referral_idx").on(t.referralId, t.createdAt),
+    check("referral_events_actor_check", sql`${t.actorType} in ('partner', 'cms', 'system')`),
+  ],
+);
+
+/* -------------------------------------------------------------------------- */
+/* Oportunidades                                                               */
+/* -------------------------------------------------------------------------- */
+
+export const opportunities = pgTable(
+  "opportunities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    kind: text("kind").notNull(),
+    summary: text("summary").notNull(),
+    description: text("description").notNull().default(""),
+    status: text("status").notNull().default("draft"),
+    deadline: date("deadline"),
+    minTierRank: smallint("min_tier_rank").notNull().default(1),
+    modalities: text("modalities").array().notNull().default(sql`'{}'::text[]`),
+    partnerIds: uuid("partner_ids").array().notNull().default(sql`'{}'::uuid[]`),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [
+    index("opportunities_status_idx").on(t.status, t.createdAt.desc()),
+    check("opportunities_status_check", sql`${t.status} in ('draft', 'open', 'closed')`),
+  ],
+);
+
+/** Manifestações de interesse de um parceiro em uma oportunidade (uma por empresa). */
+export const opportunityInterests = pgTable(
+  "opportunity_interests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    opportunityId: uuid("opportunity_id")
+      .notNull()
+      .references(() => opportunities.id, { onDelete: "cascade" }),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+    partnerUserId: uuid("partner_user_id").references(() => partnerUsers.id, { onDelete: "set null" }),
+    message: text("message").notNull().default(""),
+    status: text("status").notNull().default("sent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("opportunity_interests_unique").on(t.opportunityId, t.partnerId),
+    check("opportunity_interests_status_check", sql`${t.status} in ('sent', 'accepted', 'declined')`),
+  ],
+);
+
+/* -------------------------------------------------------------------------- */
+/* Comissões                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Regras de comissão. Nenhum percentual fica no código: a regra aplicada a um recebimento é a
+ * aprovada e vigente mais específica (do parceiro > nível + modalidade > nível > geral).
+ * `recurring_months`: em serviços recorrentes, quantas mensalidades pagas geram participação.
+ */
+export const commissionRules = pgTable(
+  "commission_rules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    partnerId: uuid("partner_id").references(() => partners.id, { onDelete: "cascade" }),
+    tierKey: text("tier_key").references(() => partnerTiers.key, { onDelete: "restrict", onUpdate: "cascade" }),
+    modalityKey: text("modality_key").references(() => partnerModalities.key, { onDelete: "restrict", onUpdate: "cascade" }),
+    scope: text("scope").notNull().default("all"),
+    rateBp: integer("rate_bp").notNull(),
+    recurringMonths: smallint("recurring_months").notNull().default(12),
+    validFrom: date("valid_from").notNull(),
+    validTo: date("valid_to"),
+    status: text("status").notNull().default("draft"),
+    /** Se a taxa pode aparecer na página pública (só regras gerais por nível). */
+    isPublic: boolean("is_public").notNull().default(false),
+    notes: text("notes").notNull().default(""),
+    approvedBy: uuid("approved_by").references(() => users.id, { onDelete: "set null" }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    version: integer("version").notNull().default(1),
+    ...timestamps,
+  },
+  (t) => [
+    index("commission_rules_lookup_idx").on(t.status, t.partnerId, t.tierKey),
+    check("commission_rules_rate_range", sql`${t.rateBp} BETWEEN 0 AND 10000`),
+    check("commission_rules_months_range", sql`${t.recurringMonths} BETWEEN 0 AND 120`),
+    check("commission_rules_scope_check", sql`${t.scope} in ('all', 'one_time', 'recurring')`),
+    check("commission_rules_status_check", sql`${t.status} in ('draft', 'approved', 'archived')`),
+    check("commission_rules_dates_check", sql`${t.validTo} IS NULL OR ${t.validTo} >= ${t.validFrom}`),
+  ],
+);
+
+/**
+ * Recebimentos da Rocket ligados a uma indicação ganha: a base das comissões (receita líquida elegível
+ * efetivamente recebida). Reembolso é um recebimento do tipo "refund" que aponta para o original.
+ * `external_ref` único torna idempotente o registro vindo de uma integração (ou de um clique repetido).
+ */
+export const revenueReceipts = pgTable(
+  "revenue_receipts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    referralId: uuid("referral_id")
+      .notNull()
+      .references(() => referrals.id, { onDelete: "restrict" }),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "restrict" }),
+    kind: text("kind").notNull(),
+    installmentNumber: smallint("installment_number"),
+    amountCents: money("amount_cents").notNull(),
+    receivedOn: date("received_on").notNull(),
+    refundOf: uuid("refund_of").references((): AnyPgColumn => revenueReceipts.id, { onDelete: "restrict" }),
+    description: text("description").notNull().default(""),
+    externalRef: text("external_ref"),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("revenue_receipts_referral_idx").on(t.referralId, t.receivedOn),
+    uniqueIndex("revenue_receipts_external_unique").on(t.externalRef).where(sql`${t.externalRef} IS NOT NULL`),
+    uniqueIndex("revenue_receipts_installment_unique").on(t.referralId, t.installmentNumber).where(sql`${t.kind} = 'recurring'`),
+    check("revenue_receipts_kind_check", sql`${t.kind} in ('one_time', 'recurring', 'refund')`),
+    check("revenue_receipts_amount_positive", sql`${t.amountCents} > 0`),
+    check("revenue_receipts_installment_check", sql`(${t.kind} = 'recurring') = (${t.installmentNumber} IS NOT NULL) AND (${t.installmentNumber} IS NULL OR ${t.installmentNumber} >= 1)`),
+    check("revenue_receipts_refund_check", sql`(${t.kind} = 'refund') = (${t.refundOf} IS NOT NULL)`),
+  ],
+);
+
+/** Pagamentos feitos pela Rocket aos parceiros, somando lançamentos aprovados. */
+export const partnerPayouts = pgTable(
+  "partner_payouts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "restrict" }),
+    amountCents: money("amount_cents").notNull(),
+    paidOn: date("paid_on").notNull(),
+    method: text("method").notNull(),
+    reference: text("reference").notNull().default(""),
+    notes: text("notes").notNull().default(""),
+    status: text("status").notNull().default("registered"),
+    /** Chave gerada pela tela de registro: um clique repetido nunca cria dois pagamentos. */
+    idempotencyKey: text("idempotency_key").notNull(),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    voidedBy: uuid("voided_by").references(() => users.id, { onDelete: "set null" }),
+    voidedAt: timestamp("voided_at", { withTimezone: true }),
+    voidReason: text("void_reason").notNull().default(""),
+  },
+  (t) => [
+    uniqueIndex("partner_payouts_idempotency_unique").on(t.idempotencyKey),
+    index("partner_payouts_partner_idx").on(t.partnerId, t.paidOn.desc()),
+    check("partner_payouts_amount_positive", sql`${t.amountCents} > 0`),
+    check("partner_payouts_status_check", sql`${t.status} in ('registered', 'voided')`),
+  ],
+);
+
+/**
+ * Lançamentos de comissão (o livro-razão do parceiro). Comissão e estorno nascem de um recebimento
+ * (um lançamento por recebimento: índice único); ajuste é manual, com motivo. Valor com sinal.
+ */
+export const commissionEntries = pgTable(
+  "commission_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "restrict" }),
+    referralId: uuid("referral_id").references(() => referrals.id, { onDelete: "restrict" }),
+    receiptId: uuid("receipt_id").references(() => revenueReceipts.id, { onDelete: "restrict" }),
+    ruleId: uuid("rule_id").references(() => commissionRules.id, { onDelete: "restrict" }),
+    kind: text("kind").notNull(),
+    tierKey: text("tier_key"),
+    baseCents: money("base_cents").notNull().default(0),
+    rateBp: integer("rate_bp"),
+    amountCents: money("amount_cents").notNull(),
+    status: text("status").notNull().default("pending"),
+    reason: text("reason").notNull().default(""),
+    reversalOf: uuid("reversal_of").references((): AnyPgColumn => commissionEntries.id, { onDelete: "restrict" }),
+    payoutId: uuid("payout_id").references(() => partnerPayouts.id, { onDelete: "restrict" }),
+    approvedBy: uuid("approved_by").references(() => users.id, { onDelete: "set null" }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    cancelledBy: uuid("cancelled_by").references(() => users.id, { onDelete: "set null" }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("commission_entries_receipt_unique").on(t.receiptId).where(sql`${t.receiptId} IS NOT NULL`),
+    index("commission_entries_partner_idx").on(t.partnerId, t.status, t.createdAt.desc()),
+    index("commission_entries_payout_idx").on(t.payoutId),
+    index("commission_entries_referral_idx").on(t.referralId),
+    check("commission_entries_kind_check", sql`${t.kind} in ('commission', 'reversal', 'adjustment')`),
+    check("commission_entries_status_check", sql`${t.status} in ('pending', 'approved', 'paid', 'cancelled')`),
+    check("commission_entries_amount_nonzero", sql`${t.amountCents} <> 0`),
+    check("commission_entries_source_check", sql`${t.kind} = 'adjustment' OR ${t.receiptId} IS NOT NULL`),
+    check("commission_entries_paid_has_payout", sql`(${t.status} = 'paid') = (${t.payoutId} IS NOT NULL)`),
+    check("commission_entries_adjustment_reason", sql`${t.kind} <> 'adjustment' OR length(${t.reason}) > 0`),
+  ],
+);
+
+/* -------------------------------------------------------------------------- */
+/* Contratos, arquivos e recursos                                              */
+/* -------------------------------------------------------------------------- */
+
+/** Arquivos privados do programa (contratos, materiais). Baixados só por rota autorizada. */
+export const allianceFiles = pgTable("alliance_files", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storageKey: text("storage_key").notNull().unique(),
+  filename: text("filename").notNull(),
+  mimeType: text("mime_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  sha256: text("sha256").notNull(),
+  uploadedBy: uuid("uploaded_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Contratos e termos: versão, vigência e aceite (com data, pessoa, IP e hash do texto aceito). */
+export const partnerContracts = pgTable(
+  "partner_contracts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    kind: text("kind").notNull().default("partnership"),
+    version: integer("version").notNull().default(1),
+    status: text("status").notNull().default("draft"),
+    startsOn: date("starts_on"),
+    endsOn: date("ends_on"),
+    terms: text("terms").notNull().default(""),
+    termsSha256: text("terms_sha256"),
+    commercialTerms: text("commercial_terms").notNull().default(""),
+    fileId: uuid("file_id").references(() => allianceFiles.id, { onDelete: "restrict" }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedBy: uuid("accepted_by").references(() => partnerUsers.id, { onDelete: "set null" }),
+    acceptedName: text("accepted_name"),
+    acceptedIp: text("accepted_ip"),
+    acceptedUserAgent: text("accepted_user_agent"),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("partner_contracts_version_unique").on(t.partnerId, t.kind, t.version),
+    index("partner_contracts_partner_idx").on(t.partnerId, t.createdAt.desc()),
+    check("partner_contracts_status_check", sql`${t.status} in ('draft', 'sent', 'active', 'expired', 'terminated')`),
+    check("partner_contracts_dates_check", sql`${t.endsOn} IS NULL OR ${t.startsOn} IS NULL OR ${t.endsOn} >= ${t.startsOn}`),
+    check("partner_contracts_accepted_check", sql`${t.acceptedAt} IS NULL OR ${t.termsSha256} IS NOT NULL`),
+  ],
+);
+
+/** Biblioteca do parceiro: materiais e treinamentos, segmentados por nível, modalidade e empresa. */
+export const partnerResources = pgTable(
+  "partner_resources",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    category: text("category").notNull(),
+    fileId: uuid("file_id").references(() => allianceFiles.id, { onDelete: "restrict" }),
+    url: text("url"),
+    status: text("status").notNull().default("draft"),
+    minTierRank: smallint("min_tier_rank").notNull().default(1),
+    modalities: text("modalities").array().notNull().default(sql`'{}'::text[]`),
+    partnerIds: uuid("partner_ids").array().notNull().default(sql`'{}'::uuid[]`),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [
+    index("partner_resources_status_idx").on(t.status, t.category, t.sortOrder),
+    check("partner_resources_status_check", sql`${t.status} in ('draft', 'published')`),
+    check("partner_resources_source_check", sql`(${t.fileId} IS NOT NULL) <> (${t.url} IS NOT NULL)`),
+  ],
+);
+
+/* -------------------------------------------------------------------------- */
+/* Comunicação, suporte e configurações                                        */
+/* -------------------------------------------------------------------------- */
+
+/** Comunicados do programa, segmentados. "Importante" também vai por e-mail. */
+export const allianceAnnouncements = pgTable(
+  "alliance_announcements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    important: boolean("important").notNull().default(false),
+    status: text("status").notNull().default("draft"),
+    minTierRank: smallint("min_tier_rank").notNull().default(1),
+    modalities: text("modalities").array().notNull().default(sql`'{}'::text[]`),
+    partnerIds: uuid("partner_ids").array().notNull().default(sql`'{}'::uuid[]`),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [
+    index("alliance_announcements_status_idx").on(t.status, t.publishedAt.desc()),
+    check("alliance_announcements_status_check", sql`${t.status} in ('draft', 'published', 'archived')`),
+  ],
+);
+
+/** Avisos no Hub, por pessoa. */
+export const partnerNotifications = pgTable(
+  "partner_notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+    partnerUserId: uuid("partner_user_id")
+      .notNull()
+      .references(() => partnerUsers.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull().default(""),
+    link: text("link"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("partner_notifications_user_idx").on(t.partnerUserId, t.createdAt.desc())],
+);
+
+/**
+ * Registro de e-mails do programa. `dedupe_key` único: o mesmo evento nunca manda o mesmo e-mail duas
+ * vezes (ex.: "application-received:<id>"). Guarda o estado de entrega e o erro, sem o corpo do e-mail.
+ */
+export const allianceEmailLog = pgTable(
+  "alliance_email_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    dedupeKey: text("dedupe_key").notNull(),
+    template: text("template").notNull(),
+    toEmail: text("to_email").notNull(),
+    partnerId: uuid("partner_id").references(() => partners.id, { onDelete: "set null" }),
+    status: text("status").notNull().default("sending"),
+    attempts: smallint("attempts").notNull().default(0),
+    providerId: text("provider_id"),
+    lastError: text("last_error"),
+    /** Parâmetros para reenviar (nunca links com token). Nulo quando o e-mail não pode ser reenviado. */
+    params: jsonb("params"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("alliance_email_log_dedupe_unique").on(t.dedupeKey),
+    index("alliance_email_log_status_idx").on(t.status, t.createdAt.desc()),
+    check("alliance_email_log_status_check", sql`${t.status} in ('sending', 'sent', 'failed', 'skipped')`),
+  ],
+);
+
+export const supportTickets = pgTable(
+  "support_tickets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    code: text("code").notNull().default(sql`'SUP-' || lpad(nextval('support_ticket_seq')::text, 5, '0')`),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+    createdBy: uuid("created_by").references(() => partnerUsers.id, { onDelete: "set null" }),
+    subject: text("subject").notNull(),
+    category: text("category").notNull(),
+    status: text("status").notNull().default("open"),
+    assignedTo: uuid("assigned_to").references(() => users.id, { onDelete: "set null" }),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("support_tickets_code_unique").on(t.code),
+    index("support_tickets_partner_idx").on(t.partnerId, t.lastMessageAt.desc()),
+    index("support_tickets_status_idx").on(t.status, t.lastMessageAt.desc()),
+    check("support_tickets_status_check", sql`${t.status} in ('open', 'answered', 'closed')`),
+  ],
+);
+
+export const supportMessages = pgTable(
+  "support_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ticketId: uuid("ticket_id")
+      .notNull()
+      .references(() => supportTickets.id, { onDelete: "cascade" }),
+    authorType: text("author_type").notNull(),
+    authorUserId: uuid("author_user_id").references(() => users.id, { onDelete: "set null" }),
+    authorPartnerUserId: uuid("author_partner_user_id").references(() => partnerUsers.id, { onDelete: "set null" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("support_messages_ticket_idx").on(t.ticketId, t.createdAt),
+    check("support_messages_author_check", sql`${t.authorType} in ('partner', 'cms')`),
+  ],
+);
+
+/** Parâmetros operacionais do programa (um registro, chave "program"). Validados por schema no servidor. */
+export const allianceSettings = pgTable("alliance_settings", {
+  key: text("key").primaryKey(),
+  data: jsonb("data").notNull(),
+  version: integer("version").notNull().default(1),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

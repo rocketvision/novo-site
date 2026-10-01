@@ -19,7 +19,7 @@ export function canAny(user: SessionUser, permissions: Permission[]) {
 }
 
 /** Áreas administrativas do Studio. Quem não tem nenhuma delas e tem o Blog (o Colunista) vive só no Blog. */
-const ADMIN_AREAS: Permission[] = ["landing.view", "projects.view", "diagnostics.view", "media.view", "users.view", "audit.view", "settings.view"];
+const ADMIN_AREAS: Permission[] = ["landing.view", "projects.view", "diagnostics.view", "alliance.view", "media.view", "users.view", "audit.view", "settings.view"];
 
 export function isBlogOnly(permissions: ReadonlySet<Permission>) {
   return permissions.has("blog.view") && !ADMIN_AREAS.some((p) => permissions.has(p));

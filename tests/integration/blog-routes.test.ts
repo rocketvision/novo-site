@@ -24,6 +24,7 @@ import * as categories from "@/app/api/cms/blog/categories/route";
 import * as blogMedia from "@/app/api/cms/blog/media/route";
 import * as cron from "@/app/api/cron/blog-publish/route";
 import { createUser, resetTestDatabase } from "../support/db";
+import { HUB_PERMISSIONS } from "@/lib/alliance/constants";
 
 const ORIGIN = "http://localhost:3000";
 let adminToken: string;
@@ -121,10 +122,14 @@ describe("catálogo de permissões", () => {
     };
     walk("src/app");
     const used = new Set<string>();
+    const hubUsed = new Set<string>();
     for (const f of files) {
       const text = readFileSync(f, "utf8");
-      for (const m of text.matchAll(/(?:permission:\s*|requirePermission\(\s*|can\(user,\s*)"([a-z_]+\.[a-z_]+)"/g)) used.add(m[1]);
+      // Rotas e páginas do Alliance Hub usam o catálogo próprio (papéis da empresa parceira).
+      const hub = /src[\\/]app[\\/](alliance|api[\\/]alliance[\\/]hub)[\\/]/.test(f);
+      for (const m of text.matchAll(/(?:permission:\s*|requirePermission\(\s*|requireHubPermission\(\s*|can\(user,\s*)"([a-z_]+\.[a-z_]+)"/g)) (hub ? hubUsed : used).add(m[1]);
     }
+    for (const key of hubUsed) expect(key in HUB_PERMISSIONS, key).toBe(true);
     expect(used.size).toBeGreaterThan(10);
     for (const key of used) expect(isPermission(key), key).toBe(true);
   });

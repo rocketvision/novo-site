@@ -39,6 +39,7 @@ export const nav = [
   { label: "Projetos", href: "/projetos" },
   { label: "Blog", href: "/blog" },
   { label: "Planos", href: "/#planos" },
+  { label: "Parceiros", href: "/partners" },
 ] as const;
 
 export const primaryCta = { label: "Fazer diagnóstico", href: "/#diagnostico" } as const;

@@ -19,7 +19,7 @@ import { HttpError, badRequest, forbidden, payloadTooLarge, unauthorized, unproc
  * 5. Erros: convertidos em JSON com status HTTP correto; nada interno vaza para o cliente.
  */
 
-type Ctx<Params> = {
+export type Ctx<Params> = {
   request: NextRequest;
   params: Params;
   ip: string | null;
@@ -72,7 +72,8 @@ export function authedRoute<Params = Record<string, string>>(
   });
 }
 
-function wrap<Params>(inner: (ctx: Ctx<Params>) => Promise<Response>) {
+/** Base de todas as rotas (CMS, Hub e públicas): contexto da requisição e conversão de erros em JSON. */
+export function wrap<Params>(inner: (ctx: Ctx<Params>) => Promise<Response>) {
   return async (request: NextRequest, context: { params: Promise<Params> }) => {
     const requestId = crypto.randomUUID();
     const started = Date.now();

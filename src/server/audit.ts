@@ -9,7 +9,11 @@ import { log } from "@/server/log";
  * apenas dos campos que mudaram. Nunca registra senhas, hashes, tokens ou sessões.
  */
 
-export type AuditActor = { id: string; email: string } | null;
+/**
+ * Quem fez. `id` é um usuário do CMS; ações de pessoas do Alliance Hub (que não são usuários do CMS)
+ * entram com `id` nulo e o e-mail da pessoa, e a ação começa com "alliance.hub.".
+ */
+export type AuditActor = { id: string | null; email: string } | null;
 
 export type AuditEvent = {
   actor: AuditActor;
