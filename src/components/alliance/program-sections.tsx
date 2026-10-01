@@ -186,7 +186,7 @@ export function Tiers({ tiers }: { tiers: PublicProgram["tiers"] }) {
                 {elite && <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(30rem_18rem_at_100%_0%,rgb(44_157_245/0.18),transparent_60%)]" />}
                 <div className="relative flex items-center justify-between">
                   <p className={cn("font-mono text-[0.65rem] tracking-[0.14em] uppercase", elite ? "text-white/45" : "text-fg/40")}>{tier.label}</p>
-                  <TierBadge tier={tier.key} size={76} detailed title={`Selo ${tier.name}`} />
+                  <TierBadge tier={tier.key} size={112} detailed title={`Selo ${tier.name}`} />
                 </div>
                 <h3 className="relative mt-10 text-[clamp(1.6rem,1.3rem+0.8vw,2.2rem)] leading-none font-semibold tracking-[-0.04em]">{tier.name}</h3>
                 <p className={cn("relative mt-4 text-[0.9rem] leading-relaxed", elite ? "text-white/60" : "text-fg/60")}>{tier.description}</p>

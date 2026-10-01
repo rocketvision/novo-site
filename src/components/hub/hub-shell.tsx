@@ -11,14 +11,14 @@ import { cn } from "@/lib/utils";
 export type HubNavKey = "dashboard" | "referrals" | "earnings" | "resources" | "opportunities" | "support" | "company" | "team" | "notices" | "account";
 
 const ITEMS: { key: HubNavKey; label: string; hint: string; href: string; icon: typeof Inbox }[] = [
-  { key: "dashboard", label: "Dashboard", hint: "Visão geral", href: "/alliance", icon: LayoutDashboard },
-  { key: "referrals", label: "Referral Pipeline", hint: "Indicações", href: "/alliance/indicacoes", icon: Inbox },
-  { key: "earnings", label: "Earnings", hint: "Ganhos", href: "/alliance/ganhos", icon: Wallet },
-  { key: "resources", label: "Partner Resources", hint: "Materiais", href: "/alliance/recursos", icon: FolderOpen },
-  { key: "opportunities", label: "Opportunities", hint: "Oportunidades", href: "/alliance/oportunidades", icon: Lightbulb },
-  { key: "support", label: "Support", hint: "Suporte", href: "/alliance/suporte", icon: LifeBuoy },
-  { key: "company", label: "My Company", hint: "Minha empresa", href: "/alliance/empresa", icon: Building2 },
-  { key: "team", label: "Team Access", hint: "Equipe", href: "/alliance/equipe", icon: UsersRound },
+  { key: "dashboard", label: "Painel", hint: "Visão geral", href: "/alliance", icon: LayoutDashboard },
+  { key: "referrals", label: "Indicações", hint: "Funil de indicações", href: "/alliance/indicacoes", icon: Inbox },
+  { key: "earnings", label: "Ganhos", hint: "Comissões e pagamentos", href: "/alliance/ganhos", icon: Wallet },
+  { key: "resources", label: "Materiais", hint: "Recursos para vender", href: "/alliance/recursos", icon: FolderOpen },
+  { key: "opportunities", label: "Oportunidades", hint: "Projetos e campanhas", href: "/alliance/oportunidades", icon: Lightbulb },
+  { key: "support", label: "Suporte", hint: "Fale com a Rocket", href: "/alliance/suporte", icon: LifeBuoy },
+  { key: "company", label: "Minha empresa", hint: "Perfil e contratos", href: "/alliance/empresa", icon: Building2 },
+  { key: "team", label: "Equipe", hint: "Acessos da empresa", href: "/alliance/equipe", icon: UsersRound },
 ];
 
 /**
@@ -117,7 +117,7 @@ export function HubShell({ allowed, user, unread, children }: { allowed: HubNavK
         <button type="button" aria-label="Abrir menu" aria-expanded={open} onClick={() => setOpen(true)} className="flex size-9 items-center justify-center rounded-md text-zinc-700 hover:bg-zinc-100 lg:hidden">
           <Menu className="size-5" />
         </button>
-        <span className="hidden text-[13px] text-zinc-500 lg:block">The Rocket Vision Partner Program</span>
+        <span className="hidden text-[13px] text-zinc-500 lg:block">O programa de parceiros da Rocket Vision</span>
         <span className="lg:hidden">
           <HubLogo />
         </span>

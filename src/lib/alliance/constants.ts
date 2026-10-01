@@ -9,10 +9,10 @@
 
 export const PROGRAM = {
   name: "Rocket Alliance",
-  signature: "The Rocket Vision Partner Program",
+  signature: "O programa de parceiros da Rocket Vision",
   slogan: "Grow Together. Go Beyond.",
-  complement: "One ecosystem. Infinite possibilities.",
-  publicMessage: "Great things are built together.",
+  complement: "Um ecossistema. Possibilidades infinitas.",
+  publicMessage: "Grandes coisas se constroem juntas.",
   hubName: "Alliance Hub",
 } as const;
 
@@ -25,25 +25,25 @@ export type ModalityKey = (typeof MODALITY_KEYS)[number];
 
 export const MODALITIES: Record<ModalityKey, { name: string; description: string; icon: "Handshake" | "Briefcase" | "Code" | "Compass" }> = {
   referral: {
-    name: "Referral Partner",
+    name: "Parceiro Indicador",
     description:
       "Destinado a profissionais e empresas que indicam clientes à Rocket Vision. O parceiro recebe uma comissão quando sua indicação resulta em um contrato efetivamente pago. Entrada simplificada.",
     icon: "Handshake",
   },
   business: {
-    name: "Business Partner",
+    name: "Parceiro de Negócios",
     description:
       "Para agências de marketing, consultorias, empresas de TI e representantes comerciais que desejam incluir as soluções da Rocket em seu portfólio. Permite vendas conjuntas, propostas comerciais compartilhadas e projetos em modelo white-label, mediante aprovação.",
     icon: "Briefcase",
   },
   technology: {
-    name: "Technology Partner",
+    name: "Parceiro de Tecnologia",
     description:
       "Para desenvolvedores, software houses e especialistas que complementam a capacidade técnica da Rocket Vision. Permite desenvolvimento conjunto, integrações, subcontratação e participação em projetos maiores.",
     icon: "Code",
   },
   strategic: {
-    name: "Strategic Partner",
+    name: "Parceiro Estratégico",
     description:
       "Para empresas com potencial de estabelecer relacionamentos comerciais de longo prazo. Inclui iniciativas de co-marketing, produtos conjuntos, expansão para novos mercados e condições comerciais negociadas individualmente.",
     icon: "Compass",
@@ -153,9 +153,9 @@ export const HUB_OPEN_STATUSES: PartnerStatus[] = ["onboarding", "active"];
 /* -------------------------------------------------------------------------- */
 
 export const PARTNER_ROLES = [
-  { key: "owner", label: "Partner Owner", description: "Responsável pela empresa: acesso completo, equipe, contratos e ganhos." },
-  { key: "manager", label: "Partner Manager", description: "Gerencia indicações, oportunidades e dados da empresa. Vê os ganhos." },
-  { key: "member", label: "Partner Member", description: "Registra e acompanha as próprias indicações, acessa materiais e suporte." },
+  { key: "owner", label: "Responsável", description: "Responsável pela empresa: acesso completo, equipe, contratos e ganhos." },
+  { key: "manager", label: "Gestor", description: "Gerencia indicações, oportunidades e dados da empresa. Vê os ganhos." },
+  { key: "member", label: "Membro", description: "Registra e acompanha as próprias indicações, acessa materiais e suporte." },
 ] as const;
 export type PartnerRole = (typeof PARTNER_ROLES)[number]["key"];
 export const PARTNER_ROLE_KEYS = PARTNER_ROLES.map((r) => r.key) as [PartnerRole, ...PartnerRole[]];
@@ -177,7 +177,7 @@ export const HUB_PERMISSIONS = {
 export type HubPermission = keyof typeof HUB_PERMISSIONS;
 
 export function hubCan(role: PartnerRole, permission: HubPermission, options: { managersInvite?: boolean } = {}) {
-  // Com a opção ligada para a empresa, o Partner Manager também convida (só membros).
+  // Com a opção ligada para a empresa, o Gestor também convida (só membros).
   if (permission === "team.manage" && role === "manager" && options.managersInvite) return true;
   return (HUB_PERMISSIONS[permission] as readonly string[]).includes(role);
 }

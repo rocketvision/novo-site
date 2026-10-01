@@ -13,7 +13,7 @@ import { hubEarnings } from "@/server/alliance/commissions";
 import { hubContracts } from "@/server/alliance/contracts";
 import { isTwoFactorAvailable } from "@/server/alliance/hub/totp";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const metadata: Metadata = { title: "Painel" };
 
 /** Dashboard do parceiro: quem é no programa, números da empresa, próximos passos e comunicados. */
 export default async function HubDashboard() {
@@ -48,8 +48,8 @@ export default async function HubDashboard() {
             <h1 className="mt-3 text-[1.9rem] leading-tight font-semibold tracking-[-0.03em]">Olá, {user.name.split(" ")[0]}.</h1>
             <p className="mt-1 text-[15px] text-white/65">{user.partner.tradeName}</p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] py-1 pr-3 pl-1 text-[12px] font-medium text-white ring-1 ring-white/15">
-                <TierBadge tier={user.partner.tierKey} size={22} />
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] py-1 pr-3.5 pl-1 text-[12px] font-medium text-white ring-1 ring-white/15">
+                <TierBadge tier={user.partner.tierKey} size={30} />
                 {tier?.name ?? user.partner.tierKey}
               </span>
               {who.modalities.map((m) => (
@@ -60,11 +60,14 @@ export default async function HubDashboard() {
               {user.partner.status === "onboarding" && <span className="rounded-full px-3 py-1 text-[12px] text-amber-200 ring-1 ring-amber-300/30">Onboarding</span>}
             </div>
           </div>
-          {hubCan(user.role, "referrals.create") && (
-            <Link href="/alliance/indicacoes/nova" className="inline-flex h-10 items-center gap-2 self-start rounded-full bg-white px-5 text-[13px] font-semibold text-zinc-950 hover:bg-zinc-100 sm:self-auto">
-              <Plus className="size-4" /> Nova indicação
-            </Link>
-          )}
+          <div className="flex flex-col items-start gap-5 sm:items-end">
+            <TierBadge tier={user.partner.tierKey} size={112} detailed title={`Selo ${tier?.name ?? user.partner.tierKey}`} className="hidden drop-shadow-[0_16px_32px_rgb(0_0_0/0.5)] sm:block" />
+            {hubCan(user.role, "referrals.create") && (
+              <Link href="/alliance/indicacoes/nova" className="inline-flex h-10 items-center gap-2 rounded-full bg-white px-5 text-[13px] font-semibold text-zinc-950 hover:bg-zinc-100">
+                <Plus className="size-4" /> Nova indicação
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 

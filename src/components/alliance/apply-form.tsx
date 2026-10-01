@@ -169,7 +169,7 @@ export function ApplyForm({ modalities }: { modalities: { key: string; name: str
               className="group inline-flex h-13 w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(180deg,#f6f7f9_0%,#d3d7de_55%,#b9bec7_100%)] px-7 text-[1rem] font-semibold text-[#0b0b0e] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(0,0,0,0.18),0_10px_30px_-12px_rgba(0,0,0,0.8)] transition-[transform,box-shadow,opacity] duration-300 hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_40px_-10px_rgb(44_157_245/0.55)] disabled:opacity-70 sm:w-auto"
             >
               {state === "sending" ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : null}
-              {state === "sending" ? "Enviando..." : "Become a Partner"}
+              {state === "sending" ? "Enviando..." : "Enviar candidatura"}
               {state !== "sending" && <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />}
             </button>
           </m.form>

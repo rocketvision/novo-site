@@ -187,7 +187,7 @@ export function ContactForm({ initial }: { initial: { contactName: string; conta
   );
 }
 
-/** Aceite de termo pelo Partner Owner: exige marcar que leu; o servidor confere que o texto é o mesmo. */
+/** Aceite de termo pelo Responsável: exige marcar que leu; o servidor confere que o texto é o mesmo. */
 export function AcceptContract({ id, title, hash }: { id: string; title: string; hash: string }) {
   const router = useRouter();
   const toast = useToast();

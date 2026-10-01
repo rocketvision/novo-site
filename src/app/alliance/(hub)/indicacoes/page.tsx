@@ -11,7 +11,7 @@ import { requireHubSession } from "@/server/alliance/hub/guard";
 import { countReferralsForHub, listReferralsForHub } from "@/server/alliance/referrals";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Referral Pipeline" };
+export const metadata: Metadata = { title: "Indicações" };
 
 const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 
@@ -28,7 +28,7 @@ export default async function HubReferralsPage({ searchParams }: { searchParams:
   return (
     <div>
       <PageHeader
-        title="Referral Pipeline"
+        title="Indicações"
         description={all ? "As indicações da sua empresa, etapa por etapa." : "As indicações que você registrou, etapa por etapa."}
         actions={
           hubCan(user.role, "referrals.create") && (

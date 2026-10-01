@@ -7,7 +7,7 @@ import { hubCan, OPPORTUNITY_KINDS } from "@/lib/alliance/constants";
 import { requireHubSession } from "@/server/alliance/hub/guard";
 import { hubOpportunities } from "@/server/alliance/library";
 
-export const metadata: Metadata = { title: "Opportunities" };
+export const metadata: Metadata = { title: "Oportunidades" };
 
 const INTEREST: Record<string, { label: string; tone: "blue" | "green" | "neutral" }> = {
   sent: { label: "Interesse enviado", tone: "blue" },
@@ -22,7 +22,7 @@ export default async function HubOpportunitiesPage() {
   const today = new Date().toISOString().slice(0, 10);
   return (
     <div>
-      <PageHeader title="Opportunities" description="Projetos conjuntos, subcontratações e campanhas abertas para a sua empresa, conforme modalidade e nível." />
+      <PageHeader title="Oportunidades" description="Projetos conjuntos, subcontratações e campanhas abertas para a sua empresa, conforme modalidade e nível." />
       {items.length === 0 ? (
         <EmptyState icon={<Lightbulb className="size-8" />} title="Nenhuma oportunidade aberta para a sua empresa agora. Avisamos quando surgir uma." />
       ) : (

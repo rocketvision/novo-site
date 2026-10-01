@@ -139,7 +139,7 @@ export function PartnerPageEditor({
     <>
       <Panel title="Abertura" description={`O hero mostra os logotipos da Rocket Vision e da ${partnerName} lado a lado, sobre a capa do cadastro.`}>
         <div className="space-y-5">
-          <Field label="Título" hint='Ex.: "Two visions. One shared future."' error={errors["hero.title"]} counter={{ value: data.hero.title.length, max: 90 }}>
+          <Field label="Título" hint='Ex.: "Duas visões. Um futuro em comum."' error={errors["hero.title"]} counter={{ value: data.hero.title.length, max: 90 }}>
             {(p) => <Input {...p} value={data.hero.title} maxLength={90} onChange={(e) => setData((d) => ({ ...d, hero: { ...d.hero, title: e.target.value } }))} />}
           </Field>
           <Field label="Apresentação da parceria" optional hint="Um parágrafo curto. Só informações reais, aprovadas pela empresa." error={errors["hero.subtitle"]} counter={{ value: data.hero.subtitle.length, max: 400 }}>
@@ -192,7 +192,7 @@ export function PartnerPageEditor({
                     {(p) => <Textarea {...p} rows={2} value={block.body} maxLength={400} onChange={(e) => setBlock(i, { body: e.target.value })} />}
                   </Field>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Texto do botão" optional hint={`Vazio: "Visit ${partnerName}".`} error={errors[`blocks.${i}.label`]}>
+                    <Field label="Texto do botão" optional hint={`Vazio: "Visitar o site da ${partnerName}".`} error={errors[`blocks.${i}.label`]}>
                       {(p) => <Input {...p} value={block.label} maxLength={40} onChange={(e) => setBlock(i, { label: e.target.value })} />}
                     </Field>
                     <Field label="Link" optional hint={hints.website ? "Vazio: o site oficial do cadastro." : "Vazio e sem site no cadastro: o bloco não aparece."} error={errors[`blocks.${i}.url`]}>

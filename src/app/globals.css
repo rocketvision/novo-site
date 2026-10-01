@@ -488,14 +488,16 @@ a:focus-visible .logo-rocket-hover {
   }
 }
 
-/* No carregamento da página, a entrada dos títulos espera a cortina da abertura subir. */
-html:not(.intro-done) .animate-rise,
-html:not(.intro-done) .animate-fade-up,
-html:not(.intro-done) .animate-headline {
+/* No carregamento da página, a entrada dos títulos espera a cortina da abertura subir.
+   A regra sai só com `intro-settled`, quando todas as entradas já terminaram: tirar o atraso no meio
+   da animação faria tudo saltar para o fim de uma vez (a página "piscava"). */
+html:not(.intro-settled) .animate-rise,
+html:not(.intro-settled) .animate-fade-up,
+html:not(.intro-settled) .animate-headline {
   animation-delay: calc(var(--delay, 0ms) + 1650ms);
 }
 
-html:not(.intro-done) .animate-fade-in {
+html:not(.intro-settled) .animate-fade-in {
   animation-delay: calc(var(--delay, 500ms) + 1650ms);
 }
 

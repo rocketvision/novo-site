@@ -12,7 +12,7 @@ import { hubEarnings } from "@/server/alliance/commissions";
 import { getProgramSettings } from "@/server/alliance/settings";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Earnings" };
+export const metadata: Metadata = { title: "Ganhos" };
 
 const FILTERS = [
   { key: "", label: "Todos" },
@@ -37,7 +37,7 @@ export default async function HubEarningsPage({ searchParams }: { searchParams: 
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Earnings" description="Comissões da sua empresa: do recebimento pela Rocket Vision até o pagamento." />
+      <PageHeader title="Ganhos" description="Comissões da sua empresa: do recebimento pela Rocket Vision até o pagamento." />
 
       <div className="grid gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-4">
         <Card label="Previstas" value={formatMoney(e.forecastCents)} hint="Estimativa, não é pagamento garantido" muted />

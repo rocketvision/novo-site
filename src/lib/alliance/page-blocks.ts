@@ -31,7 +31,7 @@ export const ctaBlock = z.object({
   visible,
   title: optionalText(120, "O título"),
   body: optionalText(400, "O texto"),
-  /** Vazio: "Visit {nome}". */
+  /** Vazio: "Visitar o site da {nome}". */
   label: optionalText(40, "O texto do botão"),
   /** Vazio: o site oficial cadastrado. */
   url: optionalHttpsUrl,
@@ -45,7 +45,7 @@ export type BlockKind = PageBlock["kind"];
 
 export const partnerPageSchema = z.object({
   hero: z.object({
-    /** Frase de abertura. Ex.: "Two visions. One shared future." */
+    /** Frase de abertura. Ex.: "Duas visões. Um futuro em comum." */
     title: optionalText(90, "O título"),
     subtitle: optionalText(400, "O subtítulo"),
   }),
@@ -79,7 +79,7 @@ export function newBlock(kind: BlockKind): PageBlock {
     case "cta":
       return { ...base, kind, title: "", body: "", label: "", url: "" };
     case "explore":
-      return { ...base, kind, title: "Explore More" };
+      return { ...base, kind, title: "Conheça outros parceiros" };
     default:
       return { ...base, kind, eyebrow: "", title: "" };
   }
@@ -92,15 +92,15 @@ export function newBlock(kind: BlockKind): PageBlock {
 export function defaultPartnerPage(): PartnerPageContent {
   const t = (idSuffix: string, title: string) => ({ id: `default-${idSuffix}`, kind: "text" as const, visible: true, eyebrow: "", title, body: "" });
   return {
-    hero: { title: "Two visions. One shared future.", subtitle: "" },
+    hero: { title: "Duas visões. Um futuro em comum.", subtitle: "" },
     blocks: [
-      t("about", "About the Partner"),
-      t("what", "What They Do"),
-      { id: "default-expertise", kind: "expertise", visible: true, eyebrow: "", title: "Areas of Expertise" },
-      t("partnership", "Our Partnership"),
-      { id: "default-projects", kind: "projects", visible: true, eyebrow: "", title: "Selected Projects" },
+      t("about", "Sobre o parceiro"),
+      t("what", "O que fazem"),
+      { id: "default-expertise", kind: "expertise", visible: true, eyebrow: "", title: "Áreas de atuação" },
+      t("partnership", "Nossa parceria"),
+      { id: "default-projects", kind: "projects", visible: true, eyebrow: "", title: "Projetos em destaque" },
       { id: "default-cta", kind: "cta", visible: true, title: "", body: "", label: "", url: "" },
-      { id: "default-explore", kind: "explore", visible: true, title: "Explore More" },
+      { id: "default-explore", kind: "explore", visible: true, title: "Conheça outros parceiros" },
     ],
   };
 }

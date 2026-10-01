@@ -29,9 +29,9 @@ export async function listPartnerUsers(partnerId: string) {
 
 /**
  * Muda o papel ou desativa/reativa alguém da equipe.
- * - A empresa sempre mantém ao menos um Partner Owner ativo.
+ * - A empresa sempre mantém ao menos um Responsável ativo.
  * - Ninguém muda o próprio papel nem desativa a si mesmo.
- * - Pelo Hub, só o Partner Owner gerencia a equipe e não cria outro owner (isso é com a Rocket).
+ * - Pelo Hub, só o Responsável gerencia a equipe e não cria outro owner (isso é com a Rocket).
  */
 export async function updatePartnerUser(
   by: { kind: "cms"; actor: CmsActor } | { kind: "hub"; user: HubUser },
@@ -42,9 +42,9 @@ export async function updatePartnerUser(
 ) {
   if (by.kind === "hub") {
     if (by.user.partner.id !== partnerId || !hubCan(by.user.role, "team.manage")) throw forbidden();
-    if (by.user.role !== "owner") throw forbidden("Só o Partner Owner muda papéis e acessos.");
+    if (by.user.role !== "owner") throw forbidden("Só o Responsável muda papéis e acessos.");
     if (by.user.id === userId) throw forbidden("Você não pode mudar o próprio acesso.");
-    if (input.role === "owner") throw forbidden("O Partner Owner é definido pela Rocket Vision.");
+    if (input.role === "owner") throw forbidden("O Responsável é definido pela Rocket Vision.");
   }
   await getDb().transaction(async (tx) => {
     const [target] = await tx
@@ -54,7 +54,7 @@ export async function updatePartnerUser(
       .for("update");
     // Outra empresa ou inexistente: a mesma resposta (não confirma que o ID existe).
     if (!target) throw notFound("Pessoa não encontrada.");
-    if (by.kind === "hub" && target.role === "owner") throw forbidden("O Partner Owner é gerenciado pela Rocket Vision.");
+    if (by.kind === "hub" && target.role === "owner") throw forbidden("O Responsável é gerenciado pela Rocket Vision.");
 
     const losingOwner = target.role === "owner" && target.status === "active" && ((input.role && input.role !== "owner") || input.status === "disabled");
     if (losingOwner) {
@@ -62,7 +62,7 @@ export async function updatePartnerUser(
         .select({ owners: sql<number>`count(*)::int` })
         .from(schema.partnerUsers)
         .where(and(eq(schema.partnerUsers.partnerId, partnerId), eq(schema.partnerUsers.role, "owner"), eq(schema.partnerUsers.status, "active"), ne(schema.partnerUsers.id, userId)));
-      if (owners === 0) throw conflict("A empresa precisa de ao menos um Partner Owner ativo. Defina outro antes.", "last_owner");
+      if (owners === 0) throw conflict("A empresa precisa de ao menos um Responsável ativo. Defina outro antes.", "last_owner");
     }
     if (input.status === "active" && !target.passwordHash) throw conflict("Esta pessoa ainda não aceitou o convite. Reenvie o convite.", "not_accepted");
 
