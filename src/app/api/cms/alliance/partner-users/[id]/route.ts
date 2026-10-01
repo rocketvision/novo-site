@@ -7,7 +7,7 @@ import { isUuid } from "@/server/media/service";
 import { getDb, schema } from "@/server/db";
 import { updatePartnerUser } from "@/server/alliance/team";
 
-/** PATCH /api/cms/alliance/partner-users/:id: papel (inclusive Partner Owner) e acesso de uma pessoa do Hub. */
+/** PATCH /api/cms/alliance/partner-users/:id: papel (inclusive Responsável) e acesso de uma pessoa do Hub. */
 export const PATCH = authedRoute<{ id: string }>({ permission: "alliance.partners" }, async ({ params, request, user, ip, userAgent }) => {
   if (!isUuid(params.id)) throw notFound("Pessoa não encontrada.");
   const input = await readJson(request, partnerMemberUpdateSchema.extend({ role: z.enum(["owner", "manager", "member"]).optional() }));

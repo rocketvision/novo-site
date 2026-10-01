@@ -161,6 +161,11 @@ function PartnerCard({ partner: p, modalityName, tierName }: { partner: Director
             <span className="text-[1.6rem] font-semibold tracking-[-0.03em] text-white/85">{p.tradeName}</span>
           )}
         </div>
+        {tierName && p.tierKey && (
+          <div className="absolute top-4 right-4">
+            <TierBadge tier={p.tierKey} size={72} detailed title={`Selo ${tierName}`} className="drop-shadow-[0_10px_24px_rgb(0_0_0/0.5)]" />
+          </div>
+        )}
         {p.featured && (
           <span className="absolute top-4 left-4 rounded-full bg-white/[0.08] px-2.5 py-1 text-[0.7rem] font-medium text-white/80 ring-1 ring-white/15 backdrop-blur">Destaque</span>
         )}
@@ -181,10 +186,7 @@ function PartnerCard({ partner: p, modalityName, tierName }: { partner: Director
             </span>
           ))}
           {tierName && (
-            <span className="inline-flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-0.5 text-[0.7rem] font-medium text-white/80 ring-1 ring-white/12">
-              <TierBadge tier={p.tierKey ?? "member"} size={20} />
-              {tierName}
-            </span>
+            <span className="rounded-full px-2.5 py-1 text-[0.7rem] font-medium text-white/80 ring-1 ring-white/12">{tierName}</span>
           )}
         </div>
       </div>

@@ -734,7 +734,7 @@ export const partners = pgTable(
     directoryEnabled: boolean("directory_enabled").notNull().default(false),
     featured: boolean("featured").notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),
-    /** Com a opção, o Partner Manager também convida membros para a equipe. */
+    /** Com a opção, o Gestor também convida membros para a equipe. */
     managersInvite: boolean("managers_invite").notNull().default(false),
     // Avaliação para evolução de nível (não depende só do faturamento).
     qualityScore: smallint("quality_score"),

@@ -15,7 +15,7 @@ export const allianceContent: SectionContent<"alliance"> = {
     paragraphs: [
       "O Rocket Alliance é o programa oficial de parcerias da Rocket Vision, criado para conectar empresas, profissionais de tecnologia, agências e consultores que desejam crescer por meio de oportunidades comerciais, colaboração técnica e desenvolvimento de soluções digitais.",
       "A proposta é construir um ecossistema em que os parceiros possam indicar clientes, comercializar soluções, desenvolver projetos em conjunto e gerar receita recorrente.",
-      "O programa terá identidade premium, benefícios progressivos, regras transparentes, reconhecimento e um portal exclusivo para parceiros.",
+      "O programa tem identidade premium, benefícios progressivos, regras transparentes, reconhecimento e um portal exclusivo para parceiros.",
     ],
   },
   commissions: {
@@ -29,7 +29,7 @@ export const allianceContent: SectionContent<"alliance"> = {
     ],
   },
   directory: {
-    title: "Our Partners",
+    title: "Nossos parceiros",
     lead: "Empresas que constroem soluções, projetos e oportunidades ao lado da Rocket Vision.",
   },
   faq: [
@@ -46,7 +46,7 @@ export const allianceContent: SectionContent<"alliance"> = {
     {
       question: "Qual modalidade devo escolher?",
       answer:
-        "A modalidade define como o parceiro atua. Referral Partner indica clientes; Business Partner inclui as soluções da Rocket no próprio portfólio; Technology Partner complementa a capacidade técnica; Strategic Partner constrói relações de longo prazo. Uma empresa pode ter mais de uma modalidade, se autorizada.",
+        "A modalidade define como o parceiro atua. Parceiro Indicador indica clientes; Parceiro de Negócios inclui as soluções da Rocket no próprio portfólio; Parceiro de Tecnologia complementa a capacidade técnica; Parceiro Estratégico constrói relações de longo prazo. Uma empresa pode ter mais de uma modalidade, se autorizada.",
     },
     {
       question: "Como funcionam as comissões?",
@@ -80,7 +80,7 @@ export const allianceContent: SectionContent<"alliance"> = {
     },
   ],
   apply: {
-    title: "Become a Partner",
+    title: "Seja um parceiro",
     lead: "Conte sobre a sua empresa e como você quer crescer com a Rocket Vision. A equipe analisa cada candidatura e responde pelo e-mail informado.",
   },
 };
@@ -91,9 +91,9 @@ export const alliancePage = {
     title: PROGRAM.name,
     slogan: PROGRAM.slogan,
     message: PROGRAM.publicMessage,
-    lead: "Join an ecosystem of innovators, creators and businesses shaping the future of digital experiences.",
-    primary: "Become a Partner",
-    secondary: "Explore Our Partners",
+    lead: "Faça parte de um ecossistema de empresas, criadores e especialistas que estão construindo o futuro das experiências digitais.",
+    primary: "Quero ser parceiro",
+    secondary: "Conheça nossos parceiros",
   },
   modalities: {
     eyebrow: "Modalidades",
@@ -108,7 +108,7 @@ export const alliancePage = {
   journey: { eyebrow: "Como funciona", title: "Da inscrição ao reconhecimento." },
   commissions: { eyebrow: "Comissões e benefícios", title: "Regras claras. Crescimento compartilhado.", rateLabel: "comissão inicial", ratesNote: "Percentuais das regras aprovadas, sobre a receita líquida elegível. Condições individuais podem variar conforme o termo de parceria." },
   directory: { eyebrow: "Diretório", search: "Buscar parceiros", allModalities: "Todas as modalidades", allSectors: "Todos os setores", empty: "Em breve, os primeiros parceiros do Rocket Alliance aparecem aqui.", noResults: "Nenhum parceiro encontrado com esses filtros.", clear: "Limpar filtros", more: "Ver mais parceiros" },
-  faq: { eyebrow: "FAQ", title: "Perguntas frequentes" },
-  final: { title: "Become a Partner.", slogan: PROGRAM.slogan, complement: PROGRAM.complement },
+  faq: { eyebrow: "Dúvidas", title: "Perguntas frequentes" },
+  final: { title: "Seja um parceiro.", slogan: PROGRAM.slogan, complement: PROGRAM.complement },
   hub: { label: "Já é parceiro?", link: "Entrar no Alliance Hub" },
 } as const;

@@ -126,7 +126,7 @@ function HeroContent({ hero, services }: Content) {
                 variant: "secondary",
                 size: "lg",
                 className:
-                  "bg-white/[0.04] text-white ring-white/25 backdrop-blur-md hover:bg-white/[0.08] hover:text-white hover:ring-white/50 max-[400px]:w-full",
+                  "bg-[rgb(10_12_16/0.55)] text-white ring-white/25 hover:bg-[rgb(10_12_16/0.7)] hover:text-white hover:ring-white/50 max-[400px]:w-full",
               })}
             >
               <span>{hero.secondaryCta.label}</span>

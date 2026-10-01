@@ -1,6 +1,6 @@
 # Rocket Alliance
 
-**Rocket Alliance · The Rocket Vision Partner Program.** Grow Together. Go Beyond.
+**Rocket Alliance · O programa de parceiros da Rocket Vision.** Grow Together. Go Beyond.
 
 O programa de parceiros faz parte do site e do CMS que já existem. Não é um produto separado nem um segundo CMS. Ele reaproveita o banco, a mídia, a auditoria, o rate limit, o draft mode e os padrões de rota do Studio.
 
@@ -85,9 +85,9 @@ Cada página e cada rota conferem a permissão no servidor. A aba escondida é s
 
   | Papel | O que pode |
   | --- | --- |
-  | Partner Owner | Tudo, inclusive equipe, contratos e ganhos |
-  | Partner Manager | Indicações, oportunidades, dados da empresa e ganhos |
-  | Partner Member | Só as próprias indicações, materiais e suporte |
+  | Responsável | Tudo, inclusive equipe, contratos e ganhos |
+  | Gestor | Indicações, oportunidades, dados da empresa e ganhos |
+  | Membro | Só as próprias indicações, materiais e suporte |
 
 - **Isolamento.** Toda consulta do Hub filtra pela empresa da sessão, no servidor. O ID na URL nunca basta: indicação, contrato, arquivo ou chamado de outra empresa responde 404.
 - **Perfil público.** Mudanças em dados que aparecem no site viram um *pedido de alteração*, que a Rocket aprova em Parceiros. O contato interno a empresa atualiza sozinha.
@@ -121,7 +121,7 @@ Cada página e cada rota conferem a permissão no servidor. A aba escondida é s
 
 - **Rascunho.** O contrato é criado em rascunho e depois enviado para aceite.
 - **Envio.** Enviar congela o texto e grava o SHA-256 dele.
-- **Aceite.** Feito pelo Partner Owner no Hub. Registra pessoa, data, IP, navegador e o hash do texto aceito. O servidor confere que o texto não mudou.
+- **Aceite.** Feito pelo Responsável no Hub. Registra pessoa, data, IP, navegador e o hash do texto aceito. O servidor confere que o texto não mudou.
 - **Nova versão.** Mudar o texto cria outra versão; a anterior continua no histórico.
 - **Arquivos.** Contratos e materiais são privados (Vercel Blob `private`; em desenvolvimento, `.data/alliance-files`). Só são baixados por rotas que conferem a sessão e a permissão. O tipo é detectado pelos bytes, e HTML ou executáveis são recusados.
 
