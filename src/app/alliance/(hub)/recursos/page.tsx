@@ -6,7 +6,7 @@ import { RESOURCE_CATEGORIES } from "@/lib/alliance/constants";
 import { requireHubSession } from "@/server/alliance/hub/guard";
 import { hubResources } from "@/server/alliance/library";
 
-export const metadata: Metadata = { title: "Materiais" };
+export const metadata: Metadata = { title: "Partner Resources" };
 
 /** Biblioteca do parceiro: só o que o nível, as modalidades e a empresa permitem (filtrado no servidor). */
 export default async function HubResourcesPage() {
@@ -15,7 +15,7 @@ export default async function HubResourcesPage() {
   const groups = RESOURCE_CATEGORIES.map((c) => ({ ...c, items: items.filter((i) => i.category === c.key) })).filter((g) => g.items.length > 0);
   return (
     <div>
-      <PageHeader title="Materiais" description="Materiais comerciais, identidade visual, documentos, apresentações e treinamentos para vender e entregar junto com a Rocket Vision." />
+      <PageHeader title="Partner Resources" description="Materiais comerciais, identidade visual, documentos, apresentações e treinamentos para vender e entregar junto com a Rocket Vision." />
       {groups.length === 0 ? (
         <EmptyState icon={<FolderOpen className="size-8" />} title="Os materiais do programa aparecem aqui assim que forem publicados para a sua empresa." />
       ) : (

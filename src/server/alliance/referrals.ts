@@ -35,7 +35,7 @@ type Ctx = { ip: string | null; userAgent: string | null };
  * Concorrência: o registro trava as chaves da empresa (pg_advisory_xact_lock) dentro da transação, então
  * dois parceiros enviando a mesma empresa no mesmo instante nunca ficam os dois com a proteção.
  *
- * Isolamento: toda leitura do Hub filtra pela empresa da sessão (e, para o Membro, pelas
+ * Isolamento: toda leitura do Hub filtra pela empresa da sessão (e, para o Partner Member, pelas
  * indicações que ele mesmo registrou). Um ID de outra empresa responde 404, igual a um ID inexistente.
  */
 
@@ -148,7 +148,7 @@ export async function createReferral(user: HubUser, input: ReferralInput, ctx: C
   return { id: referral.id, code: referral.code };
 }
 
-/** Filtro de isolamento do Hub: sempre a empresa da sessão; Membro vê só as dele. */
+/** Filtro de isolamento do Hub: sempre a empresa da sessão; Partner Member vê só as dele. */
 function hubScope(user: HubUser): SQL {
   const own = eq(schema.referrals.partnerId, user.partner.id);
   return hubCan(user.role, "referrals.view_all") ? own : and(own, eq(schema.referrals.submittedBy, user.id))!;
@@ -458,7 +458,7 @@ export async function updateReferral(actor: Actor, id: string, input: ReferralUp
       { type: "referral", title: `${r.code}: ${referralStatusLabel(effects.statusChanged)}`, body: `${r.companyName}${effects.visibleNote ? `. ${effects.visibleNote}` : ""}`, link: `/alliance/indicacoes/${r.id}` },
       { roles: ["owner", "manager"], email: { template: "referral_status", params, dedupeKey: `referral-status:${r.id}:${r.version}` } },
     );
-    // Quem registrou (se for Membro) também recebe.
+    // Quem registrou (se for Partner Member) também recebe.
     if (recipients.length) {
       const [submitter] = await getDb().select({ role: schema.partnerUsers.role }).from(schema.partnerUsers).where(inArray(schema.partnerUsers.id, recipients));
       if (submitter?.role === "member") {

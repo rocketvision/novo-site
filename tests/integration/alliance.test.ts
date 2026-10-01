@@ -265,7 +265,7 @@ describe("Alliance Hub: autenticação", () => {
     expect(u.recoveryCodes).toHaveLength(9);
   });
 
-  it("Responsável não cria outro owner pelo Hub; membro não convida", async () => {
+  it("Partner Owner não cria outro owner pelo Hub; membro não convida", async () => {
     const r = await teamRoute.POST(req("POST", "/api/alliance/hub/team", { name: "Bia", email: "bia@aurora.example", role: "owner" }), params({}));
     expect(r.status).toBe(403);
     const ok = await teamRoute.POST(req("POST", "/api/alliance/hub/team", { name: "Caio", email: "caio@aurora.example", role: "member" }), params({}));
@@ -307,7 +307,7 @@ describe("Indicações: duplicidade, isolamento e transições", () => {
     expect(row.possibleDuplicateOf).not.toBeNull();
   });
 
-  it("isolamento: outra empresa e o Membro não veem indicações que não são deles", async () => {
+  it("isolamento: outra empresa e o Partner Member não veem indicações que não são deles", async () => {
     const [mine] = await getDb().select().from(s.referrals).where(and(eq(s.referrals.partnerId, partnerA), eq(s.referrals.companyDomain, "padariasol.example")));
     expect(await getReferralForHub(hubB, mine.id)).toBeNull();
     hubAMember = await hubUser(partnerA, "membro@aurora.example", "member");
@@ -456,7 +456,7 @@ describe("Rotas: sessões e permissões", () => {
     expect((await hubResourceFileRoute.GET(req("GET", `/api/alliance/hub/resources/${res.id}/file`), params({ id: res.id }))).status).toBe(404);
   });
 
-  it("contrato de outra empresa não pode ser aceito (404) e o Membro não aceita termos (403)", async () => {
+  it("contrato de outra empresa não pode ser aceito (404) e o Partner Member não aceita termos (403)", async () => {
     const db = getDb();
     const [c] = await db.insert(s.partnerContracts).values({ partnerId: partnerB, title: "Termo", kind: "partnership", version: 1, status: "sent", terms: "Texto", termsSha256: "a".repeat(64), sentAt: new Date(), createdBy: owner.id }).returning();
     await asHub(hubA);

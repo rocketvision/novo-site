@@ -313,7 +313,7 @@ export function PartnerEditor({ id, initial, media: initialMedia, projects, perm
           </fieldset>
           <div className="mt-5 space-y-4 border-t border-zinc-100 pt-5">
             <Switch label="Mostrar o nível no site" description="Só com autorização da empresa. Desligado: o diretório e a página não mostram o nível." checked={data.showTier} disabled={readOnly} onChange={(v) => update("showTier", v)} />
-            <Switch label="Gestor convida membros" description="Permite que gerentes da empresa convidem novos membros pelo Hub." checked={data.managersInvite} disabled={readOnly} onChange={(v) => update("managersInvite", v)} />
+            <Switch label="Partner Manager convida membros" description="Permite que gerentes da empresa convidem novos membros pelo Hub." checked={data.managersInvite} disabled={readOnly} onChange={(v) => update("managersInvite", v)} />
           </div>
         </Panel>
 

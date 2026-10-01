@@ -10,7 +10,7 @@ import { requireHubPermission } from "@/server/alliance/hub/guard";
 import { hubTickets } from "@/server/alliance/support";
 import { getProgramSettings } from "@/server/alliance/settings";
 
-export const metadata: Metadata = { title: "Suporte" };
+export const metadata: Metadata = { title: "Support" };
 
 export default async function HubSupportPage() {
   const { user } = await requireHubPermission("support.use");
@@ -18,7 +18,7 @@ export default async function HubSupportPage() {
   return (
     <div>
       <PageHeader
-        title="Suporte"
+        title="Support"
         description={`Fale com a equipe Rocket Vision. Os chamados da sua empresa ficam registrados aqui.${settings.supportEmail ? ` Também por ${settings.supportEmail}.` : ""}`}
         actions={
           <ButtonLink href="/alliance/suporte/novo" size="sm">

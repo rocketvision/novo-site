@@ -9,7 +9,7 @@ import { requireHubSession } from "@/server/alliance/hub/guard";
 import { hubCompany } from "@/server/alliance/company";
 import { hubContracts } from "@/server/alliance/contracts";
 
-export const metadata: Metadata = { title: "Minha empresa" };
+export const metadata: Metadata = { title: "My Company" };
 
 const REQUEST_STATUS: Record<string, { label: string; tone: "amber" | "green" | "red" | "neutral" }> = {
   pending: { label: "Aguardando aprovação", tone: "amber" },
@@ -26,7 +26,7 @@ export default async function HubCompanyPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Minha empresa"
+        title="My Company"
         description="Dados da sua empresa no programa. O que aparece no site só muda depois da aprovação da Rocket Vision."
         actions={
           company.published && (
@@ -100,7 +100,7 @@ export default async function HubCompanyPage() {
                         </a>
                       )}
                       {c.status === "sent" && hubCan(user.role, "contracts.accept") && c.termsSha256 && <AcceptContract id={c.id} title={c.title} hash={c.termsSha256} />}
-                      {c.status === "sent" && !hubCan(user.role, "contracts.accept") && <span className="text-xs text-zinc-500">Aguardando o aceite do Responsável.</span>}
+                      {c.status === "sent" && !hubCan(user.role, "contracts.accept") && <span className="text-xs text-zinc-500">Aguardando o aceite do Partner Owner.</span>}
                       {c.acceptedAt && <span className="text-xs text-zinc-500">Aceito por {c.acceptedName} em {formatDateTime(c.acceptedAt)}</span>}
                     </div>
                   </li>

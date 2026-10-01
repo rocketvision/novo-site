@@ -13,7 +13,7 @@ import { hubEarnings } from "@/server/alliance/commissions";
 import { hubContracts } from "@/server/alliance/contracts";
 import { isTwoFactorAvailable } from "@/server/alliance/hub/totp";
 
-export const metadata: Metadata = { title: "Painel" };
+export const metadata: Metadata = { title: "Dashboard" };
 
 /** Dashboard do parceiro: quem é no programa, números da empresa, próximos passos e comunicados. */
 export default async function HubDashboard() {
