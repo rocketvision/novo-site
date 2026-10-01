@@ -230,7 +230,7 @@ function SitesScene({ service, index, tiles, tone, from, variant, heading }: Sce
     <Stage stageRef={ref} height={320} tone={tone} from={from}>
       <div data-grid className="absolute inset-[-6%] grid origin-center grid-cols-4 gap-[1.2vw] p-[1.2vw] max-md:grid-cols-3">
         {list.map((tile, i) => (
-          <div key={i} className="relative overflow-hidden rounded-[clamp(4px,0.6vw,10px)] bg-fg/5">
+          <div key={i} className={cn("relative overflow-hidden rounded-[clamp(4px,0.6vw,10px)] bg-fg/5", i === 15 && "max-md:hidden")}>
             {/* eslint-disable-next-line @next/next/no-img-element -- faixas já otimizadas, recortadas por object-position */}
             <img src={tile.src} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" style={{ objectPosition: tile.position }} />
           </div>
@@ -247,7 +247,7 @@ function SitesScene({ service, index, tiles, tone, from, variant, heading }: Sce
         data-dim
         className={cn(
           "absolute inset-0",
-          tone === "light" ? "bg-[radial-gradient(60%_60%_at_50%_50%,rgb(251_251_253/0.86),rgb(251_251_253/0.95))]" : "bg-[radial-gradient(60%_60%_at_50%_50%,rgb(10_10_11/0.72),rgb(10_10_11/0.9))]",
+          tone === "light" ? "bg-[radial-gradient(42%_46%_at_50%_50%,rgb(251_251_253/0.94)_30%,rgb(251_251_253/0.5)_100%)] max-md:bg-[radial-gradient(80%_40%_at_50%_50%,rgb(251_251_253/0.95)_50%,rgb(251_251_253/0.55)_100%)]" : "bg-[radial-gradient(42%_46%_at_50%_50%,rgb(10_10_11/0.86)_30%,rgb(10_10_11/0.45)_100%)] max-md:bg-[radial-gradient(80%_40%_at_50%_50%,rgb(10_10_11/0.9)_50%,rgb(10_10_11/0.5)_100%)]",
         )}
       />
       <div className="absolute inset-0 grid place-items-center px-4">
