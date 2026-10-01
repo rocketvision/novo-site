@@ -16,7 +16,7 @@ export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const [projectsPage, projects] = await Promise.all([getSectionContent("projectsPage"), getPublishedProjects()]);
-  const hasSampleProjects = projects.some((p) => p.sample);
+  const hasRealProjects = projects.some((p) => !p.sample);
   const title = `Projetos | ${site.name}`;
   const description = projectsPage.lead;
   return {
@@ -25,8 +25,9 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical: "/projetos" },
     openGraph: { title, description, url: "/projetos" },
     twitter: { title, description },
-    // Enquanto houver projetos de exemplo, a página não deve aparecer nos buscadores.
-    robots: hasSampleProjects || projects.length === 0 ? { index: false, follow: true } : { index: true, follow: true },
+    // A página entra nos buscadores quando há ao menos um projeto real. Os conceituais aparecem com selo
+    // e cada um fica fora do índice, mas não tiram a página de projetos do ar.
+    robots: hasRealProjects ? { index: true, follow: true } : { index: false, follow: true },
   };
 }
 

@@ -254,7 +254,7 @@ export function ProjectEditor({ id, initial, media: initialMedia, perms }: Proje
       {!creating && (
         <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-zinc-500">
           <Badge tone={status.tone}>{status.label}</Badge>
-          {initial.isSample && <Badge tone="blue">Exemplo</Badge>}
+          {initial.isSample && <Badge tone="blue">Conceitual</Badge>}
           {initial.status === "published" && initial.publishedAt && (
             <span>
               Publicado {relativeTime(initial.publishedAt)}
