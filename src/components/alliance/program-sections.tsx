@@ -36,7 +36,7 @@ export function AllianceHero() {
 
       <div className="container-page relative pt-[calc(var(--header-height)+4rem)] pb-24">
         <div className="flex animate-[fade-up_900ms_var(--ease-out)_both] items-center gap-4">
-          <AllianceMark accent className="h-9 text-white sm:h-10" title="Rocket Alliance" />
+          <AllianceMark accent animated className="h-10 text-white sm:h-12" title="Rocket Alliance" />
           <span aria-hidden="true" className="h-6 w-px bg-white/20" />
           <p className="text-eyebrow text-white/55">{h.eyebrow}</p>
         </div>
