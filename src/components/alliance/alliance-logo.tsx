@@ -1,28 +1,21 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Marca do Rocket Alliance: dois anéis abertos (o anel da Rocket Vision, em dupla) entrelaçados e o
- * foguete da marca atravessando a interseção. Duas visões que se encontram e seguem juntas.
- * Vetorial, em currentColor; `accent` pinta o segundo anel com o azul da Rocket.
+ * Marca do Rocket Alliance: o símbolo da Rocket Vision, intacto, envolvido por uma órbita fina e
+ * inclinada, com um ponto (o parceiro) girando em volta. "One ecosystem. Infinite possibilities."
+ * A metade de trás da órbita é mais apagada, o que dá profundidade sem cortes no desenho.
  *
- * - Entrelaçado: cada anel passa por cima do outro em um dos cruzamentos (máscaras fixas).
- * - O foguete tem um recorte em volta (máscara com a silhueta engrossada), então aparece inteiro
- *   sobre os anéis em qualquer fundo.
- * - `animated`: o mesmo compasso da logo principal (globals.css, "Logo do Rocket Alliance"): a chama
- *   acende, o foguete dá um impulso e os anéis giram meia volta em sentidos opostos. Parado com
- *   movimento reduzido.
+ * `animated`: o símbolo segue o ciclo da logo principal (mesmas classes de globals.css) e o ponto
+ * percorre a órbita devagar. Parado com movimento reduzido.
  */
-
-const ROCKET_BODY = "M16 6c3 2.5 3.5 6 3 14h-6c-.5-8 0-11.5 3-14Zm1.6 6.5a1.6 1.6 0 1 0-3.2 0 1.6 1.6 0 1 0 3.2 0Z";
-const ROCKET_FINS = "M13 15.5 10.5 18.5V21l2.5-1ZM19 15.5l2.5 3V21l-2.5-1Z";
-const ROCKET_FLAME = "M15.2 21.6h1.6v5.2h-1.6Z";
-/** Foguete no centro (22, 16), em escala 0,7, na diagonal da marca. */
-const ROCKET_TRANSFORM = "translate(10.8 4.8) scale(0.7) rotate(45 16 16)";
+/** A órbita como caminho: começa à direita e sobe (passa por trás), depois volta pela frente. */
+const ORBIT_PATH = "M47 16 A23 5.2 0 1 0 1 16 A23 5.2 0 1 0 47 16";
 
 export function AllianceMark({ className, accent = false, animated = false, title }: { className?: string; accent?: boolean; animated?: boolean; title?: string }) {
+  const orbit = accent ? "#2c9df5" : "currentColor";
   return (
     <svg
-      viewBox="0 0 44 32"
+      viewBox="0 0 48 32"
       fill="none"
       role={title ? "img" : undefined}
       aria-label={title}
@@ -30,47 +23,55 @@ export function AllianceMark({ className, accent = false, animated = false, titl
       className={cn("h-7 w-auto shrink-0 overflow-visible", animated && "alliance-animated", className)}
     >
       <defs>
-        {/* Recorte em volta do foguete: a silhueta, engrossada, apaga os anéis por baixo dele. */}
-        <mask id="ra-mask-rocket" maskUnits="userSpaceOnUse" x="-6" y="-6" width="56" height="44">
-          <rect x="-6" y="-6" width="56" height="44" fill="#fff" />
-          <g transform={ROCKET_TRANSFORM} fill="#000" stroke="#000" strokeWidth="3.4" strokeLinejoin="round">
-            <path d={ROCKET_BODY} />
-            <path d={ROCKET_FINS} />
+        <linearGradient id="ra-orbit-fade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={orbit} stopOpacity="0.25" />
+          <stop offset="0.5" stopColor={orbit} stopOpacity="0.25" />
+          <stop offset="0.5" stopColor={orbit} stopOpacity="1" />
+          <stop offset="1" stopColor={orbit} stopOpacity="1" />
+        </linearGradient>
+        {/* A órbita passa por trás do foguete: um recorte fino em volta da silhueta dele. */}
+        <mask id="ra-orbit-behind" maskUnits="userSpaceOnUse" x="-4" y="-4" width="56" height="40">
+          <rect x="-4" y="-4" width="56" height="40" fill="#fff" />
+          <g transform="translate(8 0) rotate(45 16 16)" fill="#000" stroke="#000" strokeWidth="2.6" strokeLinejoin="round">
+            <path d="M16 6c3 2.5 3.5 6 3 14h-6c-.5-8 0-11.5 3-14Z" />
+            <path d="M13 15.5 10.5 18.5V21l2.5-1ZM19 15.5l2.5 3V21l-2.5-1Z" />
+            <path d="M15.2 21.6h1.6v5.2h-1.6Z" />
           </g>
-        </mask>
-        {/* Entrelaçado: o esquerdo some no cruzamento de baixo, o direito no de cima. */}
-        <mask id="ra-mask-left" maskUnits="userSpaceOnUse" x="-6" y="-6" width="56" height="44">
-          <rect x="-6" y="-6" width="56" height="44" fill="#fff" />
-          <circle cx="22" cy="25.75" r="2.3" fill="#000" />
-        </mask>
-        <mask id="ra-mask-right" maskUnits="userSpaceOnUse" x="-6" y="-6" width="56" height="44">
-          <rect x="-6" y="-6" width="56" height="44" fill="#fff" />
-          <circle cx="22" cy="6.25" r="2.3" fill="#000" />
         </mask>
       </defs>
 
-      <g mask="url(#ra-mask-rocket)">
-        {/* Anéis abertos, como o da marca: as aberturas ficam para fora. */}
-        <g mask="url(#ra-mask-left)">
-          <g transform="rotate(150 15 16)">
-            <circle className="alliance-ring-left" cx="15" cy="16" r="12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" pathLength={100} strokeDasharray="86 14" />
-          </g>
-        </g>
-        <g mask="url(#ra-mask-right)">
-          <g transform="rotate(-30 29 16)">
-            <circle className="alliance-ring-right" cx="29" cy="16" r="12" stroke={accent ? "#2c9df5" : "currentColor"} strokeWidth="1.6" strokeLinecap="round" pathLength={100} strokeDasharray="86 14" />
-          </g>
+      {/* Órbita inclinada: atrás mais apagada, na frente inteira. */}
+      <g mask="url(#ra-orbit-behind)">
+        <g transform="rotate(-12 24 16)">
+          <ellipse cx="24" cy="16" rx="23" ry="5.2" stroke="url(#ra-orbit-fade)" strokeWidth="0.9" />
         </g>
       </g>
 
-      <g className="alliance-rocket-hover">
-        <g className="alliance-rocket">
-          <g transform={ROCKET_TRANSFORM} fill="currentColor">
-            <path fillRule="evenodd" d={ROCKET_BODY} />
-            <path d={ROCKET_FINS} />
-            <path className="alliance-flame" d={ROCKET_FLAME} opacity=".55" />
+      {/* Símbolo da Rocket Vision, o mesmo da logo principal. */}
+      <svg x="8" y="0" width="32" height="32" viewBox="0 0 32 32" className={cn("overflow-visible", animated && "logo-animated")}>
+        <path className="logo-ring" d="M29.16 11.21A14 14 0 0 1 11.21 29.16M2.84 20.79A14 14 0 0 1 20.79 2.84" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <g className="logo-rocket">
+          <g transform="rotate(45 16 16)" fill="currentColor">
+            <path fillRule="evenodd" d="M16 6c3 2.5 3.5 6 3 14h-6c-.5-8 0-11.5 3-14Zm1.6 6.5a1.6 1.6 0 1 0-3.2 0 1.6 1.6 0 1 0 3.2 0Z" />
+            <path d="M13 15.5 10.5 18.5V21l2.5-1ZM19 15.5l2.5 3V21l-2.5-1Z" />
+            <path className="logo-flame" d="M15.2 21.6h1.6v5.2h-1.6Z" opacity=".55" />
           </g>
         </g>
+      </svg>
+
+      {/* O parceiro: um ponto na órbita. Animado, percorre a elipse e fica mais apagado quando passa por trás. */}
+      <g transform="rotate(-12 24 16)">
+        {animated ? (
+          <>
+            <circle className="alliance-dot-moving" r="1.7" fill={orbit}>
+              <animateMotion dur="12s" repeatCount="indefinite" path={ORBIT_PATH} />
+              <animate attributeName="opacity" dur="12s" repeatCount="indefinite" values="1;0.3;0.3;1;1" keyTimes="0;0.08;0.42;0.5;1" />
+            </circle>
+            <circle className="alliance-dot-still" cx="38.8" cy="20" r="1.7" fill={orbit} />
+          </>
+        ) : (
+          <circle cx="38.8" cy="20" r="1.7" fill={orbit} />
+        )}
       </g>
     </svg>
   );
