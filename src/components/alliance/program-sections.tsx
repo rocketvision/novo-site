@@ -9,6 +9,8 @@ import type { PublicProgram } from "@/server/alliance/public";
 import { cn } from "@/lib/utils";
 import { OrbitField } from "./orbit-field";
 import { Journey } from "./journey";
+import { TierBadge } from "./tier-badge";
+import { AllianceMark } from "./alliance-logo";
 
 /**
  * Seções da página do Rocket Alliance (/partners). Alternam claro e escuro como os capítulos da home,
@@ -33,7 +35,11 @@ export function AllianceHero() {
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-t from-[#050507] to-transparent" />
 
       <div className="container-page relative pt-[calc(var(--header-height)+4rem)] pb-24">
-        <p className="animate-[fade-up_900ms_var(--ease-out)_both] text-eyebrow text-white/55">{h.eyebrow}</p>
+        <div className="flex animate-[fade-up_900ms_var(--ease-out)_both] items-center gap-4">
+          <AllianceMark accent className="h-9 text-white sm:h-10" title="Rocket Alliance" />
+          <span aria-hidden="true" className="h-6 w-px bg-white/20" />
+          <p className="text-eyebrow text-white/55">{h.eyebrow}</p>
+        </div>
         <h1 id="alliance-title" className="mt-7 animate-[fade-up_900ms_var(--ease-out)_120ms_both] text-[clamp(3.1rem,1rem+8.5vw,8.5rem)] leading-[0.9] font-semibold tracking-[-0.055em]">
           Rocket
           <br />
@@ -180,7 +186,7 @@ export function Tiers({ tiers }: { tiers: PublicProgram["tiers"] }) {
                 {elite && <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(30rem_18rem_at_100%_0%,rgb(44_157_245/0.18),transparent_60%)]" />}
                 <div className="relative flex items-center justify-between">
                   <p className={cn("font-mono text-[0.65rem] tracking-[0.14em] uppercase", elite ? "text-white/45" : "text-fg/40")}>{tier.label}</p>
-                  <TierRings rank={tier.rank} light={elite} />
+                  <TierBadge tier={tier.key} size={76} detailed title={`Selo ${tier.name}`} />
                 </div>
                 <h3 className="relative mt-10 text-[clamp(1.6rem,1.3rem+0.8vw,2.2rem)] leading-none font-semibold tracking-[-0.04em]">{tier.name}</h3>
                 <p className={cn("relative mt-4 text-[0.9rem] leading-relaxed", elite ? "text-white/60" : "text-fg/60")}>{tier.description}</p>
@@ -207,17 +213,6 @@ export function Tiers({ tiers }: { tiers: PublicProgram["tiers"] }) {
         </Reveal>
       </div>
     </section>
-  );
-}
-
-/** Anéis que se somam a cada nível, ecoando o anel da marca. */
-function TierRings({ rank, light }: { rank: number; light?: boolean }) {
-  return (
-    <svg viewBox="0 0 48 24" className="h-6 w-12" aria-hidden="true">
-      {[0, 1, 2].map((i) => (
-        <circle key={i} cx={12 + i * 12} cy={12} r={9} fill="none" strokeWidth={1.4} stroke={i < rank ? BLUE : light ? "rgb(255 255 255 / 0.15)" : "rgb(0 0 0 / 0.12)"} />
-      ))}
-    </svg>
   );
 }
 

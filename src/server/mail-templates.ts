@@ -22,7 +22,8 @@ export type Template = {
   action?: { label: string; url: string };
   note: string[];
   /** Produto no cabeçalho e no rodapé. Padrão: Content Studio. */
-  product?: { label: string; footer: string };
+  /** Produto que assina o e-mail. `brand` troca o símbolo e o nome do cabeçalho (ex.: Rocket Alliance). */
+  product?: { label: string; footer: string; brand?: { mark: string; name: [string, string] } };
 };
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -35,9 +36,10 @@ function escape(value: string) {
 export function render(t: Template): Mail {
   const siteOrigin = new URL(env.NEXT_PUBLIC_SITE_URL).origin;
   const siteHost = new URL(siteOrigin).host;
-  const logo = `${cmsOrigin}/brand/rocket-vision-mark.png`;
   const url = t.action ? escape(t.action.url) : "";
   const product = t.product ?? { label: "Content Studio", footer: `E-mail automático do ${STUDIO_NAME}` };
+  const logo = `${cmsOrigin}/brand/${product.brand?.mark ?? "rocket-vision-mark.png"}`;
+  const [nameStrong, nameLight] = product.brand?.name ?? ["Rocket", "Vision"];
   const details = (t.details ?? [])
     .map(
       (d) =>
@@ -83,9 +85,9 @@ export function render(t: Template): Mail {
 
 <tr><td style="padding:0 4px 24px;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="vertical-align:middle;"><img src="${logo}" width="36" height="36" alt="Rocket Vision" style="display:block;border:0;border-radius:9px;"></td>
+<td style="vertical-align:middle;"><img src="${logo}" width="36" height="36" alt="${escape(`${nameStrong} ${nameLight}`)}" style="display:block;border:0;border-radius:9px;"></td>
 <td style="vertical-align:middle;padding-left:12px;">
-<div style="font:600 17px/1 ${FONT};letter-spacing:-0.02em;color:#0a0a0b;">Rocket <span style="font-weight:400;color:#6e6e73;">Vision</span></div>
+<div style="font:600 17px/1 ${FONT};letter-spacing:-0.02em;color:#0a0a0b;">${escape(nameStrong)} <span style="font-weight:400;color:#6e6e73;">${escape(nameLight)}</span></div>
 <div style="font:300 9.5px/1 ${FONT};letter-spacing:0.42em;text-transform:uppercase;color:#6e6e73;padding-top:7px;">${escape(product.label)}</div>
 </td>
 </tr></table>

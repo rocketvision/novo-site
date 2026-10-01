@@ -7,6 +7,7 @@ import { ArrowUpRight, Search, X } from "lucide-react";
 import { alliancePage } from "@/content/alliance";
 import type { DirectoryCard } from "@/lib/alliance/types";
 import { cn } from "@/lib/utils";
+import { TierBadge } from "./tier-badge";
 
 const BLUE = "#2c9df5";
 const PAGE = 12;
@@ -180,7 +181,8 @@ function PartnerCard({ partner: p, modalityName, tierName }: { partner: Director
             </span>
           ))}
           {tierName && (
-            <span className="rounded-full px-2.5 py-1 text-[0.7rem] font-medium ring-1" style={{ color: BLUE, boxShadow: `inset 0 0 0 1px rgb(44 157 245 / 0.35)` }}>
+            <span className="inline-flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-0.5 text-[0.7rem] font-medium text-white/80 ring-1 ring-white/12">
+              <TierBadge tier={p.tierKey ?? "member"} size={20} />
               {tierName}
             </span>
           )}
