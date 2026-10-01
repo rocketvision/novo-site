@@ -286,6 +286,72 @@ a:focus-visible .logo-rocket-hover {
   animation: logo-vision 8s ease-in-out 2s infinite;
 }
 
+/* --------------------------------------------------------------------------
+   Logo do Rocket Alliance: o mesmo ciclo de 8 s da logo principal.
+   0–13%  a chama acende e o foguete dá um impulso na diagonal
+   8–30%  os dois anéis giram meia volta, em sentidos opostos
+   -------------------------------------------------------------------------- */
+.alliance-animated .alliance-ring-left,
+.alliance-animated .alliance-ring-right {
+  transform-box: view-box;
+  animation: alliance-orbit 8s var(--ease-in-out) 2s infinite;
+}
+.alliance-animated .alliance-ring-left {
+  transform-origin: 15px 16px;
+}
+.alliance-animated .alliance-ring-right {
+  transform-origin: 29px 16px;
+  animation-name: alliance-orbit-back;
+}
+.alliance-animated .alliance-rocket {
+  animation: alliance-thrust 8s var(--ease-in-out) 2s infinite;
+}
+.alliance-animated .alliance-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: logo-flame 8s ease-out 2s infinite;
+}
+.alliance-rocket-hover {
+  transition: transform 0.5s var(--ease-out);
+}
+a:hover .alliance-rocket-hover,
+a:focus-visible .alliance-rocket-hover {
+  transform: translate(0.9px, -0.9px);
+}
+@keyframes alliance-orbit {
+  0%,
+  8% {
+    transform: rotate(0deg);
+  }
+  30%,
+  100% {
+    transform: rotate(180deg);
+  }
+}
+@keyframes alliance-orbit-back {
+  0%,
+  8% {
+    transform: rotate(0deg);
+  }
+  30%,
+  100% {
+    transform: rotate(-180deg);
+  }
+}
+@keyframes alliance-thrust {
+  0%,
+  4% {
+    transform: translate(0, 0);
+  }
+  12% {
+    transform: translate(1.3px, -1.3px);
+  }
+  22%,
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
 @keyframes logo-orbit {
   0%,
   8% {

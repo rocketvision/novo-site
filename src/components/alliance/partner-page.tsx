@@ -58,7 +58,7 @@ export function PartnerPage({ partner: p, modalityNames, tierName, others }: Pro
           <div className="mt-12 grid items-center gap-14 lg:mt-16 lg:grid-cols-12 lg:gap-10">
             <div className="lg:col-span-6">
               <div className="flex animate-[fade-up_900ms_var(--ease-out)_both] items-center gap-5" aria-label={`Rocket Alliance e ${p.tradeName}`}>
-                <AllianceMark accent className="h-8 text-white" />
+                <AllianceMark accent animated className="h-9 text-white" />
                 <span aria-hidden="true" className="text-[1.1rem] font-light text-white/30">
                   ×
                 </span>
