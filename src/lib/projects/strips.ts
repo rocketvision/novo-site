@@ -23,12 +23,48 @@ export function stripsOf(slug: string): { desktop: Strip; mobile: Strip } | null
   return { desktop: strip("desktop"), mobile: strip("mobile") };
 }
 
-/** Recortes de páginas reais para o mosaico da cena de sites: vários trechos de cada página inteira. */
-export function siteTiles(slugs: string[]): { src: string; position: string }[] {
-  const strips = slugs.flatMap((slug) => {
-    const s = stripsOf(slug);
-    return s ? [s.desktop.src] : [];
+type Tile = { src: string; position: string };
+
+/** Telas avulsas para o mosaico: projetos reais sem página inteira capturada e os projetos conceituais. */
+const STILLS: Record<string, string> = {
+  "boni-solar": "/projects/boni-conecta/galeria-1-solar.webp",
+  "boni-solucoes": "/projects/boni-conecta/galeria-2-solucoes.webp",
+  "boni-home": "/projects/boni-conecta/tela-desktop.webp",
+  brasa: "/projects/concepts/brasa-burger/tela-desktop.webp",
+  feira: "/projects/concepts/feira-viva/tela-desktop.webp",
+  fluxo: "/projects/concepts/fluxo/tela-desktop.webp",
+  navalha: "/projects/concepts/navalha-barbearia/tela-desktop.webp",
+  pulso: "/projects/concepts/pulso/tela-desktop.webp",
+  atlas: "/projects/concepts/atlas-imoveis/tela-desktop.webp",
+  trilha: "/projects/concepts/trilha/tela-desktop.webp",
+};
+
+/** De qual projeto cada tela avulsa é: a do cliente só entra se ele estiver publicado. */
+const STILL_PROJECT: Record<string, string> = { "boni-solar": "boni-conecta", "boni-solucoes": "boni-conecta", "boni-home": "boni-conecta" };
+
+/**
+ * A ordem do mosaico da cena de sites (4 colunas): cada tela aparece uma vez só, e as cores fortes
+ * dos conceitos se alternam com as páginas reais, escuras e claras, para nenhuma linha ficar igual.
+ * Itens "slug@posição" são recortes de uma página inteira; os outros, telas avulsas.
+ */
+const MOSAIC = [
+  "brasa", "mmv-assessoria@50% 0%", "feira", "gautica@50% 0%",
+  "boni-solar", "fluxo", "gautica-central-de-ajuda@50% 0%", "navalha",
+  "pulso", "mmv-assessoria@50% 55%", "atlas", "boni-solucoes",
+  "trilha", "gautica-cadastro@50% 0%", "boni-home", "gautica@50% 100%",
+];
+
+/** Telas de projetos para o mosaico da cena de sites: reais publicados e conceituais, sem repetir. */
+export function siteTiles(slugs: string[]): Tile[] {
+  const published = new Set(slugs);
+  return MOSAIC.flatMap((item) => {
+    const [key, position] = item.split("@");
+    if (position) {
+      const strips = published.has(key) ? stripsOf(key) : null;
+      return strips ? [{ src: strips.desktop.src, position }] : [];
+    }
+    const owner = STILL_PROJECT[key];
+    if (owner && !published.has(owner)) return [];
+    return [{ src: STILLS[key], position: "50% 0%" }];
   });
-  const positions = ["50% 0%", "50% 35%", "50% 70%", "50% 100%"];
-  return positions.flatMap((position) => strips.map((src) => ({ src, position })));
 }
