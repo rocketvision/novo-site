@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: { canonical: `/projetos/${project.slug}` },
     openGraph: { type: "article", title, description, url: `/projetos/${project.slug}`, ...(images && { images }) },
     twitter: { card: "summary_large_image", title, description, ...(images && { images: images.map((i) => i.url) }) },
-    // Projetos de exemplo não devem aparecer nos buscadores.
+    // Projetos conceituais (fictícios) não devem aparecer nos buscadores.
     robots: project.sample ? { index: false, follow: true } : { index: true, follow: true },
   };
 }
@@ -100,7 +100,7 @@ export default async function ProjectPage({ params }: Props) {
               </Link>
               {project.sample && (
                 <span className={cn("rounded-full px-3 py-1.5 font-mono text-[0.6875rem] tracking-wide", light ? "bg-white/10 text-white/80" : "bg-black/[0.06] text-black/60")}>
-                  Projeto de exemplo
+                  Projeto conceitual
                 </span>
               )}
             </div>

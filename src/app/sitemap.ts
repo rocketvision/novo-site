@@ -16,9 +16,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   pages.push({ url: `${site.url}/partners`, changeFrequency: "weekly", priority: 0.8 });
   for (const p of await getPublishedPartnerSlugs()) pages.push({ url: `${site.url}/partners/${p.slug}`, ...(p.publishedAt && { lastModified: p.publishedAt }), changeFrequency: "monthly", priority: 0.6 });
   const projects = await getPublishedProjects();
-  // Projetos de exemplo nunca entram. A página /projetos só entra quando tiver apenas projetos reais.
+  // Projetos conceituais (de exemplo) nunca entram. A página /projetos entra quando tiver ao menos um real.
   const real = projects.filter((p) => !p.sample);
-  if (real.length > 0 && real.length === projects.length) {
+  if (real.length > 0) {
     pages.push({ url: `${site.url}/projetos`, changeFrequency: "monthly", priority: 0.8 });
   }
   for (const project of real) {

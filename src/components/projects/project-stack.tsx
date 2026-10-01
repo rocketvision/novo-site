@@ -155,7 +155,7 @@ function ProjectCard({
               light ? "bg-white/10 text-white/80" : "bg-black/[0.06] text-black/60",
             )}
           >
-            Projeto de exemplo
+            Projeto conceitual
           </span>
         ) : (
           <span />

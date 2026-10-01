@@ -186,7 +186,7 @@ export function ProjectList({
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="truncate text-sm font-medium text-zinc-900 group-hover:underline group-hover:underline-offset-4">{row.name}</span>
-                    {row.isSample && <Badge tone="blue">Exemplo</Badge>}
+                    {row.isSample && <Badge tone="blue">Conceitual</Badge>}
                   </span>
                   <span className="mt-1 block md:hidden">
                     <StatusBadge row={row} />

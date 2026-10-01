@@ -250,7 +250,7 @@ export const projects = pgTable(
     status: projectStatus("status").notNull().default("draft"),
     featured: boolean("featured").notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),
-    /** Projeto de exemplo (mostra selo e não entra no índice de buscadores). */
+    /** Projeto conceitual/de exemplo (mostra o selo "Projeto conceitual" e não entra no índice de buscadores). */
     isSample: boolean("is_sample").notNull().default(false),
     /**
      * Versão publicada, congelada no momento da publicação. O site público lê só isto:
