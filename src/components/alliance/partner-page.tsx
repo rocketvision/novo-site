@@ -6,6 +6,8 @@ import { LogoMark } from "@/components/ui/logo";
 import type { PageBlock } from "@/lib/alliance/page-blocks";
 import type { DirectoryCard, PublicPartner } from "@/lib/alliance/types";
 import { cn } from "@/lib/utils";
+import { TierBadge } from "./tier-badge";
+import { AllianceMark } from "./alliance-logo";
 
 /**
  * Página exclusiva de um parceiro: ROCKET VISION × PARCEIRO. Tudo vem do CMS (perfil publicado e
@@ -40,7 +42,9 @@ export function PartnerPage({ partner: p, modalityNames, tierName, others }: Pro
         <div aria-hidden="true" className="absolute inset-0 -z-10 opacity-60" style={{ background: `radial-gradient(50% 45% at 80% 20%, color-mix(in srgb, ${accent} 28%, transparent), transparent 70%)` }} />
 
         <Link href="/partners#parceiros" className="absolute top-[calc(var(--header-height)+1rem)] left-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/30 px-3.5 py-1.5 text-[0.8rem] text-white/75 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white sm:left-8 lg:left-12">
-          <ArrowLeft className="size-3.5" aria-hidden="true" /> Rocket Alliance
+          <ArrowLeft className="size-3.5" aria-hidden="true" />
+          <AllianceMark accent className="h-3.5 text-white" />
+          Rocket Alliance
         </Link>
 
         <div className="container-page w-full pt-[calc(var(--header-height)+6rem)] pb-16 md:pb-24">
@@ -85,6 +89,13 @@ export function PartnerPage({ partner: p, modalityNames, tierName, others }: Pro
             </div>
           )}
         </div>
+
+        {/* Selo do nível: só quando o perfil publicado mostra o nível. */}
+        {tierName && p.tierKey && (
+          <div className="absolute right-8 bottom-16 hidden animate-[fade-up_900ms_var(--ease-out)_600ms_both] lg:block xl:right-16 xl:bottom-24">
+            <TierBadge tier={p.tierKey} size={176} detailed title={`Selo ${tierName}`} className="drop-shadow-[0_30px_60px_rgb(0_0_0/0.55)]" />
+          </div>
+        )}
       </section>
 
       <Facts partner={p} modalityNames={modalityNames} tierName={tierName} />
@@ -118,10 +129,10 @@ function Facts({ partner: p, modalityNames, tierName }: { partner: PublicPartner
   const items = [
     p.sector && { label: "Setor", value: p.sector },
     p.modalities.length > 0 && { label: p.modalities.length > 1 ? "Modalidades" : "Modalidade", value: p.modalities.map((m) => modalityNames[m] ?? m).join(", ") },
-    tierName && { label: "Nível", value: tierName },
+    tierName && { label: "Nível", value: tierName, tier: p.tierKey },
     p.location && { label: "Localização", value: p.location, icon: MapPin },
     p.websiteUrl && { label: "Site", value: websiteHost(p.websiteUrl), href: p.websiteUrl, icon: Globe },
-  ].filter(Boolean) as { label: string; value: string; href?: string; icon?: typeof Globe }[];
+  ].filter(Boolean) as { label: string; value: string; href?: string; icon?: typeof Globe; tier?: string | null }[];
   if (items.length === 0) return null;
   return (
     <section aria-label="Sobre a parceria" data-header="dark" className="border-y border-white/[0.08] bg-[#050507] text-white">
@@ -135,6 +146,11 @@ function Facts({ partner: p, modalityNames, tierName }: { partner: PublicPartner
                   {f.value}
                   <ArrowUpRight className="size-3.5" aria-hidden="true" />
                 </a>
+              ) : f.tier ? (
+                <span className="inline-flex items-center gap-2">
+                  <TierBadge tier={f.tier} size={22} />
+                  {f.value}
+                </span>
               ) : (
                 f.value
               )}
@@ -270,8 +286,8 @@ function Block({ block, partner: p, tone, others, visitLabel }: { block: PageBlo
           <ul className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {p.gallery.map((img, i) => (
               <Reveal as="li" key={`${img.src}-${i}`} delay={(i % 3) * 0.06} className={cn(i === 0 && p.gallery.length > 2 && "sm:col-span-2 lg:row-span-2")}>
-                <figure className="h-full">
-                  <div className={cn("relative overflow-hidden rounded-3xl", i === 0 && p.gallery.length > 2 ? "aspect-[4/3] lg:aspect-auto lg:h-full" : "aspect-[4/3]")}>
+                <figure className="flex h-full flex-col">
+                  <div className={cn("relative overflow-hidden rounded-3xl", i === 0 && p.gallery.length > 2 ? "aspect-[4/3] lg:aspect-auto lg:min-h-0 lg:flex-1" : "aspect-[4/3]")}>
                     <Image src={img.src} alt={img.alt} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" placeholder={img.blurDataURL ? "blur" : "empty"} blurDataURL={img.blurDataURL} className="object-cover" />
                   </div>
                   {img.caption && <figcaption className={cn("mt-3 text-[0.8125rem]", dark ? "text-white/50" : "text-fg/50")}>{img.caption}</figcaption>}

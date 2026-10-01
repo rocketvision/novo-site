@@ -11,15 +11,16 @@ export function AllianceNav({ tabs }: { tabs: AllianceTab[] }) {
   const pathname = usePathname();
   const active = (href: string) => (href === "/cms/alliance" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
   return (
-    <nav aria-label="Rocket Alliance" className="-mx-4 mb-6 overflow-x-auto border-b border-zinc-200 px-4 sm:mx-0 sm:px-0">
-      <ul className="flex gap-1">
+    // As abas quebram linha em vez de rolar: nada fica escondido e não aparece barra de rolagem.
+    <nav aria-label="Rocket Alliance" className="mb-6 border-b border-zinc-200">
+      <ul className="-mb-px flex flex-wrap gap-x-1">
         {tabs.map((t) => (
           <li key={t.href} className="shrink-0">
             <Link
               href={t.href}
               aria-current={active(t.href) ? "page" : undefined}
               className={cn(
-                "-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2 text-[13px] font-medium whitespace-nowrap",
+                "flex items-center gap-1.5 border-b-2 px-3 py-2 text-[13px] font-medium whitespace-nowrap",
                 active(t.href) ? "border-zinc-900 text-zinc-900" : "border-transparent text-zinc-500 hover:text-zinc-900",
               )}
             >

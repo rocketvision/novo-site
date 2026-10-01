@@ -18,7 +18,7 @@ import { formatMoney } from "@/lib/alliance/money";
  *   exceto e-mails com link de uso único (convites, senha), que exigem gerar um link novo.
  */
 
-const PRODUCT = { label: PROGRAM.name, footer: `E-mail automático do ${PROGRAM.name}, ${PROGRAM.signature}` };
+const PRODUCT = { label: PROGRAM.signature, footer: `E-mail automático do ${PROGRAM.name}, ${PROGRAM.signature}`, brand: { mark: "rocket-alliance-mark.png", name: ["Rocket", "Alliance"] as [string, string] } };
 const siteOrigin = () => new URL(env.NEXT_PUBLIC_SITE_URL).origin;
 export const hubUrl = (path = "") => `${siteOrigin()}/alliance${path}`;
 const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;

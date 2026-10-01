@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, Plus } from "lucide-react";
 import { Badge, Panel } from "@/components/cms/ui/layout";
+import { TierBadge } from "@/components/alliance/tier-badge";
 import { relativeTime } from "@/lib/cms/format";
 import { hubCan, isModalityKey, MODALITIES, PROGRAM, TIERS, type TierKey } from "@/lib/alliance/constants";
 import { formatMoney } from "@/lib/alliance/money";
@@ -47,7 +48,10 @@ export default async function HubDashboard() {
             <h1 className="mt-3 text-[1.9rem] leading-tight font-semibold tracking-[-0.03em]">Olá, {user.name.split(" ")[0]}.</h1>
             <p className="mt-1 text-[15px] text-white/65">{user.partner.tradeName}</p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <span className="rounded-full bg-[#2c9df5]/15 px-3 py-1 text-[12px] font-medium text-[#8ecbff] ring-1 ring-[#2c9df5]/30">{tier?.name ?? user.partner.tierKey}</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] py-1 pr-3 pl-1 text-[12px] font-medium text-white ring-1 ring-white/15">
+                <TierBadge tier={user.partner.tierKey} size={22} />
+                {tier?.name ?? user.partner.tierKey}
+              </span>
               {who.modalities.map((m) => (
                 <span key={m} className="rounded-full px-3 py-1 text-[12px] text-white/75 ring-1 ring-white/15">
                   {isModalityKey(m) ? MODALITIES[m].name : m}

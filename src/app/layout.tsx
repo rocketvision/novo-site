@@ -48,7 +48,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${archivo.variable}`}>
+    <html lang="pt-BR" data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${archivo.variable}`}>
       <head>
         {/* Sem JavaScript, os elementos com reveal e o vídeo da abertura (autoplay do HTML) ficam visíveis. */}
         <noscript>

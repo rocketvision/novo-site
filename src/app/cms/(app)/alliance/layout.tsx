@@ -1,3 +1,4 @@
+import { AllianceMark } from "@/components/alliance/alliance-logo";
 import { AllianceNav, type AllianceTab } from "@/components/cms/alliance/alliance-nav";
 import { PROGRAM } from "@/lib/alliance/constants";
 import { requirePermission } from "@/server/authz/guard";
@@ -23,12 +24,12 @@ export default async function AllianceLayout({ children }: { children: React.Rea
     { href: "/cms/alliance/recursos", label: "Recursos", permission: "alliance.resources" },
     { href: "/cms/alliance/comunicacoes", label: "Comunicações", permission: "alliance.communications", badge: badges.tickets },
     { href: "/cms/alliance/configuracoes", label: "Configurações", permission: "alliance.settings" },
-    { href: "/cms/alliance/auditoria", label: "Auditoria", permission: "alliance.settings" },
   ];
   const tabs = all.filter((t) => t.permission === null || user.permissions.has(t.permission)).map((t) => ({ href: t.href, label: t.label, badge: t.badge }));
   return (
     <>
-      <p className="mb-3 text-[11px] font-semibold tracking-[0.16em] text-zinc-400 uppercase">
+      <p className="mb-3 flex items-center gap-2.5 text-[11px] font-semibold tracking-[0.16em] text-zinc-400 uppercase">
+        <AllianceMark accent className="h-5 text-zinc-900" />
         {PROGRAM.name} · {PROGRAM.signature}
       </p>
       <AllianceNav tabs={tabs} />

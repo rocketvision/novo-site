@@ -39,7 +39,7 @@ function resourceHref(type: string, id: string | null) {
 const show = (v: unknown) => (v === null || v === undefined || v === "" ? "vazio" : typeof v === "object" ? JSON.stringify(v) : String(v));
 
 export default async function AllianceAuditPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  await requirePermission("alliance.settings", "/cms/alliance/auditoria");
+  await requirePermission("alliance.settings", "/cms/alliance/configuracoes/auditoria");
   const sp = await searchParams;
   const area = sp.area && AREAS[sp.area] ? sp.area : undefined;
   const date = (v?: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
