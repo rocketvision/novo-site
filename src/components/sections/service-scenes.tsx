@@ -228,7 +228,7 @@ function SitesScene({ service, index, tiles, tone, from, variant, heading }: Sce
 
   return (
     <Stage stageRef={ref} height={320} tone={tone} from={from}>
-      <div data-grid className="absolute inset-[-6%] grid origin-center grid-cols-4 gap-[1.2vw] p-[1.2vw] max-md:grid-cols-3">
+      <div data-grid className="absolute inset-[-6%] grid origin-center grid-cols-4 gap-[1.2vw] bg-[#0b0b0e] p-[1.2vw] max-md:grid-cols-3">
         {list.map((tile, i) => (
           <div key={i} className={cn("relative overflow-hidden rounded-[clamp(4px,0.6vw,10px)] bg-fg/5", i === 15 && "max-md:hidden")}>
             {/* eslint-disable-next-line @next/next/no-img-element -- faixas já otimizadas, recortadas por object-position */}
@@ -239,7 +239,19 @@ function SitesScene({ service, index, tiles, tone, from, variant, heading }: Sce
       {/* Recorte: no escuro, preto com a palavra em branco multiplicado sobre o mosaico; no claro, o inverso
           em "screen". Nos dois casos as páginas só aparecem dentro das letras. */}
       <div data-knockout aria-hidden="true" className={cn("absolute inset-0 grid place-items-center", tone === "light" ? "bg-white mix-blend-screen" : "bg-black mix-blend-multiply")}>
-        <span data-word className={cn("block text-[clamp(6rem,27vw,30rem)] leading-none font-black tracking-[-0.06em]", tone === "light" ? "text-black" : "text-white")}>
+        <span data-word className={cn("block text-[clamp(6rem,27vw,30rem)] leading-none font-black tracking-[-0.02em]", tone === "light" ? "text-black" : "text-white")}>
+          {scenes.sites.word}
+        </span>
+      </div>
+      {/* Contorno da palavra: mantém SITES legível mesmo quando uma tela clara cai dentro das letras. */}
+      <div data-knockout aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center">
+        <span
+          data-word
+          className={cn(
+            "block text-[clamp(6rem,27vw,30rem)] leading-none font-black tracking-[-0.02em] text-transparent",
+            tone === "light" ? "[-webkit-text-stroke:clamp(1.5px,0.18vw,3px)_rgb(10_10_11/0.9)]" : "[-webkit-text-stroke:clamp(1.5px,0.18vw,3px)_rgb(255_255_255/0.85)]",
+          )}
+        >
           {scenes.sites.word}
         </span>
       </div>

@@ -44,14 +44,15 @@ const STILL_PROJECT: Record<string, string> = { "boni-solar": "boni-conecta", "b
 
 /**
  * A ordem do mosaico da cena de sites (4 colunas): cada tela aparece uma vez só, e as cores fortes
- * dos conceitos se alternam com as páginas reais, escuras e claras, para nenhuma linha ficar igual.
+ * dos conceitos ficam nas linhas do meio, que aparecem dentro das letras de SITES na abertura da cena;
+ * as páginas reais, mais claras, ficam nas bordas.
  * Itens "slug@posição" são recortes de uma página inteira; os outros, telas avulsas.
  */
 const MOSAIC = [
-  "brasa", "mmv-assessoria@50% 0%", "feira", "gautica@50% 0%",
-  "boni-solar", "fluxo", "gautica-central-de-ajuda@50% 0%", "navalha",
-  "pulso", "mmv-assessoria@50% 55%", "atlas", "boni-solucoes",
-  "trilha", "gautica-cadastro@50% 0%", "boni-home", "gautica@50% 100%",
+  "mmv-assessoria@50% 0%", "gautica@50% 0%", "gautica-central-de-ajuda@50% 0%", "boni-home",
+  "brasa", "fluxo", "navalha", "pulso",
+  "feira", "mmv-assessoria@50% 55%", "trilha", "boni-solar",
+  "atlas", "gautica-cadastro@50% 0%", "boni-solucoes", "gautica@50% 100%",
 ];
 
 /** Telas de projetos para o mosaico da cena de sites: reais publicados e conceituais, sem repetir. */
