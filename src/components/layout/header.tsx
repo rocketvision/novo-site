@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, m } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
+import { RestrictedList, RestrictedMenu } from "@/components/layout/restricted-access";
 import { ButtonLink } from "@/components/ui/button";
 import { nav, primaryCta } from "@/lib/site";
 import { ease, duration, stagger } from "@/lib/motion";
@@ -110,6 +111,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <RestrictedMenu dark={dark} />
           <ButtonLink
             href={primaryCta.href}
             size="sm"
@@ -181,11 +183,12 @@ export function Header() {
                 ))}
               </ul>
               <m.div
-                className="mt-auto"
+                className="mt-auto space-y-6"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: duration.base, ease: ease.out, delay: 0.35 }}
               >
+                <RestrictedList onNavigate={() => setOpen(false)} />
                 <ButtonLink
                   href={primaryCta.href}
                   size="lg"
