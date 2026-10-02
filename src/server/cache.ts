@@ -8,6 +8,13 @@ import { log } from "@/server/log";
  *
  * `{ expire: 0 }`: quem publica espera ver a mudança no próximo carregamento, sem conteúdo antigo.
  */
+/**
+ * Validade máxima do conteúdo em cache (segundos). As tags continuam atualizando na hora ao publicar;
+ * isto só garante que algo gravado fora do CMS (ex.: direto no banco) apareça em até 1 hora, já que o
+ * cache de dados da Vercel sobrevive aos deploys.
+ */
+export const CACHE_MAX_AGE = 3600;
+
 export const CACHE_TAGS = {
   landing: "landing",
   projects: "projects",
