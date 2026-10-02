@@ -7,7 +7,7 @@ import { DEFAULT_CONTENT } from "@/lib/content/defaults";
 import { SECTION_SCHEMAS, type SectionContent, type SectionKey } from "@/lib/content/schemas";
 import type { LandingContent, Resolved, ResolvedImage } from "@/lib/content/resolved";
 import { getSession } from "@/server/auth/session";
-import { CACHE_TAGS } from "@/server/cache";
+import { CACHE_MAX_AGE, CACHE_TAGS } from "@/server/cache";
 import { getDb, isDatabaseConfigured, schema } from "@/server/db";
 import { log } from "@/server/log";
 import { collectImageRefs, isImageField } from "./refs";
@@ -85,7 +85,7 @@ function publishedLoader<K extends SectionKey>(key: K) {
       return { content, media: [...media] };
     },
     ["published-section-data", key],
-    { tags: [sectionTag(key), CACHE_TAGS.media] },
+    { tags: [sectionTag(key), CACHE_TAGS.media], revalidate: CACHE_MAX_AGE },
   );
 }
 

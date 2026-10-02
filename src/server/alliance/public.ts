@@ -13,7 +13,7 @@ import type { ProjectSnapshot } from "@/lib/projects/types";
 import { buildPartnerSnapshot, toPartnerInput } from "./partners";
 import { listModalities, listTiers, type ModalityRow, type TierRow } from "./settings";
 import { ALLIANCE_TAGS } from "./tags";
-import { CACHE_TAGS } from "@/server/cache";
+import { CACHE_MAX_AGE, CACHE_TAGS } from "@/server/cache";
 
 /**
  * Leitura do Rocket Alliance pelo site público.
@@ -75,7 +75,7 @@ const directoryLoader = unstable_cache(
     }));
   },
   ["alliance-directory"],
-  { tags: [ALLIANCE_TAGS.directory, CACHE_TAGS.media] },
+  { tags: [ALLIANCE_TAGS.directory, CACHE_TAGS.media], revalidate: CACHE_MAX_AGE },
 );
 
 export async function getDirectory(): Promise<DirectoryCard[]> {
@@ -135,7 +135,7 @@ function partnerLoader(slug: string) {
       return resolvePartner(row.id, row.featured, { ...snapshot, page: page.success ? page.data : { hero: { title: "", subtitle: "" }, blocks: [] } }, row.publishedAt);
     },
     ["alliance-partner", slug],
-    { tags: [ALLIANCE_TAGS.partner(slug), ALLIANCE_TAGS.directory, CACHE_TAGS.media, CACHE_TAGS.projects] },
+    { tags: [ALLIANCE_TAGS.partner(slug), ALLIANCE_TAGS.directory, CACHE_TAGS.media, CACHE_TAGS.projects], revalidate: CACHE_MAX_AGE },
   );
 }
 

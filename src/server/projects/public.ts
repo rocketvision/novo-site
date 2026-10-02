@@ -2,7 +2,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { ProjectImage, ProjectSnapshot, PublicProject } from "@/lib/projects/types";
-import { CACHE_TAGS } from "@/server/cache";
+import { CACHE_MAX_AGE, CACHE_TAGS } from "@/server/cache";
 import { getDb, isDatabaseConfigured, schema } from "@/server/db";
 import { isPreviewing } from "@/server/content/public";
 import { log } from "@/server/log";
@@ -90,7 +90,7 @@ const listPublished = unstable_cache(
     return resolveMany(rows);
   },
   ["published-projects"],
-  { tags: [CACHE_TAGS.projects, CACHE_TAGS.media] },
+  { tags: [CACHE_TAGS.projects, CACHE_TAGS.media], revalidate: CACHE_MAX_AGE },
 );
 
 export async function getPublishedProjects(): Promise<PublicProject[]> {
@@ -114,7 +114,7 @@ function publishedBySlug(slug: string) {
       return rows.length ? (await resolveMany(rows))[0] : null;
     },
     ["published-project", slug],
-    { tags: [CACHE_TAGS.project(slug), CACHE_TAGS.projects, CACHE_TAGS.media] },
+    { tags: [CACHE_TAGS.project(slug), CACHE_TAGS.projects, CACHE_TAGS.media], revalidate: CACHE_MAX_AGE },
   );
 }
 
