@@ -161,7 +161,10 @@ export function Header() {
             exit={{ opacity: 0 }}
             transition={{ duration: duration.fast, ease: ease.out }}
           >
-            <nav aria-label="Menu" className="container-page flex h-full flex-col pt-8 pb-10">
+            <nav
+              aria-label="Menu"
+              className="container-page flex h-full flex-col overflow-y-auto overscroll-contain pt-8 pb-[max(2.5rem,env(safe-area-inset-bottom))] [@media(max-height:760px)]:pt-4"
+            >
               <ul className="flex flex-col">
                 {[...nav, { label: "Contato", href: "/#contato" }].map((item, i) => (
                   <m.li
@@ -174,7 +177,7 @@ export function Header() {
                     <Link
                       href={item.href}
                       onClick={() => setOpen(false)}
-                      className="flex items-center justify-between py-5 text-[1.75rem] font-semibold tracking-[-0.03em] text-ink"
+                      className="flex items-center justify-between py-5 text-[1.75rem] font-semibold tracking-[-0.03em] text-ink [@media(max-height:760px)]:py-3.5 [@media(max-height:760px)]:text-[1.5rem]"
                     >
                       {item.label}
                       <ArrowRight className="size-5 text-muted" />
