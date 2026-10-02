@@ -58,10 +58,11 @@ function AreaCard({ area, compact = false, onNavigate }: { area: Area; compact?:
       </span>
 
       <span>
-        <span className={cn("block leading-[1.05] font-semibold tracking-[-0.03em]", compact ? "text-[1.05rem]" : "text-[1.2rem]")}>
-          {area.label.replace("Painel do ", "Painel do ")}
+        <span className="block text-xs text-white/55">Painel do</span>
+        <span className={cn("block leading-none font-semibold tracking-[-0.035em]", compact ? "mt-0.5 text-[1.35rem]" : "mt-1 text-[1.6rem]")}>
+          {area.label.replace("Painel do ", "")}
         </span>
-        <span className="mt-1.5 block text-xs text-white/45 transition-colors duration-500 group-hover/area:text-white/70">Entrar</span>
+        <span className="mt-2 block font-mono text-[0.6rem] tracking-[0.16em] text-white/40 uppercase transition-colors duration-500 group-hover/area:text-white/75">Entrar</span>
       </span>
     </a>
   );
