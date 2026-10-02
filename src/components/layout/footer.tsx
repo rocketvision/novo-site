@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import type { Resolved } from "@/lib/content/resolved";
-import { nav, site as brand } from "@/lib/site";
+import { nav, restrictedAreas, site as brand } from "@/lib/site";
 
 /** `settings`: dados editáveis no CMS (Configurações). Campos vazios não aparecem. */
 export function Footer({ settings }: { settings: Resolved<"site"> }) {
@@ -28,7 +28,7 @@ export function Footer({ settings }: { settings: Resolved<"site"> }) {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-10 text-sm sm:grid-cols-3 md:gap-16">
+          <div className="grid grid-cols-2 gap-10 text-sm sm:grid-cols-4 md:gap-14">
             <nav aria-label="Rodapé">
               <p className="text-eyebrow mb-4 text-white/50">Navegação</p>
               <ul className="space-y-3">
@@ -51,6 +51,19 @@ export function Footer({ settings }: { settings: Resolved<"site"> }) {
                   </Link>
                 </li>
                 {contactLinks.map((item) => (
+                  <li key={item.href}>
+                    <a href={item.href} className="link-underline transition-colors hover:text-white">
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-eyebrow mb-4 text-white/50">Área restrita</p>
+              <ul className="space-y-3">
+                {restrictedAreas.map((item) => (
                   <li key={item.href}>
                     <a href={item.href} className="link-underline transition-colors hover:text-white">
                       {item.label}
