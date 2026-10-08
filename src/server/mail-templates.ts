@@ -22,8 +22,11 @@ export type Template = {
   action?: { label: string; url: string };
   note: string[];
   /** Produto no cabeçalho e no rodapé. Padrão: Content Studio. */
-  /** Produto que assina o e-mail. `brand` troca o símbolo e o nome do cabeçalho (ex.: Rocket Alliance). */
-  product?: { label: string; footer: string; brand?: { mark: string; name: [string, string] } };
+  /**
+   * Produto que assina o e-mail. `brand` troca o símbolo e o nome do cabeçalho (ex.: Rocket Alliance);
+   * `origin` troca o endereço do rodapé e de onde vem o símbolo (ex.: o endereço do Alliance Hub).
+   */
+  product?: { label: string; footer: string; origin?: string; brand?: { mark: string; name: [string, string] } };
 };
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -34,11 +37,12 @@ function escape(value: string) {
 }
 
 export function render(t: Template): Mail {
-  const siteOrigin = new URL(env.NEXT_PUBLIC_SITE_URL).origin;
-  const siteHost = new URL(siteOrigin).host;
   const url = t.action ? escape(t.action.url) : "";
   const product = t.product ?? { label: "Content Studio", footer: `E-mail automático do ${STUDIO_NAME}` };
-  const logo = `${cmsOrigin}/brand/${product.brand?.mark ?? "rocket-vision-mark.png"}`;
+  const siteOrigin = product.origin ?? new URL(env.NEXT_PUBLIC_SITE_URL).origin;
+  // No rodapé, o endereço aparece sem o "www." (rocketvision.dev).
+  const siteHost = new URL(siteOrigin).host.replace(/^www\./, "");
+  const logo = `${product.origin ?? cmsOrigin}/brand/${product.brand?.mark ?? "rocket-vision-mark.png"}`;
   const [nameStrong, nameLight] = product.brand?.name ?? ["Rocket", "Vision"];
   const details = (t.details ?? [])
     .map(

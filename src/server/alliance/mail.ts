@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/server/db";
-import { env } from "@/server/env";
+import { env, hubOrigin } from "@/server/env";
 import { log } from "@/server/log";
 import { sendMail, type Mail } from "@/server/mail";
 import { render, type Template } from "@/server/mail-templates";
@@ -18,12 +18,13 @@ import { formatMoney } from "@/lib/alliance/money";
  *   exceto e-mails com link de uso único (convites, senha), que exigem gerar um link novo.
  */
 
-const PRODUCT = { label: PROGRAM.signature, footer: `E-mail automático do ${PROGRAM.name}, ${PROGRAM.signature}`, brand: { mark: "rocket-alliance-mark.png", name: ["Rocket", "Alliance"] as [string, string] } };
-const siteOrigin = () => new URL(env.NEXT_PUBLIC_SITE_URL).origin;
-export const hubUrl = (path = "") => `${siteOrigin()}/alliance${path}`;
+const PRODUCT = { label: PROGRAM.signature, footer: `E-mail automático do ${PROGRAM.name}, ${PROGRAM.signature}`, origin: hubOrigin, brand: { mark: "rocket-alliance-mark.png", name: ["Rocket", "Alliance"] as [string, string] } };
+export const hubUrl = (path = "") => `${hubOrigin}/alliance${path}`;
 const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;
 
 const brand = (t: Omit<Template, "product">): Mail => render({ ...t, product: PRODUCT });
+/** Todo e-mail do Rocket Alliance sai pelo remetente do programa (ALLIANCE_MAIL_FROM), quando configurado. */
+const fromAlliance = (mail: Mail): Mail => (env.ALLIANCE_MAIL_FROM ? { ...mail, from: env.ALLIANCE_MAIL_FROM } : mail);
 
 /* -------------------------------------------------------------------------- */
 /* Templates                                                                   */
@@ -307,7 +308,7 @@ export async function deliver(input: DeliverInput): Promise<"sent" | "failed" | 
 }
 
 async function send(logId: string, mail: Mail) {
-  const result = await sendMail(mail);
+  const result = await sendMail(fromAlliance(mail));
   const status = result.delivered ? "sent" : result.error === "not_configured" ? "skipped" : "failed";
   await getDb()
     .update(schema.allianceEmailLog)

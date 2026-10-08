@@ -27,6 +27,8 @@ Nada disto foi executado em produção. Siga a ordem abaixo quando houver autori
 2. **Variáveis na Vercel** (Production e Preview):
    - `ALLIANCE_ENCRYPTION_KEY`: 32 caracteres ou mais, aleatórios (`openssl rand -base64 48`). Ela cifra os segredos de 2FA do Hub. **Não troque depois de ativar:** quem já usa 2FA teria de configurar de novo. Sem ela, o Hub funciona, mas a opção de 2FA fica indisponível.
    - `BLOB_READ_WRITE_TOKEN`: o mesmo já usado. Contratos e materiais vão para o Blob com `access: "private"`. Sem Blob em produção, o envio de arquivos responde 503.
+   - `ALLIANCE_URL` (opcional): endereço próprio do Hub (ex.: `https://alliance.rocketvision.dev`). Com ela, `/alliance` só abre nesse endereço (o site redireciona para lá), a raiz dele leva ao Hub e os links dos e-mails do programa apontam para ele.
+   - `ALLIANCE_MAIL_FROM` (opcional): remetente dos e-mails do programa (ex.: `Rocket Alliance <alliance@rocketvision.dev>`). Sem ela, usa `MAIL_FROM`.
    - `RESEND_API_KEY` e `MAIL_FROM` (já existentes) para os e-mails do programa. Sem eles, os e-mails ficam registrados como "não enviado" em Comunicações → E-mails enviados, e podem ser reenviados depois.
 3. **Migração e seed:**
 

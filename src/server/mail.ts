@@ -8,7 +8,8 @@ import { log } from "@/server/log";
  * no log para testes; em produção, administradores podem gerar o link pela tela de Usuários.
  */
 
-export type Mail = { to: string; subject: string; text: string; html?: string };
+/** `from`: remetente próprio (ex.: Rocket Alliance). Sem ele, MAIL_FROM. */
+export type Mail = { to: string; subject: string; text: string; html?: string; from?: string };
 
 export function isMailConfigured() {
   return Boolean(env.RESEND_API_KEY && env.MAIL_FROM);
@@ -26,7 +27,7 @@ export async function sendMail(mail: Mail): Promise<{ delivered: boolean; id?: s
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: env.MAIL_FROM, to: [mail.to], subject: mail.subject, text: mail.text, html: mail.html }),
+      body: JSON.stringify({ from: mail.from ?? env.MAIL_FROM, to: [mail.to], subject: mail.subject, text: mail.text, html: mail.html }),
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) {

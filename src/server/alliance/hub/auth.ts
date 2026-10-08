@@ -2,7 +2,7 @@ import "server-only";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { getDb, schema, type Tx } from "@/server/db";
 import { audit } from "@/server/audit";
-import { env } from "@/server/env";
+import { hubOrigin } from "@/server/env";
 import { conflict, forbidden, HttpError, notFound, unauthorized } from "@/server/http/errors";
 import { getDummyHash, hashPassword, needsRehash, verifyPassword } from "@/server/auth/password";
 import { generateToken, hashToken } from "@/server/auth/tokens";
@@ -26,9 +26,8 @@ const TTL = { invite: 7 * 24 * 3600_000, password_reset: 3600_000, email_change:
 type TokenType = keyof typeof TTL;
 
 export const normalizeEmail = (email: string) => email.trim().toLowerCase();
-const siteOrigin = () => new URL(env.NEXT_PUBLIC_SITE_URL).origin;
 export const hubTokenUrl = (type: "invite" | "password_reset" | "email_change", token: string) =>
-  `${siteOrigin()}/alliance/${type === "invite" ? "convite" : type === "password_reset" ? "redefinir-senha" : "confirmar-email"}/${token}`;
+  `${hubOrigin}/alliance/${type === "invite" ? "convite" : type === "password_reset" ? "redefinir-senha" : "confirmar-email"}/${token}`;
 
 const hubActor = (u: { email: string }) => ({ id: null, email: u.email });
 
