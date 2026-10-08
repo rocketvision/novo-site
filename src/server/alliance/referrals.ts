@@ -29,8 +29,8 @@ type Ctx = { ip: string | null; userAgent: string | null };
  *
  * Atribuição: vale o primeiro registro válido. Enquanto uma indicação está em andamento e dentro da
  * proteção (ou já foi ganha), ninguém mais registra a mesma empresa. Mesma empresa =
- * mesmo domínio (site ou e-mail corporativo) ou mesmo CNPJ. Nome igual sem domínio/CNPJ em comum entra,
- * marcado como possível duplicidade para a equipe decidir.
+ * mesmo domínio do site ou mesmo CNPJ. Nome igual ou mesmo domínio de e-mail do contato, sem site/CNPJ
+ * em comum, entra marcado como possível duplicidade para a equipe decidir.
  *
  * Concorrência: o registro trava as chaves da empresa (pg_advisory_xact_lock) dentro da transação, então
  * dois parceiros enviando a mesma empresa no mesmo instante nunca ficam os dois com a proteção.
@@ -69,31 +69,52 @@ export async function createReferral(user: HubUser, input: ReferralInput, ctx: C
     if (keys.taxId) strong.push(eq(schema.referrals.companyTaxId, keys.taxId));
     if (strong.length) {
       const [taken] = await tx
-        .select({ partnerId: schema.referrals.partnerId, code: schema.referrals.code })
+        .select({ partnerId: schema.referrals.partnerId, code: schema.referrals.code, companyName: schema.referrals.companyName, taxId: schema.referrals.companyTaxId })
         .from(schema.referrals)
         .where(and(or(...strong), HOLDING))
+        .orderBy(asc(schema.referrals.createdAt))
         .limit(1);
       if (taken) {
+        // A mensagem diz qual dado coincidiu (CNPJ ou site) e aparece no campo dele.
+        const byTaxId = Boolean(keys.taxId && taken.taxId === keys.taxId);
+        const field = byTaxId ? "companyTaxId" : "companyWebsite";
+        const what = byTaxId ? "este CNPJ" : "este site";
         // Para outra empresa, só "já registrada": nunca quem indicou nem em que etapa está.
         const message =
           taken.partnerId === user.partner.id
-            ? `A sua empresa já registrou esta indicação (${taken.code}). Acompanhe por ela.`
-            : "Esta empresa já está registrada no programa e protegida para outra indicação.";
-        throw new HttpError(409, "duplicate_referral", message, { fields: { companyName: message } });
+            ? `A sua empresa já indicou uma empresa com ${what}: ${taken.code} (${taken.companyName}). Acompanhe por ela.`
+            : `Uma empresa com ${what} já está registrada no programa e protegida por outra indicação.`;
+        throw new HttpError(409, "duplicate_referral", message, { fields: { [field]: message } });
       }
     }
     const [similar] = keys.nameKey
       ? await tx
-          .select({ id: schema.referrals.id, partnerId: schema.referrals.partnerId, code: schema.referrals.code })
+          .select({ id: schema.referrals.id, partnerId: schema.referrals.partnerId, code: schema.referrals.code, companyName: schema.referrals.companyName })
           .from(schema.referrals)
           .where(and(eq(schema.referrals.companyNameKey, keys.nameKey), HOLDING))
           .orderBy(asc(schema.referrals.createdAt))
           .limit(1)
       : [];
-    if (similar && similar.partnerId === user.partner.id) {
-      const message = `A sua empresa já registrou uma indicação com este nome (${similar.code}).`;
+    // Nome repetido na própria empresa só bloqueia sem site nem CNPJ para diferenciar; com eles, só sinaliza.
+    if (similar && similar.partnerId === user.partner.id && !keys.domain && !keys.taxId) {
+      const message = `A sua empresa já indicou uma empresa com este nome: ${similar.code} (${similar.companyName}). Se for outra empresa, informe o site ou o CNPJ para diferenciar.`;
       throw new HttpError(409, "duplicate_referral", message, { fields: { companyName: message } });
     }
+    // Mesmo domínio de e-mail do contato (ou e-mail de um lado batendo com o site do outro): só sinaliza.
+    const contactDomain = sql`lower(split_part(${schema.referrals.contactEmail}, '@', 2))`;
+    const soft: SQL[] = [];
+    if (keys.emailDomain) soft.push(sql`${contactDomain} = ${keys.emailDomain}`, eq(schema.referrals.companyDomain, keys.emailDomain));
+    if (keys.domain) soft.push(sql`${contactDomain} = ${keys.domain}`);
+    const [sameContactDomain] =
+      !similar && soft.length
+        ? await tx
+            .select({ id: schema.referrals.id })
+            .from(schema.referrals)
+            .where(and(or(...soft), HOLDING))
+            .orderBy(asc(schema.referrals.createdAt))
+            .limit(1)
+        : [];
+    const possibleDuplicate = similar ?? sameContactDomain;
 
     const [row] = await tx
       .insert(schema.referrals)
@@ -115,7 +136,7 @@ export async function createReferral(user: HubUser, input: ReferralInput, ctx: C
         estimatedValueCents: input.estimatedValue ?? null,
         consentConfirmed: input.consentConfirmed,
         protectedUntil: new Date(Date.now() + settings.protectionDays * DAY),
-        possibleDuplicateOf: similar?.id ?? null,
+        possibleDuplicateOf: possibleDuplicate?.id ?? null,
       })
       .returning();
     await tx.insert(schema.referralEvents).values({ referralId: row.id, toStatus: "submitted", actorType: "partner", actorPartnerUserId: user.id, note: "" });

@@ -19,6 +19,7 @@ import {
   TIER_KEYS,
 } from "./constants";
 import { parseMoney } from "./money";
+import { normalizeTaxId } from "./identity";
 import { SLUG_PATTERN } from "@/lib/validation/projects";
 
 /**
@@ -210,7 +211,7 @@ export const partnerMemberUpdateSchema = z.object({ role: z.enum(PARTNER_ROLE_KE
 export const referralInputSchema = z.object({
   companyName: text(120, "O nome da empresa"),
   companyWebsite: websiteUrl,
-  companyTaxId: optionalText(20, "O CNPJ"),
+  companyTaxId: optionalText(20, "O CNPJ").refine((v) => !v || normalizeTaxId(v) !== null, "CNPJ inválido. Confira os 14 números ou deixe em branco."),
   contactName: text(80, "O nome do contato"),
   contactRole: optionalText(60, "O cargo"),
   contactEmail: email,
