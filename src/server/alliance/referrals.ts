@@ -58,10 +58,70 @@ async function lockKeys(tx: Tx, keys: (string | null)[]) {
 export async function createReferral(user: HubUser, input: ReferralInput, ctx: Ctx) {
   if (!hubCan(user.role, "referrals.create")) throw forbidden();
   await enforce(POLICIES.referralByUser, user.id);
+  const referral = await registerReferral({ partner: user.partner, by: { kind: "partner", user } }, input, ctx);
+  await deliver({
+    dedupeKey: `referral-received:${referral.id}`,
+    template: "referral_received",
+    to: user.email,
+    partnerId: user.partner.id,
+    params: { name: user.name, code: referral.code, company: referral.companyName, protectedUntil: fmtDay(referral.protectedUntil), id: referral.id },
+  });
+  const settings = await getProgramSettings();
+  if (settings.notifyEmail) {
+    await deliver({
+      dedupeKey: `team-referral:${referral.id}`,
+      template: "team_notice",
+      to: settings.notifyEmail,
+      params: {
+        subject: `Nova indicação ${referral.code}: ${referral.companyName}`,
+        summary: `${user.partner.tradeName} indicou ${referral.companyName}.${referral.possibleDuplicateOf ? " Atenção: possível duplicidade com outra indicação." : ""}`,
+        url: `${cmsOrigin}/cms/alliance/indicacoes/${referral.id}`,
+      },
+    });
+  }
+  return { id: referral.id, code: referral.code };
+}
+
+/**
+ * Indicação registrada pela equipe no CMS em nome de uma empresa parceira (ex.: chegou por telefone ou
+ * WhatsApp). Mesmas regras de duplicidade e proteção do Hub; o parceiro é avisado no Hub e por e-mail.
+ */
+export async function createReferralFromCms(actor: Actor, partnerId: string, input: ReferralInput, ctx: Ctx) {
+  const [partner] = await getDb().select({ id: schema.partners.id, tradeName: schema.partners.tradeName, status: schema.partners.status }).from(schema.partners).where(eq(schema.partners.id, partnerId));
+  if (!partner) throw new HttpError(422, "invalid_partner", "Escolha a empresa parceira que fez a indicação.", { fields: { partnerId: "Escolha a empresa parceira que fez a indicação." } });
+  if (partner.status === "suspended" || partner.status === "terminated") {
+    const message = `${partner.tradeName} está ${partner.status === "suspended" ? "suspensa" : "encerrada"} no programa e não pode receber novas indicações.`;
+    throw new HttpError(422, "partner_inactive", message, { fields: { partnerId: message } });
+  }
+  const referral = await registerReferral({ partner, by: { kind: "cms", actor } }, input, ctx);
+  await notifyPartner(
+    partner.id,
+    { type: "referral", title: `Indicação ${referral.code} registrada`, body: `A equipe Rocket Vision registrou ${referral.companyName} em nome da sua empresa.`, link: `/alliance/indicacoes/${referral.id}` },
+    {
+      roles: ["owner", "manager"],
+      email: {
+        template: "referral_received",
+        dedupeKey: `referral-received:${referral.id}`,
+        params: { code: referral.code, company: referral.companyName, protectedUntil: fmtDay(referral.protectedUntil), id: referral.id, byTeam: "1" },
+      },
+    },
+  );
+  return { id: referral.id, code: referral.code };
+}
+
+type Origin = { partner: { id: string; tradeName: string }; by: { kind: "partner"; user: HubUser } | { kind: "cms"; actor: Actor } };
+
+/**
+ * Registro comum ao Hub e ao CMS: duplicidade, proteção, histórico e auditoria, numa transação.
+ * As mensagens de duplicidade dizem o que coincidiu. Para outro parceiro, o Hub nunca revela quem indicou;
+ * a equipe (CMS) vê a indicação existente e o parceiro dela.
+ */
+async function registerReferral({ partner, by }: Origin, input: ReferralInput, ctx: Ctx) {
+  const fromCms = by.kind === "cms";
   const keys = companyKeys({ companyName: input.companyName, website: input.companyWebsite, contactEmail: input.contactEmail, taxId: input.companyTaxId });
   const settings = await getProgramSettings();
 
-  const referral = await getDb().transaction(async (tx) => {
+  return getDb().transaction(async (tx) => {
     await lockKeys(tx, [keys.domain && `d:${keys.domain}`, keys.taxId && `t:${keys.taxId}`, keys.nameKey && `n:${keys.nameKey}`]);
 
     const strong: SQL[] = [];
@@ -69,8 +129,9 @@ export async function createReferral(user: HubUser, input: ReferralInput, ctx: C
     if (keys.taxId) strong.push(eq(schema.referrals.companyTaxId, keys.taxId));
     if (strong.length) {
       const [taken] = await tx
-        .select({ partnerId: schema.referrals.partnerId, code: schema.referrals.code, companyName: schema.referrals.companyName, taxId: schema.referrals.companyTaxId })
+        .select({ partnerId: schema.referrals.partnerId, partnerName: schema.partners.tradeName, code: schema.referrals.code, companyName: schema.referrals.companyName, taxId: schema.referrals.companyTaxId })
         .from(schema.referrals)
+        .innerJoin(schema.partners, eq(schema.partners.id, schema.referrals.partnerId))
         .where(and(or(...strong), HOLDING))
         .orderBy(asc(schema.referrals.createdAt))
         .limit(1);
@@ -80,8 +141,9 @@ export async function createReferral(user: HubUser, input: ReferralInput, ctx: C
         const field = byTaxId ? "companyTaxId" : "companyWebsite";
         const what = byTaxId ? "este CNPJ" : "este site";
         // Para outra empresa, só "já registrada": nunca quem indicou nem em que etapa está.
-        const message =
-          taken.partnerId === user.partner.id
+        const message = fromCms
+          ? `Já existe uma indicação protegida com ${what}: ${taken.code} (${taken.companyName}), de ${taken.partnerName}.`
+          : taken.partnerId === partner.id
             ? `A sua empresa já indicou uma empresa com ${what}: ${taken.code} (${taken.companyName}). Acompanhe por ela.`
             : `Uma empresa com ${what} já está registrada no programa e protegida por outra indicação.`;
         throw new HttpError(409, "duplicate_referral", message, { fields: { [field]: message } });
@@ -96,8 +158,8 @@ export async function createReferral(user: HubUser, input: ReferralInput, ctx: C
           .limit(1)
       : [];
     // Nome repetido na própria empresa só bloqueia sem site nem CNPJ para diferenciar; com eles, só sinaliza.
-    if (similar && similar.partnerId === user.partner.id && !keys.domain && !keys.taxId) {
-      const message = `A sua empresa já indicou uma empresa com este nome: ${similar.code} (${similar.companyName}). Se for outra empresa, informe o site ou o CNPJ para diferenciar.`;
+    if (similar && similar.partnerId === partner.id && !keys.domain && !keys.taxId) {
+      const message = `${fromCms ? `${partner.tradeName} já indicou` : "A sua empresa já indicou"} uma empresa com este nome: ${similar.code} (${similar.companyName}). Se for outra empresa, informe o site ou o CNPJ para diferenciar.`;
       throw new HttpError(409, "duplicate_referral", message, { fields: { companyName: message } });
     }
     // Mesmo domínio de e-mail do contato (ou e-mail de um lado batendo com o site do outro): só sinaliza.
@@ -119,8 +181,8 @@ export async function createReferral(user: HubUser, input: ReferralInput, ctx: C
     const [row] = await tx
       .insert(schema.referrals)
       .values({
-        partnerId: user.partner.id,
-        submittedBy: user.id,
+        partnerId: partner.id,
+        submittedBy: by.kind === "partner" ? by.user.id : null,
         companyName: input.companyName,
         companyWebsite: input.companyWebsite,
         companyTaxId: keys.taxId,
@@ -139,34 +201,21 @@ export async function createReferral(user: HubUser, input: ReferralInput, ctx: C
         possibleDuplicateOf: possibleDuplicate?.id ?? null,
       })
       .returning();
-    await tx.insert(schema.referralEvents).values({ referralId: row.id, toStatus: "submitted", actorType: "partner", actorPartnerUserId: user.id, note: "" });
+    await tx
+      .insert(schema.referralEvents)
+      .values(
+        by.kind === "partner"
+          ? { referralId: row.id, toStatus: "submitted", actorType: "partner", actorPartnerUserId: by.user.id, note: "" }
+          : { referralId: row.id, toStatus: "submitted", actorType: "cms", actorUserId: by.actor.id, note: "Registrada pela equipe Rocket Vision em nome do parceiro." },
+      );
     await audit(
-      { actor: { id: null, email: user.email }, action: "alliance.hub.referral_created", resourceType: "referral", resourceId: row.id, summary: `${user.partner.tradeName} indicou ${input.companyName} (${row.code})`, ...ctx },
+      by.kind === "partner"
+        ? { actor: { id: null, email: by.user.email }, action: "alliance.hub.referral_created", resourceType: "referral", resourceId: row.id, summary: `${partner.tradeName} indicou ${input.companyName} (${row.code})`, ...ctx }
+        : { actor: by.actor, action: "alliance.referral.created", resourceType: "referral", resourceId: row.id, summary: `Registrou ${input.companyName} (${row.code}) em nome de ${partner.tradeName}`, ...ctx },
       tx,
     );
     return row;
   });
-
-  await deliver({
-    dedupeKey: `referral-received:${referral.id}`,
-    template: "referral_received",
-    to: user.email,
-    partnerId: user.partner.id,
-    params: { name: user.name, code: referral.code, company: referral.companyName, protectedUntil: fmtDay(referral.protectedUntil), id: referral.id },
-  });
-  if (settings.notifyEmail) {
-    await deliver({
-      dedupeKey: `team-referral:${referral.id}`,
-      template: "team_notice",
-      to: settings.notifyEmail,
-      params: {
-        subject: `Nova indicação ${referral.code}: ${referral.companyName}`,
-        summary: `${user.partner.tradeName} indicou ${referral.companyName}.${referral.possibleDuplicateOf ? " Atenção: possível duplicidade com outra indicação." : ""}`,
-        url: `${cmsOrigin}/cms/alliance/indicacoes/${referral.id}`,
-      },
-    });
-  }
-  return { id: referral.id, code: referral.code };
 }
 
 /** Filtro de isolamento do Hub: sempre a empresa da sessão; Partner Member vê só as dele. */

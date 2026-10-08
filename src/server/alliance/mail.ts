@@ -97,11 +97,15 @@ export const TEMPLATES = {
     brand({
       to,
       subject: `Indicação ${p.code} registrada`,
-      preheader: `A indicação da ${p.company} está registrada e protegida no seu nome.`,
+      preheader: p.byTeam ? `A equipe da Rocket Vision registrou a indicação da ${p.company} em nome da sua empresa.` : `A indicação da ${p.company} está registrada e protegida no seu nome.`,
       eyebrow: PROGRAM.hubName,
       title: "Indicação recebida",
       greeting: `Olá, ${firstName(p.name)}.`,
-      paragraphs: [`Registramos a sua indicação da ${p.company}. A equipe da Rocket Vision vai analisar e você acompanha cada etapa pelo Alliance Hub.`],
+      paragraphs: [
+        p.byTeam
+          ? `A equipe da Rocket Vision registrou a indicação da ${p.company} em nome da sua empresa. Ela já está protegida e você acompanha cada etapa pelo Alliance Hub.`
+          : `Registramos a sua indicação da ${p.company}. A equipe da Rocket Vision vai analisar e você acompanha cada etapa pelo Alliance Hub.`,
+      ],
       details: [
         { label: "Identificador", value: p.code },
         { label: "Empresa indicada", value: p.company },

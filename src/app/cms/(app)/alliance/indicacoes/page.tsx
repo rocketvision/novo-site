@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Inbox, Search } from "lucide-react";
-import { buttonClass } from "@/components/cms/ui/button";
+import { ChevronRight, Inbox, Plus, Search } from "lucide-react";
+import { ButtonLink, buttonClass } from "@/components/cms/ui/button";
 import { Input, Select } from "@/components/cms/ui/field";
 import { Badge, EmptyState, PageHeader } from "@/components/cms/ui/layout";
 import { ToneBadge } from "@/components/cms/alliance/tone-badge";
@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Indicações · Rocket Alliance" };
 const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 
 export default async function CmsReferralsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  await requirePermission("alliance.view", "/cms/alliance/indicacoes");
+  const user = await requirePermission("alliance.view", "/cms/alliance/indicacoes");
   const sp = await searchParams;
   const status = REFERRAL_STATUS_KEYS.includes(one(sp.status) as ReferralStatus) ? (one(sp.status) as ReferralStatus) : undefined;
   const partnerId = isUuid(one(sp.parceiro)) ? one(sp.parceiro) : undefined;
@@ -34,7 +34,17 @@ export default async function CmsReferralsPage({ searchParams }: { searchParams:
 
   return (
     <div>
-      <PageHeader title="Indicações" description="Todas as indicações dos parceiros: qualificação, negociação, conversão e encerramento." />
+      <PageHeader
+        title="Indicações"
+        description="Todas as indicações dos parceiros: qualificação, negociação, conversão e encerramento."
+        actions={
+          user.permissions.has("alliance.referrals") && (
+            <ButtonLink href="/cms/alliance/indicacoes/nova" size="sm">
+              <Plus className="size-4" /> Nova indicação
+            </ButtonLink>
+          )
+        }
+      />
       <nav aria-label="Etapas" className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
         <Tile href={href({ status: undefined })} label="Todas" value={total} active={!status} />
         {REFERRAL_STATUSES.map((s) => (
@@ -60,7 +70,7 @@ export default async function CmsReferralsPage({ searchParams }: { searchParams:
         </button>
       </form>
       {items.length === 0 ? (
-        <EmptyState icon={<Inbox className="size-8" />} title={total === 0 ? "Nenhuma indicação ainda. Elas chegam pelo Alliance Hub." : "Nenhuma indicação com esses filtros."} />
+        <EmptyState icon={<Inbox className="size-8" />} title={total === 0 ? "Nenhuma indicação ainda. Elas chegam pelo Alliance Hub ou são registradas aqui pela equipe." : "Nenhuma indicação com esses filtros."} />
       ) : (
         <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
           <ul className="divide-y divide-zinc-100">

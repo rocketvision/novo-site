@@ -223,6 +223,9 @@ export const referralInputSchema = z.object({
   consentConfirmed: z.literal(true, { message: "Confirme que o cliente autorizou o contato da Rocket Vision." }),
 });
 export type ReferralInput = z.infer<typeof referralInputSchema>;
+/** Indicação registrada pela equipe no CMS: os mesmos dados, mais a empresa parceira que indicou. */
+const choosePartner = "Escolha a empresa parceira que fez a indicação.";
+export const cmsReferralInputSchema = referralInputSchema.extend({ partnerId: z.string({ message: choosePartner }).uuid(choosePartner) });
 
 export const referralUpdateSchema = z.object({
   status: z.enum(REFERRAL_STATUS_KEYS).optional(),
