@@ -86,30 +86,35 @@ export async function createReferral(user: HubUser, input: ReferralInput, ctx: C
  * Indicação registrada pela equipe no CMS em nome de uma empresa parceira (ex.: chegou por telefone ou
  * WhatsApp). Mesmas regras de duplicidade e proteção do Hub; o parceiro é avisado no Hub e por e-mail.
  */
-export async function createReferralFromCms(actor: Actor, partnerId: string, input: ReferralInput, ctx: Ctx) {
-  const [partner] = await getDb().select({ id: schema.partners.id, tradeName: schema.partners.tradeName, status: schema.partners.status }).from(schema.partners).where(eq(schema.partners.id, partnerId));
+export async function createReferralFromCms(actor: Actor, origin: { partnerId: string; submittedBy: string | null }, input: ReferralInput, ctx: Ctx) {
+  const db = getDb();
+  const [partner] = await db.select({ id: schema.partners.id, tradeName: schema.partners.tradeName, status: schema.partners.status }).from(schema.partners).where(eq(schema.partners.id, origin.partnerId));
   if (!partner) throw new HttpError(422, "invalid_partner", "Escolha a empresa parceira que fez a indicação.", { fields: { partnerId: "Escolha a empresa parceira que fez a indicação." } });
   if (partner.status === "suspended" || partner.status === "terminated") {
     const message = `${partner.tradeName} está ${partner.status === "suspended" ? "suspensa" : "encerrada"} no programa e não pode receber novas indicações.`;
     throw new HttpError(422, "partner_inactive", message, { fields: { partnerId: message } });
   }
-  const referral = await registerReferral({ partner, by: { kind: "cms", actor } }, input, ctx);
-  await notifyPartner(
-    partner.id,
-    { type: "referral", title: `Indicação ${referral.code} registrada`, body: `A equipe Rocket Vision registrou ${referral.companyName} em nome da sua empresa.`, link: `/alliance/indicacoes/${referral.id}` },
-    {
-      roles: ["owner", "manager"],
-      email: {
-        template: "referral_received",
-        dedupeKey: `referral-received:${referral.id}`,
-        params: { code: referral.code, company: referral.companyName, protectedUntil: fmtDay(referral.protectedUntil), id: referral.id, byTeam: "1" },
-      },
-    },
-  );
+  let person: { id: string; role: string } | null = null;
+  if (origin.submittedBy) {
+    [person] = await db
+      .select({ id: schema.partnerUsers.id, role: schema.partnerUsers.role })
+      .from(schema.partnerUsers)
+      .where(and(eq(schema.partnerUsers.id, origin.submittedBy), eq(schema.partnerUsers.partnerId, partner.id), eq(schema.partnerUsers.status, "active")));
+    if (!person) {
+      const message = `Essa pessoa não está ativa na equipe de ${partner.tradeName} no Hub. Escolha outra ou deixe em branco.`;
+      throw new HttpError(422, "invalid_submitter", message, { fields: { submittedBy: message } });
+    }
+  }
+  const referral = await registerReferral({ partner, by: { kind: "cms", actor, submittedBy: person?.id ?? null } }, input, ctx);
+  const notice = { type: "referral", title: `Indicação ${referral.code} registrada`, body: `A equipe Rocket Vision registrou ${referral.companyName} em nome da sua empresa.`, link: `/alliance/indicacoes/${referral.id}` };
+  const email = { template: "referral_received" as const, dedupeKey: `referral-received:${referral.id}`, params: { code: referral.code, company: referral.companyName, protectedUntil: fmtDay(referral.protectedUntil), id: referral.id, byTeam: "1" } };
+  await notifyPartner(partner.id, notice, { roles: ["owner", "manager"], email });
+  // Quem indicou, se for Partner Member, também recebe (owner e managers já receberam acima).
+  if (person?.role === "member") await notifyPartner(partner.id, notice, { userIds: [person.id], email });
   return { id: referral.id, code: referral.code };
 }
 
-type Origin = { partner: { id: string; tradeName: string }; by: { kind: "partner"; user: HubUser } | { kind: "cms"; actor: Actor } };
+type Origin = { partner: { id: string; tradeName: string }; by: { kind: "partner"; user: HubUser } | { kind: "cms"; actor: Actor; submittedBy: string | null } };
 
 /**
  * Registro comum ao Hub e ao CMS: duplicidade, proteção, histórico e auditoria, numa transação.
@@ -182,7 +187,7 @@ async function registerReferral({ partner, by }: Origin, input: ReferralInput, c
       .insert(schema.referrals)
       .values({
         partnerId: partner.id,
-        submittedBy: by.kind === "partner" ? by.user.id : null,
+        submittedBy: by.kind === "partner" ? by.user.id : by.submittedBy,
         companyName: input.companyName,
         companyWebsite: input.companyWebsite,
         companyTaxId: keys.taxId,

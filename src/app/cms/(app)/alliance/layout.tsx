@@ -13,19 +13,20 @@ export default async function AllianceLayout({ children }: { children: React.Rea
   const user = await requirePermission("alliance.view", "/cms/alliance");
   const badges = await allianceBadges();
   const all: (AllianceTab & { permission: Permission | null })[] = [
-    { href: "/cms/alliance", label: "Visão geral", permission: null },
-    { href: "/cms/alliance/candidaturas", label: "Candidaturas", permission: "alliance.applications", badge: badges.applications },
-    { href: "/cms/alliance/parceiros", label: "Parceiros", permission: null, badge: badges.changeRequests },
-    { href: "/cms/alliance/diretorio", label: "Diretório", permission: "alliance.publish" },
-    { href: "/cms/alliance/paginas", label: "Páginas", permission: "alliance.publish" },
-    { href: "/cms/alliance/indicacoes", label: "Indicações", permission: null, badge: badges.referrals },
-    { href: "/cms/alliance/comissoes", label: "Comissões", permission: "alliance.finance" },
-    { href: "/cms/alliance/contratos", label: "Contratos", permission: "alliance.contracts" },
-    { href: "/cms/alliance/recursos", label: "Recursos", permission: "alliance.resources" },
-    { href: "/cms/alliance/comunicacoes", label: "Comunicações", permission: "alliance.communications", badge: badges.tickets },
-    { href: "/cms/alliance/configuracoes", label: "Configurações", permission: "alliance.settings" },
+    { group: "Operação", href: "/cms/alliance", label: "Visão geral", permission: null },
+    { group: "Operação", href: "/cms/alliance/candidaturas", label: "Candidaturas", permission: "alliance.applications", badge: badges.applications },
+    { group: "Operação", href: "/cms/alliance/parceiros", label: "Parceiros", permission: null, badge: badges.changeRequests },
+    { group: "Operação", href: "/cms/alliance/indicacoes", label: "Indicações", permission: null, badge: badges.referrals },
+    { group: "Operação", href: "/cms/alliance/comissoes", label: "Comissões", permission: "alliance.finance" },
+    { group: "Operação", href: "/cms/alliance/comunicacoes/suporte", label: "Suporte", permission: "alliance.communications", badge: badges.tickets },
+    { group: "Conteúdo", href: "/cms/alliance/diretorio", label: "Diretório", permission: "alliance.publish" },
+    { group: "Conteúdo", href: "/cms/alliance/paginas", label: "Páginas", permission: "alliance.publish" },
+    { group: "Conteúdo", href: "/cms/alliance/recursos", label: "Recursos", permission: "alliance.resources" },
+    { group: "Conteúdo", href: "/cms/alliance/comunicacoes", label: "Comunicados", permission: "alliance.communications", exclude: ["/cms/alliance/comunicacoes/suporte"] },
+    { group: "Administração", href: "/cms/alliance/contratos", label: "Contratos", permission: "alliance.contracts" },
+    { group: "Administração", href: "/cms/alliance/configuracoes", label: "Configurações", permission: "alliance.settings" },
   ];
-  const tabs = all.filter((t) => t.permission === null || user.permissions.has(t.permission)).map((t) => ({ href: t.href, label: t.label, badge: t.badge }));
+  const tabs = all.filter((t) => t.permission === null || user.permissions.has(t.permission)).map((t) => ({ href: t.href, label: t.label, badge: t.badge, group: t.group, exclude: t.exclude }));
   return (
     <>
       <p className="mb-3 flex items-center gap-2.5 text-[11px] font-semibold tracking-[0.16em] text-zinc-400 uppercase">

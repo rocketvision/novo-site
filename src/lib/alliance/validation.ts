@@ -225,7 +225,11 @@ export const referralInputSchema = z.object({
 export type ReferralInput = z.infer<typeof referralInputSchema>;
 /** Indicação registrada pela equipe no CMS: os mesmos dados, mais a empresa parceira que indicou. */
 const choosePartner = "Escolha a empresa parceira que fez a indicação.";
-export const cmsReferralInputSchema = referralInputSchema.extend({ partnerId: z.string({ message: choosePartner }).uuid(choosePartner) });
+export const cmsReferralInputSchema = referralInputSchema.extend({
+  partnerId: z.string({ message: choosePartner }).uuid(choosePartner),
+  /** Pessoa do parceiro que fez a indicação (opcional). Vazio: fica com o owner e os managers. */
+  submittedBy: z.preprocess((v) => (v === "" ? null : v), z.string().uuid("Escolha uma pessoa da equipe do parceiro.").nullable().optional()),
+});
 
 export const referralUpdateSchema = z.object({
   status: z.enum(REFERRAL_STATUS_KEYS).optional(),

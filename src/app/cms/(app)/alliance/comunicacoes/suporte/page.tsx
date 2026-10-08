@@ -7,25 +7,44 @@ import { relativeTime } from "@/lib/cms/format";
 import { TICKET_CATEGORIES, TICKET_STATUSES, type TicketStatus } from "@/lib/alliance/constants";
 import { requirePermission } from "@/server/authz/guard";
 import { listTickets } from "@/server/alliance/support";
+import { eq } from "drizzle-orm";
+import { getDb, schema } from "@/server/db";
+import { isUuid } from "@/server/media/service";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Suporte · Rocket Alliance" };
 
-export default async function SupportPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function SupportPage({ searchParams }: { searchParams: Promise<{ status?: string; parceiro?: string }> }) {
   await requirePermission("alliance.communications", "/cms/alliance/comunicacoes/suporte");
-  const { status: raw } = await searchParams;
+  const { status: raw, parceiro } = await searchParams;
   const status = TICKET_STATUSES.some((s) => s.key === raw) ? (raw as TicketStatus) : undefined;
-  const rows = await listTickets({ status });
+  const partnerId = isUuid(parceiro) ? parceiro : undefined;
+  const [rows, partner] = await Promise.all([
+    listTickets({ status, partnerId }),
+    partnerId ? getDb().select({ tradeName: schema.partners.tradeName }).from(schema.partners).where(eq(schema.partners.id, partnerId)).then((r) => r[0] ?? null) : null,
+  ]);
+  const href = (s?: string) => {
+    const u = new URLSearchParams(Object.entries({ status: s, parceiro: partnerId }).filter((e): e is [string, string] => Boolean(e[1])));
+    return u.size ? `?${u}` : "?";
+  };
   return (
     <div>
       <PageHeader title="Suporte" description="Chamados abertos pelas empresas no Alliance Hub." />
       <nav aria-label="Filtrar por situação" className="mb-4 flex flex-wrap gap-2">
         {[{ key: undefined, label: "Todos" }, ...TICKET_STATUSES].map((s) => (
-          <Link key={s.label} href={s.key ? `?status=${s.key}` : "?"} aria-current={status === s.key ? "page" : undefined} className={cn("rounded-full border px-3 py-1 text-[13px]", status === s.key ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400")}>
+          <Link key={s.label} href={href(s.key)} aria-current={status === s.key ? "page" : undefined} className={cn("rounded-full border px-3 py-1 text-[13px]", status === s.key ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400")}>
             {s.label}
           </Link>
         ))}
       </nav>
+      {partner && (
+        <p className="mb-4 text-[13px] text-zinc-600">
+          Só chamados de <strong className="font-medium text-zinc-900">{partner.tradeName}</strong>.{" "}
+          <Link href={status ? `?status=${status}` : "?"} className="underline-offset-4 hover:underline">
+            Ver de todos os parceiros
+          </Link>
+        </p>
+      )}
       {rows.length === 0 ? (
         <EmptyState icon={<LifeBuoy className="size-8" />} title="Nenhum chamado." />
       ) : (

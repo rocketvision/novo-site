@@ -6,14 +6,23 @@ import { Input, Select } from "@/components/cms/ui/field";
 import { Badge, EmptyState, PageHeader, Panel } from "@/components/cms/ui/layout";
 import { ToneBadge } from "@/components/cms/alliance/tone-badge";
 import { ChangeRequestList } from "@/components/cms/alliance/change-requests";
-import { MODALITIES, PARTNER_STATUSES, PARTNER_STATUS_KEYS, TIERS, TIER_KEYS, isModalityKey, type PartnerStatus, type TierKey } from "@/lib/alliance/constants";
+import { CONTRACT_STATUSES, MODALITIES, PARTNER_STATUSES, PARTNER_STATUS_KEYS, TIERS, TIER_KEYS, isModalityKey, type PartnerStatus, type TierKey } from "@/lib/alliance/constants";
+import { formatMoney } from "@/lib/alliance/money";
+import { relativeTime } from "@/lib/cms/format";
 import { requirePermission } from "@/server/authz/guard";
-import { listChangeRequests, listPartners } from "@/server/alliance/partners";
+import { listChangeRequests, listPartners, type PartnerSort } from "@/server/alliance/partners";
 
 export const metadata: Metadata = { title: "Parceiros · Rocket Alliance" };
 
 type Search = Promise<Record<string, string | string[] | undefined>>;
 const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
+const SORTS: { key: PartnerSort; label: string }[] = [
+  { key: "name", label: "Nome (A–Z)" },
+  { key: "referrals", label: "Mais indicações em andamento" },
+  { key: "login", label: "Último acesso ao Hub" },
+  { key: "recent", label: "Mais recentes" },
+  { key: "directory", label: "Ordem do diretório" },
+];
 
 export default async function PartnersPage({ searchParams }: { searchParams: Search }) {
   const user = await requirePermission("alliance.view", "/cms/alliance/parceiros");
@@ -21,8 +30,13 @@ export default async function PartnersPage({ searchParams }: { searchParams: Sea
   const status = PARTNER_STATUS_KEYS.includes(one(sp.status) as PartnerStatus) ? (one(sp.status) as PartnerStatus) : undefined;
   const tier = TIER_KEYS.includes(one(sp.nivel) as TierKey) ? (one(sp.nivel) as TierKey) : undefined;
   const q = one(sp.q)?.slice(0, 100) ?? "";
+  const sort = SORTS.find((x) => x.key === one(sp.ordem))?.key ?? "name";
+  const pending = one(sp.pendencia) === "1";
   const canEdit = user.permissions.has("alliance.partners");
-  const [partners, requests] = await Promise.all([listPartners({ q, status, tier }), canEdit ? listChangeRequests({ status: "pending" }) : Promise.resolve([])]);
+  const finance = user.permissions.has("alliance.finance");
+  const contracts = user.permissions.has("alliance.contracts");
+  const [partners, requests] = await Promise.all([listPartners({ q, status, tier, pending, sort, finance }), canEdit ? listChangeRequests({ status: "pending" }) : Promise.resolve([])]);
+  const filtered = Boolean(q || status || tier || pending);
 
   return (
     <div>
@@ -67,6 +81,17 @@ export default async function PartnersPage({ searchParams }: { searchParams: Sea
             </option>
           ))}
         </Select>
+        <Select name="ordem" defaultValue={sort} aria-label="Ordenar por" className="sm:w-56">
+          {SORTS.map((x) => (
+            <option key={x.key} value={x.key}>
+              {x.label}
+            </option>
+          ))}
+        </Select>
+        <label className="flex shrink-0 items-center gap-2 px-1 text-[13px] text-zinc-700">
+          <input type="checkbox" name="pendencia" value="1" defaultChecked={pending} className="size-4 accent-zinc-900" />
+          Com pendência
+        </label>
         <button type="submit" className={buttonClass("secondary", "md")}>
           Filtrar
         </button>
@@ -75,9 +100,9 @@ export default async function PartnersPage({ searchParams }: { searchParams: Sea
       {partners.length === 0 ? (
         <EmptyState
           icon={<Handshake className="size-8" />}
-          title={q || status || tier ? "Nenhum parceiro com esses filtros." : "Nenhum parceiro ainda. Eles nascem das candidaturas aprovadas ou do cadastro manual."}
+          title={filtered ? "Nenhum parceiro com esses filtros." : "Nenhum parceiro ainda. Eles nascem das candidaturas aprovadas ou do cadastro manual."}
           action={
-            (q || status || tier) && (
+            filtered && (
               <Link href="/cms/alliance/parceiros" className={buttonClass("secondary", "sm")}>
                 Limpar filtros
               </Link>
@@ -99,15 +124,37 @@ export default async function PartnersPage({ searchParams }: { searchParams: Sea
                     )}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-zinc-900">{p.tradeName}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="truncate text-sm font-medium text-zinc-900">{p.tradeName}</span>
+                      {p.pendingCount > 0 && (
+                        <span className="shrink-0 rounded-full bg-sky-100 px-1.5 text-[11px] font-semibold text-sky-800 tabular-nums" title="Itens esperando a equipe">
+                          {p.pendingCount} {p.pendingCount === 1 ? "pendência" : "pendências"}
+                        </span>
+                      )}
+                    </span>
                     <span className="mt-0.5 block truncate text-xs text-zinc-500">
-                      {TIERS[p.tierKey as TierKey]?.name ?? p.tierKey} · {p.modalities.map((m) => (isModalityKey(m) ? MODALITIES[m].name : m)).join(", ") || "Sem modalidade"} · {p.users === 1 ? "1 pessoa no Hub" : `${p.users} pessoas no Hub`}
+                      {TIERS[p.tierKey as TierKey]?.name ?? p.tierKey} · {p.modalities.map((m) => (isModalityKey(m) ? MODALITIES[m].name : m)).join(", ") || "Sem modalidade"}
+                    </span>
+                    <span className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-zinc-500">
+                      <span>
+                        <strong className="font-medium text-zinc-800 tabular-nums">{p.openReferrals}</strong> {p.openReferrals === 1 ? "indicação em andamento" : "indicações em andamento"}
+                        {p.newReferrals > 0 && <span className="text-sky-700"> ({p.newReferrals} nova{p.newReferrals === 1 ? "" : "s"})</span>}
+                      </span>
+                      {p.toPayCents !== null && p.toPayCents > 0 && (
+                        <span>
+                          <strong className="font-medium text-zinc-800 tabular-nums">{formatMoney(p.toPayCents)}</strong> em comissões abertas
+                        </span>
+                      )}
+                      <span>{p.users === 0 ? "Sem acesso ao Hub" : p.lastLoginAt ? `Hub: ${relativeTime(p.lastLoginAt)}` : `${p.users === 1 ? "1 pessoa" : `${p.users} pessoas`} no Hub, sem acesso ainda`}</span>
                     </span>
                   </span>
-                  <span className="hidden items-center gap-2 sm:flex">
-                    {p.published ? <Badge tone="green">No diretório</Badge> : null}
-                    {p.hasChanges && <Badge tone="amber">Alterações</Badge>}
+                  <span className="hidden flex-col items-end gap-1.5 sm:flex">
                     <ToneBadge list={PARTNER_STATUSES} value={p.status} />
+                    <span className="flex items-center gap-1.5">
+                      {contracts && (p.contract ? <ToneBadge list={CONTRACT_STATUSES} value={p.contract} /> : <Badge>Sem contrato</Badge>)}
+                      {p.published ? <Badge tone="green">No diretório</Badge> : null}
+                      {p.hasChanges && <Badge tone="amber">Alterações</Badge>}
+                    </span>
                   </span>
                   <ChevronRight className="size-4 text-zinc-300 group-hover:text-zinc-500" aria-hidden="true" />
                 </Link>

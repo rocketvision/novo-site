@@ -16,12 +16,24 @@ const SERVICES = ["Site", "Loja virtual", "Sistema sob medida", "Aplicativo", "A
  * Nova indicação: dados da empresa, do contato e da necessidade. A duplicidade é conferida no servidor.
  * Com `partners`, é o formulário do CMS: a equipe registra em nome da empresa parceira escolhida.
  */
-export function ReferralForm({ protectionDays, partners }: { protectionDays: number; partners?: { id: string; tradeName: string }[] }) {
+export function ReferralForm({
+  protectionDays,
+  partners,
+  people = [],
+  defaultPartnerId = "",
+}: {
+  protectionDays: number;
+  partners?: { id: string; tradeName: string }[];
+  /** CMS: pessoas ativas no Hub de cada parceiro, para escolher quem indicou. */
+  people?: { id: string; partnerId: string; name: string; roleLabel: string }[];
+  defaultPartnerId?: string;
+}) {
   const cms = Boolean(partners);
   const router = useRouter();
   const toast = useToast();
-  const [v, setV] = useState({ partnerId: "", companyName: "", companyWebsite: "", companyTaxId: "", contactName: "", contactRole: "", contactEmail: "", contactPhone: "", city: "", need: "", services: [] as string[], estimatedValue: "", consentConfirmed: false });
+  const [v, setV] = useState({ partnerId: defaultPartnerId, submittedBy: "", companyName: "", companyWebsite: "", companyTaxId: "", contactName: "", contactRole: "", contactEmail: "", contactPhone: "", city: "", need: "", services: [] as string[], estimatedValue: "", consentConfirmed: false });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const partnerPeople = people.filter((p) => p.partnerId === v.partnerId);
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof typeof v>(k: K, value: (typeof v)[K]) => {
     setV((x) => ({ ...x, [k]: value }));
@@ -33,7 +45,7 @@ export function ReferralForm({ protectionDays, partners }: { protectionDays: num
     setBusy(true);
     setErrors({});
     try {
-      // No Hub, partnerId (vazio) é descartado pelo servidor: a empresa é sempre a da sessão.
+      // No Hub, partnerId e submittedBy (vazios) são descartados pelo servidor: vale sempre a sessão.
       const r = await api<{ id: string; code: string }>(cms ? "/api/cms/alliance/referrals" : "/api/alliance/hub/referrals", { body: v });
       toast.success(`Indicação ${r.code} registrada e protegida.`);
       router.push(`${cms ? "/cms/alliance" : "/alliance"}/indicacoes/${r.id}`);
@@ -52,7 +64,16 @@ export function ReferralForm({ protectionDays, partners }: { protectionDays: num
         <Panel title="Parceiro">
           <Field label="Empresa parceira que indicou" error={errors.partnerId} hint="A indicação fica protegida no nome dela, e quem administra a empresa no Alliance Hub é avisado.">
             {(p) => (
-              <Select {...p} value={v.partnerId} required onChange={(e) => set("partnerId", e.target.value)} className="sm:max-w-md">
+              <Select
+                {...p}
+                value={v.partnerId}
+                required
+                onChange={(e) => {
+                  set("partnerId", e.target.value);
+                  set("submittedBy", "");
+                }}
+                className="sm:max-w-md"
+              >
                 <option value="">Escolha o parceiro</option>
                 {partners.map((o) => (
                   <option key={o.id} value={o.id}>
@@ -62,6 +83,26 @@ export function ReferralForm({ protectionDays, partners }: { protectionDays: num
               </Select>
             )}
           </Field>
+          {v.partnerId && (
+            <Field
+              label="Pessoa que indicou"
+              optional
+              className="mt-5"
+              error={errors.submittedBy}
+              hint={partnerPeople.length ? "Ela acompanha a indicação no Hub e recebe os avisos. Em branco, fica com quem administra a empresa." : "Ninguém com acesso ativo ao Hub nesta empresa. A indicação fica com quem administra a empresa."}
+            >
+              {(p) => (
+                <Select {...p} value={v.submittedBy} disabled={partnerPeople.length === 0} onChange={(e) => set("submittedBy", e.target.value)} className="sm:max-w-md">
+                  <option value="">Ninguém específico</option>
+                  {partnerPeople.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name} ({o.roleLabel})
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+          )}
         </Panel>
       )}
       <Panel title="Empresa indicada">

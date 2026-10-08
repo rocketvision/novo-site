@@ -24,6 +24,9 @@ import { invitePartnerUser } from "@/server/alliance/hub/auth";
 import { publishPartner, unpublishPartner, updatePartner, getPartner } from "@/server/alliance/partners";
 import { getDirectory, getPublicPartner, getPublicProgram } from "@/server/alliance/public";
 import { createReferral, getReferralForHub, listReferralsForHub, updateReferral } from "@/server/alliance/referrals";
+import { listPartners } from "@/server/alliance/partners";
+import { partnerSummary, pendingWork } from "@/server/alliance/workspace";
+import { ALL_PERMISSIONS, type Permission } from "@/server/authz/permissions";
 import { actOnEntries, createPayout, hubEarnings, recordReceipt, setRuleStatus, voidPayout } from "@/server/alliance/commissions";
 import { totpAt, base32ToSecret } from "@/server/alliance/hub/totp";
 import type { HubUser } from "@/server/alliance/hub/session";
@@ -384,6 +387,58 @@ describe("Indicações: duplicidade, isolamento e transições", () => {
     } finally {
       await getDb().update(s.partners).set({ status }).where(eq(s.partners.id, partnerB));
     }
+  });
+
+  it("no CMS, a pessoa que indicou precisa ser da equipe ativa do parceiro e passa a acompanhar a indicação", async () => {
+    asCms(adminToken);
+    const body = { ...referral, partnerId: partnerA, companyName: "Estúdio Prisma", companyWebsite: "estudioprisma.example", contactEmail: "oi@estudioprisma.example" };
+    const wrong = await cmsReferrals.POST(req("POST", "/api/cms/alliance/referrals", { ...body, submittedBy: hubB.id }), params({}));
+    expect(wrong.status).toBe(422);
+    expect((await wrong.json()).error.fields.submittedBy).toMatch(/não está ativa na equipe de/);
+
+    const ok = await cmsReferrals.POST(req("POST", "/api/cms/alliance/referrals", { ...body, submittedBy: hubAMember.id }), params({}));
+    expect(ok.status).toBe(201);
+    const { id } = await ok.json();
+    const [row] = await getDb().select().from(s.referrals).where(eq(s.referrals.id, id));
+    expect(row.submittedBy).toBe(hubAMember.id);
+    expect((await listReferralsForHub(hubAMember)).some((x) => x.id === id)).toBe(true);
+    const notices = await getDb().select().from(s.partnerNotifications).where(eq(s.partnerNotifications.partnerUserId, hubAMember.id));
+    expect(notices.some((n) => n.link === `/alliance/indicacoes/${id}`)).toBe(true);
+  });
+
+  it("pendências e ficha do parceiro: só o que a pessoa pode ver, e filtradas por parceiro", async () => {
+    const all = new Set<Permission>(ALL_PERMISSIONS);
+    const groups = await pendingWork(all);
+    const fresh = groups.find((g) => g.key === "new_referrals");
+    expect(fresh?.count).toBeGreaterThan(0);
+    expect(fresh?.items.every((i) => i.href.startsWith("/cms/alliance/indicacoes/"))).toBe(true);
+
+    const onlyA = await pendingWork(all, partnerA);
+    const freshA = onlyA.find((g) => g.key === "new_referrals");
+    const [{ n }] = (await getDb().execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM referrals WHERE partner_id = ${partnerA} AND status = 'submitted'`)).rows;
+    expect(freshA?.count).toBe(n);
+    expect(onlyA.some((g) => g.key === "applications" || g.key === "emails_failed")).toBe(false);
+
+    const viewOnly = await pendingWork(new Set<Permission>(["alliance.view"]));
+    expect(viewOnly.every((g) => ["new_referrals", "expiring_referrals"].includes(g.key))).toBe(true);
+
+    const summary = await partnerSummary(partnerA, new Set<Permission>(["alliance.view"]));
+    expect(summary.referrals.total).toBeGreaterThan(0);
+    expect(summary.finance).toBeNull();
+    expect(summary.contracts).toBeNull();
+    expect(summary.activity.length).toBeGreaterThan(0);
+    expect((await partnerSummary(partnerA, all)).finance).not.toBeNull();
+  });
+
+  it("lista de parceiros: indicações, pendências, ordenação e comissão só para finanças", async () => {
+    const rows = await listPartners({ sort: "referrals", finance: false });
+    expect(rows.every((r) => r.toPayCents === null)).toBe(true);
+    const a = rows.find((r) => r.id === partnerA)!;
+    expect(a.openReferrals).toBeGreaterThan(0);
+    expect(rows[0].openReferrals).toBeGreaterThanOrEqual(rows[rows.length - 1].openReferrals);
+    const pendingOnly = await listPartners({ pending: true });
+    expect(pendingOnly.every((r) => r.pendingCount > 0)).toBe(true);
+    expect((await listPartners({ finance: true })).every((r) => typeof r.toPayCents === "number")).toBe(true);
   });
 
   it("sem a permissão de gerenciar indicações, o CMS não registra", async () => {
