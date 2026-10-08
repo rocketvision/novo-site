@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/cms/ui/layout";
 import { UsersAdmin } from "@/components/cms/users/users-admin";
-import { UsersTabs } from "@/components/cms/users/users-tabs";
 import { requirePermission } from "@/server/authz/guard";
 import { OWNER_ROLE_KEY } from "@/server/authz/permissions";
 import { isMailConfigured, listRoles, listUsers } from "@/server/users/service";
@@ -14,10 +12,9 @@ export default async function UsersPage() {
   const isOwner = user.roleKey === OWNER_ROLE_KEY;
 
   return (
-    <div className="max-w-5xl">
-      <PageHeader title="Usuários" description="Quem acessa o CMS e com qual função. Senhas nunca aparecem aqui: o acesso é por convite ou link de redefinição." />
-      <UsersTabs active="people" />
+    <div>
       <UsersAdmin
+        header={{ title: "Pessoas", description: "Quem acessa o CMS e com qual função. Senhas nunca aparecem aqui: o acesso é por convite ou link de redefinição." }}
         users={users.map((u) => ({ ...u, lastLoginAt: u.lastLoginAt?.toISOString() ?? null, createdAt: u.createdAt.toISOString() }))}
         roles={roles.map((r) => ({
           id: r.id,

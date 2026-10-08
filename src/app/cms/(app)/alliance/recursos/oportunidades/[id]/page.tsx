@@ -22,7 +22,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
   if (!data) notFound();
   const o = data.row;
   return (
-    <div className="max-w-6xl">
+    <div>
       <PageHeader
         back={
           <Link href="/cms/alliance/recursos/oportunidades" className="inline-flex items-center gap-1 text-[13px] text-zinc-500 hover:text-zinc-900">

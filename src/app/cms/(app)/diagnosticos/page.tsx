@@ -38,7 +38,7 @@ export default async function DiagnosticsPage({ searchParams }: { searchParams: 
   };
 
   return (
-    <div className="max-w-6xl">
+    <div>
       <PageHeader
         title="Diagnósticos"
         description="Quem respondeu o diagnóstico no site. Acompanhe cada um pelas etapas do atendimento, anote e chame no WhatsApp."

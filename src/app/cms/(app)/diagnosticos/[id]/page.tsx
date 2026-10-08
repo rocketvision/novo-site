@@ -51,7 +51,7 @@ export default async function DiagnosticPage({ params }: { params: Promise<{ id:
   ];
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader
         back={
           <Link href="/cms/diagnosticos" className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900">

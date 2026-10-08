@@ -63,9 +63,9 @@ export default async function PartnersPage({ searchParams }: { searchParams: Sea
       <form action="/cms/alliance/parceiros" className="mb-4 flex flex-col gap-2 sm:flex-row" role="search">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" aria-hidden="true" />
-          <Input name="q" defaultValue={q} placeholder="Buscar por nome, razão social, endereço ou e-mail" aria-label="Buscar parceiros" className="pl-9" />
+          <Input name="q" defaultValue={q} placeholder="Buscar parceiro ou e-mail" aria-label="Buscar parceiros" className="pl-9" />
         </div>
-        <Select name="status" defaultValue={status ?? ""} aria-label="Situação" className="sm:w-40">
+        <Select name="status" defaultValue={status ?? ""} aria-label="Situação" className="sm:w-44">
           <option value="">Todas as situações</option>
           {PARTNER_STATUSES.map((s) => (
             <option key={s.key} value={s.key}>
@@ -81,7 +81,7 @@ export default async function PartnersPage({ searchParams }: { searchParams: Sea
             </option>
           ))}
         </Select>
-        <Select name="ordem" defaultValue={sort} aria-label="Ordenar por" className="sm:w-56">
+        <Select name="ordem" defaultValue={sort} aria-label="Ordenar por" className="sm:w-52">
           {SORTS.map((x) => (
             <option key={x.key} value={x.key}>
               {x.label}

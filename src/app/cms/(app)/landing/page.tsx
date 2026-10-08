@@ -16,7 +16,7 @@ export default async function LandingPage() {
   const pendingCount = LANDING_SECTIONS.filter((s) => states.get(s.key)?.hasChanges ?? true).length;
 
   return (
-    <div className="max-w-4xl">
+    <div>
       <PageHeader
         title="Landing page"
         description={

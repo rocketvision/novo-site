@@ -33,7 +33,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
   const open = a.status === "pending_review" || a.status === "info_requested";
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader
         back={
           <Link href="/cms/alliance/candidaturas" className="inline-flex items-center gap-1 text-[13px] text-zinc-500 hover:text-zinc-900">

@@ -77,7 +77,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Search
   const filtered = baseParams.size > 0 || Boolean(filters.antes);
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader title="Auditoria" description="Tudo o que foi feito no CMS: quem, o quê, quando e de onde. O registro não guarda senhas nem tokens." />
 
       {/* Formulário GET: os filtros ficam na URL e funcionam sem JavaScript. */}

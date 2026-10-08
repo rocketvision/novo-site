@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { ButtonLink } from "@/components/cms/ui/button";
 import { Badge, PageHeader } from "@/components/cms/ui/layout";
 import { ToneBadge } from "@/components/cms/alliance/tone-badge";
-import { PartnerTabs } from "@/components/cms/alliance/partner-tabs";
+import { Tabs } from "@/components/cms/ui/tabs";
 import { siteHref } from "@/lib/cms/site-link";
 import { MODALITIES, PARTNER_STATUSES, TIERS, isModalityKey, type TierKey } from "@/lib/alliance/constants";
 import type { PartnerSnapshot } from "@/lib/alliance/types";
@@ -43,14 +43,14 @@ export default async function PartnerLayout({ children, params }: { children: Re
 
   const base = `/cms/alliance/parceiros/${id}`;
   const tabs = [
-    { href: base, label: "Resumo" },
+    { href: base, label: "Resumo", exact: true },
     { href: `${base}/editar`, label: "Cadastro" },
     ...(can("alliance.publish") ? [{ href: `${base}/pagina`, label: "Página exclusiva" }] : []),
     { href: `${base}/equipe`, label: "Equipe no Hub" },
   ];
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader
         back={
           <Link href="/cms/alliance/parceiros" className="inline-flex items-center gap-1 text-[13px] text-zinc-500 hover:text-zinc-900">
@@ -58,24 +58,26 @@ export default async function PartnerLayout({ children, params }: { children: Re
           </Link>
         }
         title={row.tradeName}
-        description={
-          <span className="flex flex-wrap items-center gap-2">
+        leading={
+          <span className="flex size-14 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5">
+            {row.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={row.logoUrl} alt="" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="text-base font-semibold text-zinc-400">{row.tradeName.slice(0, 2).toUpperCase()}</span>
+            )}
+          </span>
+        }
+        meta={
+          <>
             <ToneBadge list={PARTNER_STATUSES} value={row.status} />
             <Badge>{TIERS[row.tierKey as TierKey]?.name ?? row.tierKey}</Badge>
             {publicSlug ? <Badge tone="green">No diretório</Badge> : <Badge>Fora do diretório</Badge>}
-            <span className="text-zinc-500">
-              {[modalities.map((m) => (isModalityKey(m.key) ? MODALITIES[m.key].name : m.key)).join(", ") || "Sem modalidade", row.sector, row.legalName].filter(Boolean).join(" · ")}
-            </span>
-          </span>
+          </>
         }
+        description={[modalities.map((m) => (isModalityKey(m.key) ? MODALITIES[m.key].name : m.key)).join(", ") || "Sem modalidade", row.sector, row.legalName].filter(Boolean).join(" · ")}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {row.logoUrl && (
-              <span className="hidden h-10 w-20 items-center justify-center rounded border border-zinc-100 bg-white px-2 sm:flex">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={row.logoUrl} alt="" className="max-h-7 max-w-16 object-contain" />
-              </span>
-            )}
+          <>
             {publicSlug && (
               <ButtonLink href={siteHref(`/partners/${publicSlug}`)} target="_blank" rel="noreferrer" variant="ghost" size="sm">
                 <ExternalLink className="size-3.5" /> Ver no site
@@ -91,10 +93,10 @@ export default async function PartnerLayout({ children, params }: { children: Re
                 <Plus className="size-3.5" /> Nova indicação
               </ButtonLink>
             )}
-          </div>
+          </>
         }
       />
-      <PartnerTabs tabs={tabs} />
+      <Tabs label="Seções do parceiro" items={tabs} />
       {children}
     </div>
   );

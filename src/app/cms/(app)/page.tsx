@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, FilePen, Plus } from "lucide-react";
-import { EmptyState, PageHeader, Panel } from "@/components/cms/ui/layout";
+import { EmptyState, PageHeader, Panel, StatGrid } from "@/components/cms/ui/layout";
 import { ButtonLink } from "@/components/cms/ui/button";
 import { SECTIONS } from "@/lib/content/sections";
 import { relativeTime } from "@/lib/cms/format";
@@ -79,23 +79,17 @@ export default async function DashboardPage() {
       )}
 
       {canProjects && (
-        <div className="mb-6 grid grid-cols-3 divide-x divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
-          {(
-            [
-              ["Publicados", counts.published, "published"],
-              ["Rascunhos", counts.draft, "draft"],
-              ["Arquivados", counts.archived, "archived"],
-            ] as const
-          ).map(([label, value, status]) => (
-            <Link key={status} href={`/cms/projetos?status=${status}`} className="px-5 py-4 hover:bg-zinc-50">
-              <p className="text-[13px] text-zinc-500">Projetos {label.toLowerCase()}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-            </Link>
-          ))}
-        </div>
+        <StatGrid
+          className="mb-6 grid-cols-3"
+          items={[
+            { label: "Projetos publicados", value: String(counts.published), href: "/cms/projetos?status=published" },
+            { label: "Projetos em rascunho", value: String(counts.draft), href: "/cms/projetos?status=draft" },
+            { label: "Projetos arquivados", value: String(counts.archived), href: "/cms/projetos?status=archived" },
+          ]}
+        />
       )}
 
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid items-start gap-6 lg:grid-cols-5">
         <Panel title="Pendências" description="Rascunhos que ainda não estão no site." className="lg:col-span-3">
           {pending.length === 0 ? (
             <p className="text-sm text-zinc-500">Nada pendente. Tudo o que foi editado está publicado.</p>

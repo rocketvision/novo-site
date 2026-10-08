@@ -107,10 +107,15 @@ function FieldRenderer({ spec, path, parent, form }: { spec: FieldSpec; path: Pa
 
     case "group":
       return (
-        <fieldset className="rounded-lg border border-zinc-200 p-4">
-          <legend className="px-1 text-[13px] font-semibold text-zinc-900">{spec.label}</legend>
-          {spec.hint && <p className="-mt-1 mb-4 text-[13px] text-zinc-500">{spec.hint}</p>}
-          <Fields specs={spec.fields} path={path} form={form} />
+        <fieldset className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-5">
+          {/* float tira a legenda da borda: ela vira um título comum dentro do grupo. */}
+          <legend className="float-left mb-4 w-full">
+            <span className="block text-sm font-semibold text-zinc-900">{spec.label}</span>
+            {spec.hint && <span className="mt-0.5 block text-[13px] font-normal text-zinc-500">{spec.hint}</span>}
+          </legend>
+          <div className="clear-left">
+            <Fields specs={spec.fields} path={path} form={form} />
+          </div>
         </fieldset>
       );
 

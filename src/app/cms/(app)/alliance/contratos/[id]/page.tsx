@@ -25,7 +25,7 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
   const day = (d: string | null) => (d ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`)) : null);
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader
         back={
           <Link href="/cms/alliance/contratos" className="inline-flex items-center gap-1 text-[13px] text-zinc-500 hover:text-zinc-900">

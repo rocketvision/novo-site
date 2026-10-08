@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { EmptyState, PageHeader, Panel } from "@/components/cms/ui/layout";
+import { EmptyState, PageHeader, Panel, StatGrid } from "@/components/cms/ui/layout";
 import { relativeTime } from "@/lib/cms/format";
 import { formatMoney } from "@/lib/alliance/money";
 import { requirePermission } from "@/server/authz/guard";
@@ -40,7 +39,7 @@ export default async function AllianceOverviewPage() {
 
   return (
     <>
-      <PageHeader title="Visão geral" description="O que precisa da equipe agora e o Rocket Alliance em números." />
+      <PageHeader title="Rocket Alliance" description="O que precisa da equipe agora e o programa de parceiros em números." />
 
       <section aria-labelledby="pendencias" className="mb-8">
         <h2 id="pendencias" className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900">
@@ -51,26 +50,7 @@ export default async function AllianceOverviewPage() {
       </section>
 
       <h2 className="mb-3 text-sm font-semibold text-zinc-900">Números do programa</h2>
-      <div className="mb-6 grid gap-px overflow-hidden rounded-lg border border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-3">
-        {metrics.map((m) => {
-          const body = (
-            <>
-              <p className="text-[13px] text-zinc-500">{m.label}</p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{m.value}</p>
-              {m.hint && <p className="mt-0.5 text-xs text-zinc-500">{m.hint}</p>}
-            </>
-          );
-          return m.href ? (
-            <Link key={m.label} href={m.href} className="bg-white px-5 py-4 transition-colors hover:bg-zinc-50">
-              {body}
-            </Link>
-          ) : (
-            <div key={m.label} className="bg-white px-5 py-4">
-              {body}
-            </div>
-          );
-        })}
-      </div>
+      <StatGrid items={metrics} className={metrics.length > 6 ? "mb-8 lg:grid-cols-5" : "mb-8 lg:grid-cols-3"} />
 
       <Panel title="Atividade recente do programa">
         {activity.length === 0 ? (

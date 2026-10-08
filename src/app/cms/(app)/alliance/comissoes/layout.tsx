@@ -1,4 +1,4 @@
-import { AllianceSubNav } from "@/components/cms/alliance/alliance-nav";
+import { Tabs } from "@/components/cms/ui/tabs";
 import { requirePermission } from "@/server/authz/guard";
 
 /** Financeiro do programa: só quem tem `alliance.finance` (o admin comum não tem por padrão). */
@@ -6,9 +6,9 @@ export default async function CommissionsLayout({ children }: { children: React.
   await requirePermission("alliance.finance", "/cms/alliance/comissoes");
   return (
     <>
-      <AllianceSubNav
+      <Tabs
         label="Comissões"
-        tabs={[
+        items={[
           { href: "/cms/alliance/comissoes", label: "Lançamentos" },
           { href: "/cms/alliance/comissoes/recebimentos", label: "Recebimentos" },
           { href: "/cms/alliance/comissoes/pagamentos", label: "Pagamentos" },

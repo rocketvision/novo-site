@@ -31,7 +31,7 @@ export default async function CmsReferralPage({ params }: { params: Promise<{ id
   const day = (d: string) => formatDay(new Date(`${d}T12:00:00Z`));
 
   return (
-    <div className="max-w-6xl">
+    <div>
       <PageHeader
         back={
           <Link href="/cms/alliance/indicacoes" className="inline-flex items-center gap-1 text-[13px] text-zinc-500 hover:text-zinc-900">
