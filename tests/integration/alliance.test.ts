@@ -43,6 +43,7 @@ import * as cmsContracts from "@/app/api/cms/alliance/contracts/route";
 import * as cmsSettings from "@/app/api/cms/alliance/settings/route";
 import * as cmsFiles from "@/app/api/cms/alliance/files/route";
 import * as cmsReferral from "@/app/api/cms/alliance/referrals/[id]/route";
+import * as cmsReferrals from "@/app/api/cms/alliance/referrals/route";
 import * as hubResourceFileRoute from "@/app/api/alliance/hub/resources/[id]/file/route";
 import * as hubContractAccept from "@/app/api/alliance/hub/contracts/[id]/accept/route";
 import { referralInputSchema, referralUpdateSchema } from "@/lib/alliance/validation";
@@ -340,6 +341,55 @@ describe("Indicações: duplicidade, isolamento e transições", () => {
     expect(await listReferralsForHub(hubAMember)).toHaveLength(0);
     expect((await listReferralsForHub(hubA)).length).toBeGreaterThan(0);
     expect((await listReferralsForHub(hubB)).every((r) => r.id !== mine.id)).toBe(true);
+  });
+
+  it("a equipe registra pelo CMS em nome de um parceiro, que é avisado no Hub", async () => {
+    asCms(adminToken);
+    const body = { ...referral, partnerId: partnerA, companyName: "Clínica Horizonte", companyWebsite: "clinicahorizonte.example", contactEmail: "dra@clinicahorizonte.example" };
+    const r = await cmsReferrals.POST(req("POST", "/api/cms/alliance/referrals", body), params({}));
+    expect(r.status).toBe(201);
+    const { id, code } = await r.json();
+    expect(code).toMatch(/^RA-\d{6}$/);
+    const [row] = await getDb().select().from(s.referrals).where(eq(s.referrals.id, id));
+    expect(row).toMatchObject({ partnerId: partnerA, submittedBy: null, status: "submitted", companyDomain: "clinicahorizonte.example" });
+    const [event] = await getDb().select().from(s.referralEvents).where(eq(s.referralEvents.referralId, id));
+    expect(event).toMatchObject({ actorType: "cms", toStatus: "submitted" });
+    expect((await listReferralsForHub(hubA)).some((x) => x.id === id)).toBe(true);
+    const notices = await getDb().select().from(s.partnerNotifications).where(eq(s.partnerNotifications.partnerUserId, hubA.id));
+    expect(notices.some((n) => n.link === `/alliance/indicacoes/${id}`)).toBe(true);
+  });
+
+  it("no CMS, a duplicidade mostra a indicação existente e o parceiro dela", async () => {
+    asCms(adminToken);
+    const body = { ...referral, partnerId: partnerB, companyName: "Horizonte Saúde", companyWebsite: "https://clinicahorizonte.example", contactEmail: "x@outra.example" };
+    const r = await cmsReferrals.POST(req("POST", "/api/cms/alliance/referrals", body), params({}));
+    expect(r.status).toBe(409);
+    const { error } = await r.json();
+    expect(error.fields.companyWebsite).toMatch(/^Já existe uma indicação protegida com este site: RA-\d{6} \(Clínica Horizonte\), de /);
+  });
+
+  it("no CMS, sem parceiro ou com parceiro suspenso, a indicação é recusada com mensagem clara", async () => {
+    asCms(adminToken);
+    const body = { ...referral, companyName: "Loja Ventura", companyWebsite: "lojaventura.example", contactEmail: "a@lojaventura.example" };
+    const missing = await cmsReferrals.POST(req("POST", "/api/cms/alliance/referrals", body), params({}));
+    expect(missing.status).toBe(422);
+    expect((await missing.json()).error.fields.partnerId).toBe("Escolha a empresa parceira que fez a indicação.");
+
+    const [{ status }] = await getDb().select({ status: s.partners.status }).from(s.partners).where(eq(s.partners.id, partnerB));
+    await getDb().update(s.partners).set({ status: "suspended" }).where(eq(s.partners.id, partnerB));
+    try {
+      const suspended = await cmsReferrals.POST(req("POST", "/api/cms/alliance/referrals", { ...body, partnerId: partnerB }), params({}));
+      expect(suspended.status).toBe(422);
+      expect((await suspended.json()).error.fields.partnerId).toMatch(/está suspensa no programa e não pode receber novas indicações\.$/);
+    } finally {
+      await getDb().update(s.partners).set({ status }).where(eq(s.partners.id, partnerB));
+    }
+  });
+
+  it("sem a permissão de gerenciar indicações, o CMS não registra", async () => {
+    asCms(editorToken);
+    const r = await cmsReferrals.POST(req("POST", "/api/cms/alliance/referrals", { ...referral, partnerId: partnerA, companyName: "Sem Permissão", companyWebsite: "sempermissao.example" }), params({}));
+    expect(r.status).toBe(403);
   });
 
   it("transição inválida é recusada; perda exige motivo", async () => {

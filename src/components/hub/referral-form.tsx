@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/cms/ui/button";
-import { Field, Input, Textarea } from "@/components/cms/ui/field";
+import { Field, Input, Select, Textarea } from "@/components/cms/ui/field";
 import { Panel } from "@/components/cms/ui/layout";
 import { useToast } from "@/components/cms/ui/toast";
 import { api, ApiError } from "@/lib/cms/api";
@@ -12,11 +12,15 @@ import { maskPhone } from "@/lib/diagnostic";
 
 const SERVICES = ["Site", "Loja virtual", "Sistema sob medida", "Aplicativo", "Anúncios", "Outro"];
 
-/** Nova indicação: dados da empresa, do contato e da necessidade. A duplicidade é conferida no servidor. */
-export function ReferralForm({ protectionDays }: { protectionDays: number }) {
+/**
+ * Nova indicação: dados da empresa, do contato e da necessidade. A duplicidade é conferida no servidor.
+ * Com `partners`, é o formulário do CMS: a equipe registra em nome da empresa parceira escolhida.
+ */
+export function ReferralForm({ protectionDays, partners }: { protectionDays: number; partners?: { id: string; tradeName: string }[] }) {
+  const cms = Boolean(partners);
   const router = useRouter();
   const toast = useToast();
-  const [v, setV] = useState({ companyName: "", companyWebsite: "", companyTaxId: "", contactName: "", contactRole: "", contactEmail: "", contactPhone: "", city: "", need: "", services: [] as string[], estimatedValue: "", consentConfirmed: false });
+  const [v, setV] = useState({ partnerId: "", companyName: "", companyWebsite: "", companyTaxId: "", contactName: "", contactRole: "", contactEmail: "", contactPhone: "", city: "", need: "", services: [] as string[], estimatedValue: "", consentConfirmed: false });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof typeof v>(k: K, value: (typeof v)[K]) => {
@@ -29,9 +33,10 @@ export function ReferralForm({ protectionDays }: { protectionDays: number }) {
     setBusy(true);
     setErrors({});
     try {
-      const r = await api<{ id: string; code: string }>("/api/alliance/hub/referrals", { body: v });
+      // No Hub, partnerId (vazio) é descartado pelo servidor: a empresa é sempre a da sessão.
+      const r = await api<{ id: string; code: string }>(cms ? "/api/cms/alliance/referrals" : "/api/alliance/hub/referrals", { body: v });
       toast.success(`Indicação ${r.code} registrada e protegida.`);
-      router.push(`/alliance/indicacoes/${r.id}`);
+      router.push(`${cms ? "/cms/alliance" : "/alliance"}/indicacoes/${r.id}`);
       router.refresh();
     } catch (e) {
       const err = e as ApiError;
@@ -43,6 +48,22 @@ export function ReferralForm({ protectionDays }: { protectionDays: number }) {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-6">
+      {partners && (
+        <Panel title="Parceiro">
+          <Field label="Empresa parceira que indicou" error={errors.partnerId} hint="A indicação fica protegida no nome dela, e quem administra a empresa no Alliance Hub é avisado.">
+            {(p) => (
+              <Select {...p} value={v.partnerId} required onChange={(e) => set("partnerId", e.target.value)} className="sm:max-w-md">
+                <option value="">Escolha o parceiro</option>
+                {partners.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.tradeName}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        </Panel>
+      )}
       <Panel title="Empresa indicada">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Nome da empresa" error={errors.companyName} className="sm:col-span-2">
@@ -102,12 +123,14 @@ export function ReferralForm({ protectionDays }: { protectionDays: number }) {
       <div className="rounded-lg border border-zinc-200 bg-white p-5">
         <label className="flex items-start gap-3 text-[13px] text-zinc-700">
           <input type="checkbox" className="mt-0.5 size-4 accent-zinc-900" checked={v.consentConfirmed} onChange={(e) => set("consentConfirmed", e.target.checked)} aria-invalid={errors.consentConfirmed ? true : undefined} />
-          <span>Confirmo que o cliente sabe da indicação e autorizou o contato da Rocket Vision.</span>
+          <span>{cms ? "Confirmo que o parceiro informou que o cliente sabe da indicação e autorizou o contato da Rocket Vision." : "Confirmo que o cliente sabe da indicação e autorizou o contato da Rocket Vision."}</span>
         </label>
         {errors.consentConfirmed && <p className="mt-2 text-[13px] text-red-600">{errors.consentConfirmed}</p>}
         <p className="mt-4 flex items-start gap-2 text-[13px] text-zinc-500">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#2c9df5]" aria-hidden="true" />
-          Registrada aqui primeiro, a indicação fica protegida no nome da sua empresa por {protectionDays} dias enquanto estiver em andamento.
+          {cms
+            ? `A indicação fica protegida no nome do parceiro escolhido por ${protectionDays} dias enquanto estiver em andamento, com as mesmas regras de duplicidade do Hub.`
+            : `Registrada aqui primeiro, a indicação fica protegida no nome da sua empresa por ${protectionDays} dias enquanto estiver em andamento.`}
         </p>
         <Button type="submit" loading={busy} className="mt-5">
           Registrar indicação

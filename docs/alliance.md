@@ -98,9 +98,10 @@ Cada página e cada rota conferem a permissão no servidor. A aba escondida é s
 ## Indicações
 
 - **Proteção.** A empresa indicada fica reservada para quem registrou primeiro, por `protectionDays` (padrão 90, configurável).
-- **Duplicidade.** A comparação usa domínio (ignorando e-mails gratuitos), CNPJ (com dígito verificador) e nome normalizado.
-  - Mesmo domínio ou CNPJ protegido: a indicação é recusada com uma mensagem genérica. **O parceiro nunca descobre quem indicou antes.**
-  - Só o nome igual: a indicação entra marcada como *possível duplicidade*, para a equipe decidir.
+- **Duplicidade.** Site e CNPJ (com dígito verificador) identificam a empresa. Nome normalizado e domínio do e-mail do contato (ignorando e-mails gratuitos) são só sinais.
+  - Mesmo site ou CNPJ protegido: a indicação é recusada, e a mensagem diz qual dado coincidiu, no campo dele. **No Hub, o parceiro nunca descobre quem indicou antes**; no CMS, a equipe vê a indicação existente e o parceiro dela.
+  - Mesmo nome ou mesmo domínio de e-mail do contato: a indicação entra marcada como *possível duplicidade*, para a equipe decidir. Nome repetido na própria empresa só bloqueia quando não há site nem CNPJ para diferenciar.
+- **Registro pelo CMS.** Com `alliance.referrals`, a equipe registra em Indicações → Nova indicação uma indicação que chegou por outro canal, em nome da empresa parceira escolhida (não suspensa nem encerrada). Valem as mesmas regras; o responsável e os gestores do parceiro são avisados no Hub e por e-mail.
 - **Envios simultâneos.** Um lock de transação (`pg_advisory_xact_lock`) garante que só um fica com a proteção.
 - **Etapas.** Seguem um fluxo fechado. Perda exige motivo. Mensagens podem ser visíveis ao parceiro ou internas.
 - **Reatribuição.** É auditada, com justificativa, e fica bloqueada depois de haver recebimentos.
