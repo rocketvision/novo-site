@@ -1,9 +1,12 @@
 /**
  * Identidade de uma empresa indicada: as chaves usadas para achar indicações duplicadas.
- * Três sinais independentes. Basta um coincidir para a indicação ser considerada a mesma empresa:
- * - domínio do site (ou do e-mail corporativo do contato);
- * - CNPJ (só dígitos);
- * - nome normalizado (sem acentos, pontuação e sufixos societários).
+ * Sinais fortes (basta um coincidir para ser a mesma empresa):
+ * - domínio do site;
+ * - CNPJ (só dígitos).
+ * Sinais fracos (só marcam possível duplicidade para a equipe decidir):
+ * - nome normalizado (sem acentos, pontuação e sufixos societários);
+ * - domínio do e-mail do contato. Não identifica a empresa: o contato pode usar o e-mail de um
+ *   contador, de uma agência ou de um grupo que atende várias empresas diferentes.
  */
 
 /** Provedores de e-mail pessoal: o domínio deles não identifica uma empresa. */
@@ -77,11 +80,12 @@ export function normalizeCompanyName(input: string | null | undefined): string |
   return s.replace(/\s/g, "").length >= 3 ? s : null;
 }
 
-export type CompanyKeys = { domain: string | null; taxId: string | null; nameKey: string | null };
+export type CompanyKeys = { domain: string | null; emailDomain: string | null; taxId: string | null; nameKey: string | null };
 
 export function companyKeys(input: { companyName: string; website?: string | null; contactEmail?: string | null; taxId?: string | null }): CompanyKeys {
   return {
-    domain: normalizeDomain(input.website) ?? normalizeDomain(input.contactEmail),
+    domain: normalizeDomain(input.website),
+    emailDomain: normalizeDomain(input.contactEmail),
     taxId: normalizeTaxId(input.taxId),
     nameKey: normalizeCompanyName(input.companyName),
   };

@@ -287,10 +287,35 @@ describe("Indicações: duplicidade, isolamento e transições", () => {
   });
 
   it("outra empresa não registra o mesmo domínio e não descobre quem indicou", async () => {
-    await expect(createReferral(hubB, ref({ ...referral, companyName: "Sol Padaria e Confeitaria", contactEmail: "compras@padariasol.example", companyWebsite: "" }), ctx)).rejects.toMatchObject({
+    await expect(createReferral(hubB, ref({ ...referral, companyName: "Sol Padaria e Confeitaria", contactEmail: "compras@outra.example", companyWebsite: "padariasol.example" }), ctx)).rejects.toMatchObject({
       status: 409,
-      message: "Esta empresa já está registrada no programa e protegida para outra indicação.",
+      message: "Uma empresa com este site já está registrada no programa e protegida por outra indicação.",
+      extra: { fields: { companyWebsite: "Uma empresa com este site já está registrada no programa e protegida por outra indicação." } },
     });
+  });
+
+  it("a própria empresa vê qual indicação já tem o mesmo site, no campo do site", async () => {
+    await expect(createReferral(hubA, ref({ ...referral, companyName: "Outro Nome Qualquer" }), ctx)).rejects.toMatchObject({
+      status: 409,
+      extra: { fields: { companyWebsite: expect.stringMatching(/^A sua empresa já indicou uma empresa com este site: RA-\d{6} \(Padaria Sol Ltda\)/) } },
+    });
+  });
+
+  it("CNPJ inválido é recusado com mensagem clara", async () => {
+    const r = await hubReferrals.POST(req("POST", "/api/alliance/hub/referrals", { ...referral, companyName: "Empresa CNPJ Errado", companyWebsite: "", companyTaxId: "12.345.678/0001-00" }), params({}));
+    expect(r.status).toBe(422);
+    expect((await r.json()).error.fields.companyTaxId).toMatch(/CNPJ inválido/);
+  });
+
+  it("mesmo domínio só no e-mail do contato não bloqueia: entra marcado como possível duplicidade", async () => {
+    // Ex.: o mesmo contador ou agência como contato de empresas diferentes.
+    const other = { ...referral, companyName: "Oficina Norte", companyWebsite: "", contactEmail: "contador@padariasol.example" };
+    const mine = await createReferral(hubA, ref(other), ctx);
+    const [row] = await getDb().select().from(s.referrals).where(eq(s.referrals.id, mine.id));
+    expect(row).toMatchObject({ companyDomain: null, partnerId: partnerA });
+    expect(row.possibleDuplicateOf).not.toBeNull();
+    const again = await createReferral(hubA, ref({ ...other, companyName: "Auto Peças Leste" }), ctx);
+    expect(again.id).not.toBe(mine.id);
   });
 
   it("dois envios simultâneos da mesma empresa: só um fica com a proteção", async () => {
