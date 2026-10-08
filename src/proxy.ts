@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * 1. Endereços separados (opcional): com CMS_URL definido e diferente do site, o CMS só abre
  *    no endereço dele e o site público no dele. Sem CMS_URL, tudo fica no mesmo endereço.
+ *    O mesmo vale para o Alliance Hub com ALLIANCE_URL: /alliance só abre no endereço dele, a raiz
+ *    leva ao Hub e o resto (site e CMS) volta para o endereço de origem.
  * 2. Checagem otimista do CMS: quem não tem nem o cookie de sessão vai direto para o login,
  *    sem renderizar a página. A validação real da sessão e das permissões acontece no servidor,
  *    em cada layout, página e rota de API.
@@ -26,6 +28,8 @@ function urlOf(value: string | undefined) {
 const siteUrl = urlOf(process.env.NEXT_PUBLIC_SITE_URL);
 const cmsUrl = urlOf(process.env.CMS_URL);
 const splitHosts = siteUrl && cmsUrl && siteUrl.host !== cmsUrl.host ? { site: siteUrl, cms: cmsUrl } : null;
+const allianceUrl = urlOf(process.env.ALLIANCE_URL);
+const hubHost = siteUrl && allianceUrl && siteUrl.host !== allianceUrl.host ? allianceUrl : null;
 
 const isCmsPath = (pathname: string) => pathname === "/cms" || pathname.startsWith("/cms/");
 const isHubPath = (pathname: string) => pathname === "/alliance" || pathname.startsWith("/alliance/");
@@ -37,6 +41,15 @@ function redirectTo(base: URL, request: NextRequest) {
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  if (hubHost && siteUrl) {
+    const onHubHost = request.headers.get("host") === hubHost.host;
+    if (!onHubHost && isHubPath(pathname)) return redirectTo(hubHost, request);
+    if (onHubHost && !isHubPath(pathname)) {
+      if (pathname === "/") return NextResponse.redirect(new URL("/alliance", hubHost.origin), 307);
+      return redirectTo(isCmsPath(pathname) && splitHosts ? splitHosts.cms : siteUrl, request);
+    }
+  }
 
   if (splitHosts) {
     const host = request.headers.get("host");

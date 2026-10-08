@@ -16,11 +16,15 @@ const schema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
   /** Endereço próprio do CMS (ex.: https://cms.exemplo.com). Sem ela, o CMS fica em /cms no mesmo endereço do site. */
   CMS_URL: optional(z.string().url()),
+  /** Endereço próprio do Alliance Hub (ex.: https://alliance.exemplo.com). Sem ela, o Hub fica em /alliance no endereço do site. */
+  ALLIANCE_URL: optional(z.string().url()),
   /** Vercel Blob: armazenamento de imagens enviadas pelo CMS. */
   BLOB_READ_WRITE_TOKEN: optional(z.string().min(1)),
   /** Resend: envio de e-mails transacionais (convites e redefinição de senha). Opcional. */
   RESEND_API_KEY: optional(z.string().min(1)),
   MAIL_FROM: optional(z.string().min(3)),
+  /** Remetente dos e-mails do Rocket Alliance (ex.: "Rocket Alliance <alliance@exemplo.com>"). Sem ela, usa MAIL_FROM. */
+  ALLIANCE_MAIL_FROM: optional(z.string().min(3)),
   /** E-mail que recebe o aviso de cada diagnóstico enviado pelo site (quiz). Opcional: sem ele, os diagnósticos ficam só no CMS. */
   DIAGNOSTIC_NOTIFY_TO: optional(z.string().email()),
   /** Google Calendar (agendamento das calls do diagnóstico): cliente OAuth "Aplicativo da Web" do Google Cloud. */
@@ -47,3 +51,5 @@ export const env = parsed.data;
 export const isProduction = env.NODE_ENV === "production";
 /** Origem do CMS: links de convite e de redefinição de senha apontam para cá. */
 export const cmsOrigin = new URL(env.CMS_URL ?? env.NEXT_PUBLIC_SITE_URL).origin;
+/** Origem do Alliance Hub: links dos e-mails do Rocket Alliance apontam para cá. */
+export const hubOrigin = new URL(env.ALLIANCE_URL ?? env.NEXT_PUBLIC_SITE_URL).origin;
