@@ -405,7 +405,7 @@ export function PartnerEditor({ id, initial, media: initialMedia, projects, perm
 
       </div>
 
-      <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t border-zinc-200 bg-zinc-50/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+      <div className="sticky bottom-4 z-20 mt-8 rounded-xl border border-zinc-200 bg-white/95 px-4 py-3 shadow-lg shadow-zinc-900/5 backdrop-blur">
         <div className="flex flex-wrap items-center justify-end gap-2">
           {!creating && perms.canPublish && initial.published && (
             <Button variant="ghost" size="sm" onClick={() => setConfirm("unpublish")} disabled={busy !== null}>

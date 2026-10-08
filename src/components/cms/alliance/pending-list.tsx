@@ -18,7 +18,7 @@ export function PendingList({ groups, empty = "Nada esperando a equipe agora. Tu
     );
   }
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-2">
+    <div className={cn("grid items-start gap-4", groups.length > 1 && "lg:grid-cols-2")}>
       {groups.map((g) => (
         <section key={g.key} className="flex flex-col rounded-lg border border-zinc-200 bg-white" aria-labelledby={`pend-${g.key}`}>
           <header className="flex items-start justify-between gap-3 border-b border-zinc-100 px-4 py-3">

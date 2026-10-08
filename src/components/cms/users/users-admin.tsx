@@ -6,7 +6,7 @@ import { Check, Copy, KeyRound, LogOut, Mail, Power, UserPlus, X } from "lucide-
 import { Button } from "@/components/cms/ui/button";
 import { ConfirmDialog } from "@/components/cms/ui/dialog";
 import { Field, Input, Select } from "@/components/cms/ui/field";
-import { Badge } from "@/components/cms/ui/layout";
+import { Badge, PageHeader } from "@/components/cms/ui/layout";
 import { useToast } from "@/components/cms/ui/toast";
 import { api, ApiError } from "@/lib/cms/api";
 import { formatDateTime, relativeTime } from "@/lib/cms/format";
@@ -71,20 +71,39 @@ function useDialog(open: boolean) {
   return ref;
 }
 
-export function UsersAdmin({ users, roles, currentUserId, perms, mailConfigured }: { users: UserRowDTO[]; roles: RoleOption[]; currentUserId: string; perms: Perms; mailConfigured: boolean }) {
+export function UsersAdmin({
+  header,
+  users,
+  roles,
+  currentUserId,
+  perms,
+  mailConfigured,
+}: {
+  /** Título e descrição da página: o botão de convite fica no cabeçalho, alinhado ao título. */
+  header: { title: string; description: string };
+  users: UserRowDTO[];
+  roles: RoleOption[];
+  currentUserId: string;
+  perms: Perms;
+  mailConfigured: boolean;
+}) {
   const [inviting, setInviting] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const user = users.find((u) => u.id === selected) ?? null;
 
   return (
     <>
-      {perms.canCreate && (
-        <div className="mb-5 flex justify-end">
-          <Button size="sm" onClick={() => setInviting(true)}>
-            <UserPlus className="size-4" /> Convidar pessoa
-          </Button>
-        </div>
-      )}
+      <PageHeader
+        title={header.title}
+        description={header.description}
+        actions={
+          perms.canCreate && (
+            <Button size="sm" onClick={() => setInviting(true)}>
+              <UserPlus className="size-4" /> Convidar pessoa
+            </Button>
+          )
+        }
+      />
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="hidden border-b border-zinc-100 bg-zinc-50/60 text-xs text-zinc-500 md:table-header-group">

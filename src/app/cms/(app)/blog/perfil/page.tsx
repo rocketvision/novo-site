@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/cms/ui/layout";
-import { BlogNav } from "@/components/cms/blog/blog-nav";
 import { OwnProfileForm } from "@/components/cms/blog/taxonomy-admin";
-import { can, requirePermission } from "@/server/authz/guard";
+import { requirePermission } from "@/server/authz/guard";
 import { getOwnAuthor } from "@/server/blog/service";
 import { getMediaByIds } from "@/server/media/service";
 
@@ -14,8 +13,7 @@ export default async function OwnAuthorPage() {
   const photo = author?.photoMediaId ? (await getMediaByIds([author.photoMediaId])).get(author.photoMediaId) : undefined;
   return (
     <div className="max-w-3xl">
-      <PageHeader title="Blog" description="Foto, bio e links que aparecem junto aos seus artigos." />
-      <BlogNav current="perfil" show={{ categories: can(user, "blog.categories"), authors: can(user, "blog.authors"), profile: true }} />
+      <PageHeader title="Meu perfil de autor" description="Foto, bio e links que aparecem junto aos seus artigos." />
       <OwnProfileForm
         initial={{
           name: author?.name ?? user.name,

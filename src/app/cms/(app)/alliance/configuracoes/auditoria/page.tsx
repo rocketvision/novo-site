@@ -48,7 +48,7 @@ export default async function AllianceAuditPage({ searchParams }: { searchParams
   const base = new URLSearchParams(Object.entries({ area, de: date(sp.de), ate: date(sp.ate) }).filter((e): e is [string, string] => Boolean(e[1])));
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader title="Auditoria do programa" description="Todas as ações do Rocket Alliance, no CMS e no Hub: quem, o quê, quando e de onde. Valores e comissões nunca são apagados; cancelamentos e estornos aparecem aqui." />
       <form method="get" className="mb-5 grid gap-3 rounded-lg border border-zinc-200 bg-white p-4 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
         <label className="text-[13px] font-medium text-zinc-900">

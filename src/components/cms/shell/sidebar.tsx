@@ -18,31 +18,33 @@ import {
   PanelsTopLeft,
   ScrollText,
   Settings,
-  UserRound,
   Users,
   X,
 } from "lucide-react";
 import { StudioLogo } from "@/components/cms/brand";
+import { isActivePath, type NavIcon, type NavItem, type NavSection } from "@/components/cms/shell/nav";
 import { api } from "@/lib/cms/api";
 import { cn } from "@/lib/utils";
 
-export type NavKey = "dashboard" | "blog" | "landing" | "projects" | "diagnostics" | "agenda" | "alliance" | "media" | "users" | "audit" | "settings";
+const ICONS: Record<NavIcon, typeof LayoutDashboard> = {
+  dashboard: LayoutDashboard,
+  landing: PanelsTopLeft,
+  blog: Newspaper,
+  projects: FolderKanban,
+  diagnostics: ClipboardCheck,
+  agenda: CalendarDays,
+  alliance: Handshake,
+  media: ImageIcon,
+  users: Users,
+  audit: ScrollText,
+  settings: Settings,
+};
 
-const ITEMS: { key: NavKey; label: string; href: string; icon: typeof LayoutDashboard }[] = [
-  { key: "dashboard", label: "Visão geral", href: "/cms", icon: LayoutDashboard },
-  { key: "landing", label: "Landing page", href: "/cms/landing", icon: PanelsTopLeft },
-  { key: "blog", label: "Blog", href: "/cms/blog", icon: Newspaper },
-  { key: "projects", label: "Projetos", href: "/cms/projetos", icon: FolderKanban },
-  { key: "diagnostics", label: "Diagnósticos", href: "/cms/diagnosticos", icon: ClipboardCheck },
-  { key: "agenda", label: "Agenda", href: "/cms/agenda", icon: CalendarDays },
-  { key: "alliance", label: "Rocket Alliance", href: "/cms/alliance", icon: Handshake },
-  { key: "media", label: "Mídia", href: "/cms/midia", icon: ImageIcon },
-  { key: "users", label: "Usuários", href: "/cms/usuarios", icon: Users },
-  { key: "audit", label: "Auditoria", href: "/cms/auditoria", icon: ScrollText },
-  { key: "settings", label: "Configurações", href: "/cms/configuracoes", icon: Settings },
-];
-
-export function Sidebar({ allowed, user }: { allowed: NavKey[]; user: { name: string; email: string; roleName: string } }) {
+/**
+ * Menu lateral do Studio: as áreas agrupadas (Site, Comercial, Sistema) e, na área aberta, os subitens
+ * dela. É a única navegação entre seções: as páginas não repetem abas de seção no topo.
+ */
+export function Sidebar({ sections, user }: { sections: NavSection[]; user: { name: string; email: string; roleName: string } }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -60,7 +62,7 @@ export function Sidebar({ allowed, user }: { allowed: NavKey[]; user: { name: st
     };
   }, [open]);
 
-  const isActive = (href: string) => (href === "/cms" ? pathname === "/cms" : pathname === href || pathname.startsWith(`${href}/`));
+  const isActive = (href: string) => isActivePath(pathname, { href, exact: href === "/cms" });
 
   async function logout() {
     setLeaving(true);
@@ -74,51 +76,30 @@ export function Sidebar({ allowed, user }: { allowed: NavKey[]; user: { name: st
 
   const nav = (
     <nav aria-label="Principal" className="flex h-full flex-col">
-      <div className="flex h-14 items-center px-4">
+      <div className="flex h-16 items-center px-[18px]">
         <StudioLogo compact />
       </div>
 
-      <ul className="flex-1 space-y-0.5 px-2 py-2">
-        {ITEMS.filter((item) => allowed.includes(item.key)).map((item) => {
-          const active = isActive(item.href);
-          return (
-            <li key={item.key}>
-              <Link
-                href={item.href}
-                onClick={() => setOpen(false)}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "relative flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] font-medium transition-colors",
-                  active ? "bg-zinc-100 text-zinc-900" : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900",
-                )}
-              >
-                {active && <span aria-hidden="true" className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-accent" />}
-                <item.icon aria-hidden="true" className="size-4" strokeWidth={1.75} />
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="flex-1 overflow-y-auto px-2 pt-1 pb-4">
+        {sections.map((section, i) => (
+          <div key={section.title ?? i} className={cn(i > 0 && "mt-5")}>
+            {section.title && <p className="mb-1 px-2.5 text-[11px] font-semibold tracking-[0.08em] text-zinc-400 uppercase">{section.title}</p>}
+            <ul className="space-y-0.5">
+              {section.items.map((item) => (
+                <SidebarItem key={item.href} item={item} pathname={pathname} onNavigate={() => setOpen(false)} />
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
 
-      <div className="border-t border-zinc-200 p-2">
-        <a
-          href={siteHref("/")}
-          target="_blank"
-          rel="noopener"
-          className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] font-medium text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900"
-        >
-          <ArrowUpRight aria-hidden="true" className="size-4" strokeWidth={1.75} />
-          Ver site
-        </a>
+      <div className="flex items-center gap-1 border-t border-zinc-200 p-2">
         <Link
           href="/cms/conta"
           onClick={() => setOpen(false)}
           aria-current={isActive("/cms/conta") ? "page" : undefined}
-          className={cn(
-            "mt-1 flex items-center gap-2.5 rounded-md px-2.5 py-2 hover:bg-zinc-100/70",
-            isActive("/cms/conta") && "bg-zinc-100",
-          )}
+          title="Minha conta"
+          className={cn("flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-zinc-100/70", isActive("/cms/conta") && "bg-zinc-100")}
         >
           <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[11px] font-semibold text-zinc-700">
             {initials(user.name)}
@@ -127,16 +108,26 @@ export function Sidebar({ allowed, user }: { allowed: NavKey[]; user: { name: st
             <span className="block truncate text-[13px] font-medium text-zinc-900">{user.name}</span>
             <span className="block truncate text-xs text-zinc-500">{user.roleName}</span>
           </span>
-          <UserRound aria-hidden="true" className="size-4 text-zinc-400" strokeWidth={1.75} />
         </Link>
+        <a
+          href={siteHref("/")}
+          target="_blank"
+          rel="noopener"
+          title="Ver site"
+          aria-label="Ver site (abre em nova aba)"
+          className="flex size-8 shrink-0 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+        >
+          <ArrowUpRight aria-hidden="true" className="size-4" strokeWidth={1.75} />
+        </a>
         <button
           type="button"
           onClick={logout}
           disabled={leaving}
-          className="mt-1 flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-[13px] font-medium text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900 disabled:opacity-50"
+          title="Sair"
+          aria-label="Sair"
+          className="flex size-8 shrink-0 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50"
         >
           <LogOut aria-hidden="true" className="size-4" strokeWidth={1.75} />
-          Sair
         </button>
       </div>
     </nav>
@@ -145,7 +136,7 @@ export function Sidebar({ allowed, user }: { allowed: NavKey[]; user: { name: st
   return (
     <>
       {/* Desktop */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-zinc-200 bg-white lg:block">{nav}</aside>
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-zinc-200 bg-white lg:block">{nav}</aside>
 
       {/* Mobile: barra superior + gaveta */}
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-3 lg:hidden">
@@ -185,4 +176,68 @@ export function Sidebar({ allowed, user }: { allowed: NavKey[]; user: { name: st
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+
+function Count({ value, active }: { value?: number; active?: boolean }) {
+  if (!value) return null;
+  return (
+    <span
+      className={cn("ml-auto rounded-full px-1.5 text-[11px] leading-[18px] font-semibold tabular-nums", active ? "bg-zinc-900 text-white" : "bg-sky-100 text-sky-800")}
+      aria-label={`${value} pendentes`}
+    >
+      {value}
+    </span>
+  );
+}
+
+/** Área do menu. Com subitens, eles aparecem só quando a área está aberta (página atual dentro dela). */
+function SidebarItem({ item, pathname, onNavigate }: { item: NavItem; pathname: string; onNavigate: () => void }) {
+  const Icon = ICONS[item.icon];
+  const inArea = isActivePath(pathname, { href: item.href, exact: item.exact });
+  const children = item.children ?? [];
+  const showChildren = inArea && children.length > 1;
+  const active = inArea && !showChildren;
+  return (
+    <li>
+      <Link
+        href={item.href}
+        onClick={onNavigate}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "relative flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] font-medium transition-colors",
+          active ? "bg-zinc-100 text-zinc-900" : inArea ? "text-zinc-900" : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900",
+        )}
+      >
+        {active && <span aria-hidden="true" className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-accent" />}
+        <Icon aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.75} />
+        <span className="truncate">{item.label}</span>
+        {!showChildren && <Count value={item.badge} />}
+      </Link>
+      {showChildren && (
+        <ul className="mt-0.5 mb-2 ml-[17px] space-y-px border-l border-zinc-200 pl-2">
+          {children.map((child) => {
+            const on = isActivePath(pathname, child);
+            return (
+              <li key={child.href + child.label}>
+                {child.group && <p className="mt-2.5 mb-0.5 px-2 text-[10px] font-semibold tracking-[0.1em] text-zinc-400 uppercase first:mt-1">{child.group}</p>}
+                <Link
+                  href={child.href}
+                  onClick={onNavigate}
+                  aria-current={on ? "page" : undefined}
+                  className={cn(
+                    "relative flex h-7 items-center gap-2 rounded-md px-2 text-[13px] transition-colors",
+                    on ? "bg-zinc-100 font-medium text-zinc-900" : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900",
+                  )}
+                >
+                  {on && <span aria-hidden="true" className="absolute top-1 bottom-1 -left-[9px] w-0.5 rounded-full bg-accent" />}
+                  <span className="truncate">{child.label}</span>
+                  <Count value={child.badge} active={on} />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </li>
+  );
 }

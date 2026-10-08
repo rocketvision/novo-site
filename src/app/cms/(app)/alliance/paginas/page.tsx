@@ -13,7 +13,7 @@ export default async function PartnerPagesPage() {
   await requirePermission("alliance.publish", "/cms/alliance/paginas");
   const partners = await listPartners();
   return (
-    <div className="max-w-4xl">
+    <div>
       <PageHeader title="Páginas de parceiros" description="Cada parceiro tem uma página própria, montada em blocos. Nova empresa, nova página: nada de código." />
       <Link href="/cms/alliance/paginas/programa" className="group mb-6 flex items-center gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-3.5 hover:border-zinc-300">
         <span className="min-w-0 flex-1">

@@ -5,7 +5,6 @@ import { Newspaper, Plus, Search, Star } from "lucide-react";
 import { ButtonLink, buttonClass } from "@/components/cms/ui/button";
 import { Input, Select } from "@/components/cms/ui/field";
 import { Badge, EmptyState, PageHeader } from "@/components/cms/ui/layout";
-import { BlogNav } from "@/components/cms/blog/blog-nav";
 import { relativeTime, formatDateTime } from "@/lib/cms/format";
 import { STATUS_LABELS, STATUS_TONE, type BlogStatus } from "@/lib/blog/workflow";
 import { articleListQuerySchema } from "@/lib/validation/blog";
@@ -43,9 +42,9 @@ export default async function BlogPage({ searchParams }: { searchParams: SP }) {
   };
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader
-        title="Blog"
+        title="Artigos"
         description={all ? "Artigos de toda a equipe e dos colunistas. Só artigos publicados aparecem no site." : "Seus artigos. Envie para revisão quando estiverem prontos: a equipe revisa antes de publicar."}
         actions={
           can(user, "blog.create") && (
@@ -55,7 +54,6 @@ export default async function BlogPage({ searchParams }: { searchParams: SP }) {
           )
         }
       />
-      <BlogNav current="artigos" show={{ categories: can(user, "blog.categories"), authors: can(user, "blog.authors"), profile: can(user, "blog.create") }} />
 
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex gap-1">

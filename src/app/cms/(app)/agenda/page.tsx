@@ -52,7 +52,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Searc
   }));
 
   return (
-    <div className="max-w-6xl">
+    <div>
       <PageHeader title="Agenda" description="As calls de diagnóstico marcadas pelo site. Horários de 30 minutos, de segunda a sexta, das 9h às 11h e das 13h30 às 17h30." />
 
       {notice && (
@@ -88,7 +88,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Searc
         )}
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
+      <div className="grid items-start gap-6 xl:grid-cols-[1fr_20rem]">
         <Panel title="Disponibilidade">
           <AgendaBoard days={days} week={week} weeks={WEEKS} canManage={canManage} />
         </Panel>

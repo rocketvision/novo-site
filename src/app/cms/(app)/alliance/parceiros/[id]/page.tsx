@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { eq } from "drizzle-orm";
-import { EmptyState, Panel } from "@/components/cms/ui/layout";
+import { EmptyState, Panel, StatGrid } from "@/components/cms/ui/layout";
 import { ToneBadge } from "@/components/cms/alliance/tone-badge";
 import { PendingList } from "@/components/cms/alliance/pending-list";
 import { formatDateTime, relativeTime } from "@/lib/cms/format";
@@ -60,26 +60,7 @@ export default async function PartnerSummaryPage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {metrics.map((m) => {
-          const body = (
-            <>
-              <span className="block truncate text-xs text-zinc-500">{m.label}</span>
-              <span className="mt-1 block text-xl font-semibold text-zinc-900 tabular-nums">{m.value}</span>
-              <span className="mt-0.5 block text-xs text-zinc-500">{m.hint}</span>
-            </>
-          );
-          return m.href ? (
-            <Link key={m.label} href={m.href} className="rounded-lg border border-zinc-200 bg-white px-4 py-3 hover:border-zinc-300">
-              {body}
-            </Link>
-          ) : (
-            <div key={m.label} className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
-              {body}
-            </div>
-          );
-        })}
-      </div>
+      <StatGrid items={metrics} />
 
       <section aria-labelledby="pendencias">
         <h2 id="pendencias" className="mb-3 text-sm font-semibold text-zinc-900">

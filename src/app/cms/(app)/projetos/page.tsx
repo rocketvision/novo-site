@@ -19,7 +19,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
   const [rows, counts] = await Promise.all([listProjects({ q, status: status || undefined }), countProjectsByStatus()]);
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader
         title="Projetos"
         description="Portfólio exibido em /projetos. Só projetos publicados aparecem no site."

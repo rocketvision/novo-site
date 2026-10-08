@@ -406,11 +406,11 @@ export function RuleForm({ id, initial, partners, onDone }: { id: string | null;
     }
   }
   return (
-    <form onSubmit={submit} noValidate className="space-y-4">
+    <form onSubmit={submit} noValidate className="@container space-y-4">
       <Field label="Nome" error={errors.name}>
         {(f) => <Input {...f} value={v.name} maxLength={80} placeholder="Ex.: Pro · 2026" onChange={(e) => setV({ ...v, name: e.target.value })} />}
       </Field>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 @md:grid-cols-2 @2xl:grid-cols-3">
         <Field label="Nível" optional error={errors.tierKey}>
           {(f) => (
             <Select {...f} value={v.tierKey ?? ""} onChange={(e) => setV({ ...v, tierKey: (e.target.value || null) as TierKey | null })}>
@@ -448,7 +448,7 @@ export function RuleForm({ id, initial, partners, onDone }: { id: string | null;
           )}
         </Field>
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 @md:grid-cols-2 @2xl:grid-cols-3">
         <Field label="Percentual" hint="Sobre a receita líquida recebida." error={errors.ratePercent}>
           {(f) => <Input {...f} inputMode="decimal" placeholder="5" value={v.ratePercent} onChange={(e) => setV({ ...v, ratePercent: e.target.value })} />}
         </Field>
@@ -521,7 +521,7 @@ export function RuleActions({ id, status, name, initial, partners }: { id: strin
           </>
         )}
         {status !== "archived" && (
-          <Button size="sm" variant="ghost" onClick={() => setConfirm("archived")}>
+          <Button size="sm" variant={status === "draft" ? "ghost" : "secondary"} onClick={() => setConfirm("archived")}>
             Arquivar
           </Button>
         )}

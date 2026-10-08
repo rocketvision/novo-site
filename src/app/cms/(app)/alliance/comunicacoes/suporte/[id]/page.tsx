@@ -24,7 +24,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
   const t = data.ticket;
   const team = await teamWithPermission("alliance.communications");
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader
         back={
           <Link href="/cms/alliance/comunicacoes/suporte" className="inline-flex items-center gap-1 text-[13px] text-zinc-500 hover:text-zinc-900">
