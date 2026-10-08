@@ -1,34 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { EmptyState, PageHeader, Panel } from "@/components/cms/ui/layout";
 import { relativeTime } from "@/lib/cms/format";
 import { formatMoney } from "@/lib/alliance/money";
 import { requirePermission } from "@/server/authz/guard";
 import { getOverview } from "@/server/alliance/overview";
+import { pendingWork } from "@/server/alliance/workspace";
+import { PendingList } from "@/components/cms/alliance/pending-list";
 
 export const metadata: Metadata = { title: "Rocket Alliance" };
 
 /**
  * Visão geral do programa: parceiros, candidaturas, indicações, oportunidades, conversão e, para quem
- * pode ver finanças, comissões e pagamentos. Os avisos no topo levam ao que está esperando a equipe.
+ * pode ver finanças, comissões e pagamentos. No topo, a caixa de pendências: o que está esperando a
+ * equipe, com link direto para resolver cada item.
  */
 export default async function AllianceOverviewPage() {
   const user = await requirePermission("alliance.view", "/cms/alliance");
   const finance = user.permissions.has("alliance.finance");
-  const { counts: c, conversion, finance: f, activity } = await getOverview({ finance });
-
-  const alerts = [
-    user.permissions.has("alliance.applications") && c.applications_pending > 0 && {
-      href: "/cms/alliance/candidaturas",
-      text: c.applications_pending === 1 ? "1 candidatura esperando análise" : `${c.applications_pending} candidaturas esperando análise`,
-    },
-    c.referrals_new > 0 && { href: "/cms/alliance/indicacoes?status=submitted", text: c.referrals_new === 1 ? "1 indicação nova para analisar" : `${c.referrals_new} indicações novas para analisar` },
-    c.change_requests > 0 && { href: "/cms/alliance/parceiros#pedidos", text: c.change_requests === 1 ? "1 pedido de alteração de dados públicos" : `${c.change_requests} pedidos de alteração de dados públicos` },
-    f && f.rulesDraft > 0 && { href: "/cms/alliance/comissoes/regras", text: f.rulesDraft === 1 ? "1 regra de comissão aguardando aprovação comercial" : `${f.rulesDraft} regras de comissão aguardando aprovação comercial` },
-    user.permissions.has("alliance.communications") && c.tickets_open > 0 && { href: "/cms/alliance/comunicacoes/suporte", text: c.tickets_open === 1 ? "1 chamado de suporte aberto" : `${c.tickets_open} chamados de suporte abertos` },
-    user.permissions.has("alliance.communications") && c.emails_failed > 0 && { href: "/cms/alliance/comunicacoes/envios?status=failed", text: c.emails_failed === 1 ? "1 e-mail do programa não foi entregue" : `${c.emails_failed} e-mails do programa não foram entregues` },
-  ].filter(Boolean) as { href: string; text: string }[];
+  const [{ counts: c, conversion, finance: f, activity }, pending] = await Promise.all([getOverview({ finance }), pendingWork(user.permissions)]);
+  const pendingTotal = pending.reduce((n, g) => n + g.count, 0);
 
   const metrics: { label: string; value: string; hint?: string; href?: string }[] = [
     { label: "Parceiros ativos", value: String(c.partners_active), hint: `${c.partners_onboarding} em onboarding`, href: "/cms/alliance/parceiros?status=active" },
@@ -49,21 +40,17 @@ export default async function AllianceOverviewPage() {
 
   return (
     <>
-      <PageHeader title="Visão geral" description="O Rocket Alliance em números: parceiros, candidaturas, indicações e resultados." />
+      <PageHeader title="Visão geral" description="O que precisa da equipe agora e o Rocket Alliance em números." />
 
-      {alerts.length > 0 && (
-        <ul className="mb-6 space-y-2">
-          {alerts.map((a) => (
-            <li key={a.href}>
-              <Link href={a.href} className="group flex items-center justify-between gap-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100/70">
-                {a.text}
-                <ArrowRight aria-hidden="true" className="size-4 text-sky-700 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <section aria-labelledby="pendencias" className="mb-8">
+        <h2 id="pendencias" className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900">
+          Para fazer agora
+          {pendingTotal > 0 && <span className="rounded-full bg-sky-100 px-1.5 text-[11px] font-semibold text-sky-800 tabular-nums">{pendingTotal}</span>}
+        </h2>
+        <PendingList groups={pending} />
+      </section>
 
+      <h2 className="mb-3 text-sm font-semibold text-zinc-900">Números do programa</h2>
       <div className="mb-6 grid gap-px overflow-hidden rounded-lg border border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-3">
         {metrics.map((m) => {
           const body = (

@@ -157,7 +157,7 @@ export function PartnerEditor({ id, initial, media: initialMedia, projects, perm
       const created = await api<{ id: string }>("/api/cms/alliance/partners", { body: { data: parsed.data } });
       setSaved(data);
       toast.success("Parceiro cadastrado. Ele só aparece no site depois de publicado.");
-      router.replace(`/cms/alliance/parceiros/${created.id}`);
+      router.replace(`/cms/alliance/parceiros/${created.id}/editar`);
       return null;
     }
     if (!dirty) return version;
@@ -218,19 +218,7 @@ export function PartnerEditor({ id, initial, media: initialMedia, projects, perm
 
   return (
     <MediaContext.Provider value={{ media, remember: (m) => setMedia((all) => ({ ...all, [m.id]: m })), canUpload: perms.canUpload }}>
-      {!creating && (
-        <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-zinc-500">
-          {initial.published ? <Badge tone="green">No diretório</Badge> : <Badge>Não publicado</Badge>}
-          {initial.published && initial.publishedAt && <span>Publicado {relativeTime(initial.publishedAt)}</span>}
-          {initial.published && initial.hasChanges && !dirty && <Badge tone="amber">Alterações não publicadas</Badge>}
-          {dirty && <Badge tone="blue">Alterações não salvas</Badge>}
-          {initial.publicSlug && (
-            <a href={siteHref(`/partners/${initial.publicSlug}`)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline">
-              /partners/{initial.publicSlug} <ExternalLink className="size-3" />
-            </a>
-          )}
-        </div>
-      )}
+      {!creating && <PublishState published={initial.published} hasChanges={initial.hasChanges} publishedAt={initial.publishedAt} publicSlug={initial.publicSlug} dirty={dirty} canPublish={perms.canPublish} />}
 
       {conflict && (
         <div role="alert" className="mb-5 flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-[13px] text-amber-900 sm:flex-row sm:items-center sm:justify-between">
@@ -247,6 +235,8 @@ export function PartnerEditor({ id, initial, media: initialMedia, projects, perm
       )}
 
       <div className="space-y-6">
+        <SectionHeading title="Gestão interna" description="Só a equipe Rocket Vision vê. Nada daqui vai para o site." first />
+
         <Panel title="Programa" description="Situação, nível e modalidades. Mudar o nível avisa a empresa no Hub e por e-mail.">
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Nome comercial" error={errors.tradeName} counter={{ value: data.tradeName.length, max: 80 }}>
@@ -317,7 +307,29 @@ export function PartnerEditor({ id, initial, media: initialMedia, projects, perm
           </div>
         </Panel>
 
-        <Panel title="Perfil público" description="O que aparece no diretório e na página exclusiva. Nada de dados internos aqui.">
+        <Panel title="Dados internos" description="Nunca aparecem no site nem no diretório.">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Fields specs={INTERNAL.slice(0, 2)} path={[]} form={form} />
+            <Fields specs={INTERNAL.slice(2)} path={[]} form={form} />
+          </div>
+        </Panel>
+
+        <Panel title="Avaliação" description="Apoia a decisão de evolução de nível: resultados, qualidade das indicações, satisfação dos clientes e cumprimento das regras.">
+          <div className="grid gap-5 sm:grid-cols-3">
+            <ScoreSelect label="Qualidade das indicações" value={data.qualityScore} readOnly={readOnly} onChange={(v) => update("qualityScore", v)} />
+            <ScoreSelect label="Satisfação dos clientes" value={data.satisfactionScore} readOnly={readOnly} onChange={(v) => update("satisfactionScore", v)} />
+            <div className="pt-6">
+              <Switch label="Cumpre as regras do programa" checked={data.complianceOk} disabled={readOnly} onChange={(v) => update("complianceOk", v)} />
+            </div>
+          </div>
+          <Field label="Anotações internas" optional className="mt-5" error={errors.internalNotes}>
+            {(p) => <Textarea {...p} rows={4} value={data.internalNotes} readOnly={readOnly} maxLength={4000} onChange={(e) => update("internalNotes", e.target.value)} />}
+          </Field>
+        </Panel>
+
+        <SectionHeading title="Perfil público" description="Tudo daqui para baixo aparece no diretório e na página exclusiva, mas só depois de publicar." />
+
+        <Panel title="Apresentação" description="Setor, descrições, serviços, site e redes sociais.">
           <div className="space-y-5">
             <Field label="Setor de atuação" error={errors.sector}>
               {(p) => (
@@ -391,25 +403,6 @@ export function PartnerEditor({ id, initial, media: initialMedia, projects, perm
           <Fields specs={SEO} path={[]} form={form} />
         </Panel>
 
-        <Panel title="Dados internos" description="Nunca aparecem no site nem no diretório.">
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Fields specs={INTERNAL.slice(0, 2)} path={[]} form={form} />
-            <Fields specs={INTERNAL.slice(2)} path={[]} form={form} />
-          </div>
-        </Panel>
-
-        <Panel title="Avaliação" description="Apoia a decisão de evolução de nível: resultados, qualidade das indicações, satisfação dos clientes e cumprimento das regras.">
-          <div className="grid gap-5 sm:grid-cols-3">
-            <ScoreSelect label="Qualidade das indicações" value={data.qualityScore} readOnly={readOnly} onChange={(v) => update("qualityScore", v)} />
-            <ScoreSelect label="Satisfação dos clientes" value={data.satisfactionScore} readOnly={readOnly} onChange={(v) => update("satisfactionScore", v)} />
-            <div className="pt-6">
-              <Switch label="Cumpre as regras do programa" checked={data.complianceOk} disabled={readOnly} onChange={(v) => update("complianceOk", v)} />
-            </div>
-          </div>
-          <Field label="Anotações internas" optional className="mt-5" error={errors.internalNotes}>
-            {(p) => <Textarea {...p} rows={4} value={data.internalNotes} readOnly={readOnly} maxLength={4000} onChange={(e) => update("internalNotes", e.target.value)} />}
-          </Field>
-        </Panel>
       </div>
 
       <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t border-zinc-200 bg-zinc-50/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
@@ -649,5 +642,50 @@ function ScoreSelect({ label, value, readOnly, onChange }: { label: string; valu
         </Select>
       )}
     </Field>
+  );
+}
+
+function SectionHeading({ title, description, first }: { title: string; description: string; first?: boolean }) {
+  return (
+    <div className={cn(!first && "pt-4")}>
+      <h2 className="text-[11px] font-semibold tracking-[0.12em] text-zinc-500 uppercase">{title}</h2>
+      <p className="mt-0.5 text-[13px] text-zinc-500">{description}</p>
+    </div>
+  );
+}
+
+/** Estado de publicação em uma frase: o que está no site e o que falta fazer para atualizar. */
+function PublishState({
+  published,
+  hasChanges,
+  publishedAt,
+  publicSlug,
+  dirty,
+  canPublish,
+}: {
+  published: boolean;
+  hasChanges: boolean;
+  publishedAt: string | null;
+  publicSlug: string | null;
+  dirty: boolean;
+  canPublish: boolean;
+}) {
+  const action = canPublish ? "" : " Quem tem a permissão de publicar precisa fazer isso.";
+  const state = dirty
+    ? { tone: "border-sky-200 bg-sky-50 text-sky-900", text: `Você tem alterações não salvas. Salve para não perder.${published ? " Depois, publique para que apareçam no site." : ""}` }
+    : !published
+      ? { tone: "border-zinc-200 bg-white text-zinc-700", text: `Fora do diretório. O cadastro está salvo, mas não aparece no site até ser publicado.${action}` }
+      : hasChanges
+        ? { tone: "border-amber-200 bg-amber-50 text-amber-900", text: `No diretório, mas com alterações salvas que ainda não estão no site. Use "Publicar alterações".${action}` }
+        : { tone: "border-emerald-200 bg-emerald-50 text-emerald-900", text: `No diretório e atualizado${publishedAt ? ` (publicado ${relativeTime(publishedAt)})` : ""}.` };
+  return (
+    <div role="status" className={cn("mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border px-4 py-3 text-[13px]", state.tone)}>
+      <span>{state.text}</span>
+      {publicSlug && (
+        <a href={siteHref(`/partners/${publicSlug}`)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline">
+          /partners/{publicSlug} <ExternalLink className="size-3" />
+        </a>
+      )}
+    </div>
   );
 }

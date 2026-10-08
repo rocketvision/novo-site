@@ -30,7 +30,14 @@ type PartnerRow = typeof schema.partners.$inferSelect;
 /* Leitura                                                                     */
 /* -------------------------------------------------------------------------- */
 
-export async function listPartners(input: { q?: string; status?: PartnerStatus; tier?: TierKey } = {}) {
+export type PartnerSort = "directory" | "name" | "referrals" | "login" | "recent";
+
+/**
+ * Parceiros para as listas do Studio. Além do cadastro, traz o que ajuda a decidir: indicações em
+ * andamento, contrato, último acesso ao Hub e se há algo esperando a equipe. Valores de comissão só
+ * com `finance` (a soma nem é calculada sem a permissão).
+ */
+export async function listPartners(input: { q?: string; status?: PartnerStatus; tier?: TierKey; pending?: boolean; sort?: PartnerSort; finance?: boolean } = {}) {
   const where: SQL[] = [];
   if (input.status) where.push(eq(schema.partners.status, input.status));
   if (input.tier) where.push(eq(schema.partners.tierKey, input.tier));
@@ -39,11 +46,34 @@ export async function listPartners(input: { q?: string; status?: PartnerStatus; 
     const pattern = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
     where.push(or(ilike(schema.partners.tradeName, pattern), ilike(schema.partners.legalName, pattern), ilike(schema.partners.slug, pattern), ilike(schema.partners.contactEmail, pattern))!);
   }
-  const modalities = sql<string[]>`coalesce((select array_agg(l.modality_key order by l.modality_key) from partner_modality_links l where l.partner_id = ${schema.partners.id}), '{}')`;
-  const users = sql<number>`(select count(*)::int from partner_users u where u.partner_id = ${schema.partners.id} and u.status = 'active')`;
+  const id = schema.partners.id;
+  const modalities = sql<string[]>`coalesce((select array_agg(l.modality_key order by l.modality_key) from partner_modality_links l where l.partner_id = ${id}), '{}')`;
+  const users = sql<number>`(select count(*)::int from partner_users u where u.partner_id = ${id} and u.status = 'active')`;
+  const openReferrals = sql<number>`(select count(*)::int from referrals r where r.partner_id = ${id} and r.status in ('submitted', 'under_review', 'qualified', 'in_negotiation'))`;
+  const newReferrals = sql<number>`(select count(*)::int from referrals r where r.partner_id = ${id} and r.status = 'submitted')`;
+  const lastLoginAt = sql<Date | null>`(select max(u.last_login_at) from partner_users u where u.partner_id = ${id})`.mapWith(schema.partnerUsers.lastLoginAt);
+  // Melhor situação de contrato: vigente > aguardando aceite > rascunho > nenhum.
+  const contract = sql<string | null>`(select c.status from partner_contracts c where c.partner_id = ${id} and c.status in ('active', 'sent', 'draft')
+    order by case c.status when 'active' then 0 when 'sent' then 1 else 2 end limit 1)`;
+  const pendingCount = sql<number>`(
+    (select count(*) from referrals r where r.partner_id = ${id} and r.status = 'submitted')
+    + (select count(*) from partner_change_requests c where c.partner_id = ${id} and c.status = 'pending')
+    + (select count(*) from support_tickets t where t.partner_id = ${id} and t.status = 'open')
+    + (select count(*) from partner_contracts c where c.partner_id = ${id} and c.status = 'sent')
+    + (case when ${schema.partners.status} in ('active', 'onboarding') and not exists (select 1 from partner_users u where u.partner_id = ${id} and u.status = 'active') then 1 else 0 end)
+  )::int`;
+  const toPay = input.finance ? sql<number>`(select coalesce(sum(e.amount_cents), 0)::bigint from commission_entries e where e.partner_id = ${id} and e.status in ('pending', 'approved'))`.mapWith(Number) : sql<number | null>`null`;
+  if (input.pending) where.push(sql`${pendingCount} > 0`);
+  const order = {
+    directory: [desc(schema.partners.featured), asc(schema.partners.sortOrder), asc(schema.partners.tradeName)],
+    name: [asc(schema.partners.tradeName)],
+    referrals: [sql`${openReferrals} desc`, asc(schema.partners.tradeName)],
+    login: [sql`${lastLoginAt} desc nulls last`, asc(schema.partners.tradeName)],
+    recent: [desc(schema.partners.createdAt)],
+  }[input.sort ?? "directory"];
   return getDb()
     .select({
-      id: schema.partners.id,
+      id,
       slug: schema.partners.slug,
       tradeName: schema.partners.tradeName,
       status: schema.partners.status,
@@ -58,11 +88,17 @@ export async function listPartners(input: { q?: string; status?: PartnerStatus; 
       logoUrl: schema.media.url,
       modalities,
       users,
+      openReferrals,
+      newReferrals,
+      lastLoginAt,
+      contract,
+      pendingCount,
+      toPayCents: toPay,
     })
     .from(schema.partners)
     .leftJoin(schema.media, eq(schema.media.id, schema.partners.logoMediaId))
     .where(where.length ? and(...where) : undefined)
-    .orderBy(desc(schema.partners.featured), asc(schema.partners.sortOrder), asc(schema.partners.tradeName));
+    .orderBy(...order);
 }
 
 export async function partnerOptions() {

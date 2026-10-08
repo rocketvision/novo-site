@@ -11,6 +11,13 @@ O programa de parceiros faz parte do site e do CMS que já existem. Não é um p
 | Gestão no Studio | `/cms/alliance` | Equipe Rocket Vision, conforme as permissões `alliance.*` |
 | Alliance Hub | `/alliance` | Pessoas das empresas parceiras (login próprio, fora dos buscadores) |
 
+## Gestão no Studio
+
+- **Abas agrupadas.** *Operação* (Visão geral, Candidaturas, Parceiros, Indicações, Comissões, Suporte), *Conteúdo* (Diretório, Páginas, Recursos, Comunicados) e *Administração* (Contratos, Configurações). Cada aba só aparece com a permissão dela.
+- **Para fazer agora.** A Visão geral abre com a caixa de pendências (`server/alliance/workspace.ts`): candidaturas, indicações novas, proteções vencendo em 7 dias, chamados, contratos aguardando aceite ou vencendo em 30 dias, comissões para aprovar e a pagar, regras em rascunho, pedidos de alteração, interesses em oportunidades, parceiros sem acesso ao Hub e e-mails que falharam. Só aparece o que a pessoa pode resolver.
+- **Ficha do parceiro.** `/cms/alliance/parceiros/[id]` abre no *Resumo*: números (indicações, conversão, comissões, acesso ao Hub), pendências só daquele parceiro, indicações recentes, contratos, contato, avaliação e atividade. O formulário fica em *Cadastro* (`/editar`), separado em *Gestão interna* e *Perfil público*, com o estado de publicação explícito. Ações rápidas: nova indicação, convidar pessoa e ver no site.
+- **Lista de parceiros.** Mostra indicações em andamento, pendências, contrato, último acesso ao Hub e, para finanças, comissões abertas. Filtro *Com pendência* e ordenação por nome, indicações, último acesso ou mais recentes.
+
 ## Como as partes se ligam
 
 1. **Candidatura.** O formulário em `/partners` grava a candidatura com status *Pending Review*. Nesse momento não existe parceiro, página nem acesso.
@@ -101,7 +108,7 @@ Cada página e cada rota conferem a permissão no servidor. A aba escondida é s
 - **Duplicidade.** Site e CNPJ (com dígito verificador) identificam a empresa. Nome normalizado e domínio do e-mail do contato (ignorando e-mails gratuitos) são só sinais.
   - Mesmo site ou CNPJ protegido: a indicação é recusada, e a mensagem diz qual dado coincidiu, no campo dele. **No Hub, o parceiro nunca descobre quem indicou antes**; no CMS, a equipe vê a indicação existente e o parceiro dela.
   - Mesmo nome ou mesmo domínio de e-mail do contato: a indicação entra marcada como *possível duplicidade*, para a equipe decidir. Nome repetido na própria empresa só bloqueia quando não há site nem CNPJ para diferenciar.
-- **Registro pelo CMS.** Com `alliance.referrals`, a equipe registra em Indicações → Nova indicação uma indicação que chegou por outro canal, em nome da empresa parceira escolhida (não suspensa nem encerrada). Valem as mesmas regras; o responsável e os gestores do parceiro são avisados no Hub e por e-mail.
+- **Registro pelo CMS.** Com `alliance.referrals`, a equipe registra em Indicações → Nova indicação (ou pela ficha do parceiro) uma indicação que chegou por outro canal, em nome da empresa parceira escolhida (não suspensa nem encerrada) e, se quiser, da pessoa do parceiro que indicou. Valem as mesmas regras; o responsável, os gestores e a pessoa escolhida são avisados no Hub e por e-mail.
 - **Envios simultâneos.** Um lock de transação (`pg_advisory_xact_lock`) garante que só um fica com a proteção.
 - **Etapas.** Seguem um fluxo fechado. Perda exige motivo. Mensagens podem ser visíveis ao parceiro ou internas.
 - **Reatribuição.** É auditada, com justificativa, e fica bloqueada depois de haver recebimentos.
