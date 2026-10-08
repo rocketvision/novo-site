@@ -46,6 +46,6 @@ export const primaryCta = { label: "Fazer diagnóstico", href: "/#diagnostico" }
 
 /** Área restrita: os painéis de clientes e de parceiros, em subdomínios próprios. */
 export const restrictedAreas = [
-  { key: "client", label: "Painel do Cliente", caption: "Clientes Rocket Vision", href: "https://cliente.rocketvision.dev/" },
+  { key: "client", label: "Painel do Cliente", caption: "Clientes Rocket Vision", href: "https://projeto.rocketvision.dev/" },
   { key: "partner", label: "Painel do Parceiro", caption: "Rocket Alliance", href: "https://alliance.rocketvision.dev/" },
 ] as const;
